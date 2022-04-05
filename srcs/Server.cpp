@@ -48,6 +48,7 @@ void Server::sendMessage() {
 		 		}
 		 	char input[256];
 		 	recv((*it).fd, &input, sizeof(input), 0);
+			cout << "input: " << input << endl;
 		 	string output;
 		 	if (!strcmp(input, "exit")) {
 		 		getUsers()[index]->leave();
