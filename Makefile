@@ -6,12 +6,12 @@
 #    By: pmedina- <3 carce-bo	                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/03/23 22:21:34 by pmedina-          #+#    #+#              #
-#    Updated: 2022/04/02 21:06:48 by pmedina-         ###   ########.fr        #
+#    Updated: 2022/04/05 22:01:25 by pmedina-         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 SNAME	=	server
-SSRCS	=	srcs/main.cpp srcs/Server.cpp
+SSRCS	=	srcs/main.cpp srcs/Server.cpp srcs/Channel.cpp
 CNAME	=	client
 CSRC	=	srcs/example_client.cpp
 CXX		=	g++ 
