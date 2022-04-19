@@ -41,7 +41,7 @@ void Channel::deleteUser(std::string name) {
 				std::list<User*>::iterator it = _users.begin();
 				while (userInBlackList((*it)->getNickName()))
 					it++;
-				_users.front()->setMode('o');
+				(*it)->setMode('o');
 			}
 			else
 				_users.erase(user);
