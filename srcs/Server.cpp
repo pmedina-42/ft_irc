@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../includes/Server.hpp"
 #include <netinet/in.h>
 #include <sys/utsname.h>
 #include <iostream>
@@ -29,7 +29,6 @@ void Server::addNewUser() {
 	char name[NAME_MAX_SZ];
 	recv(sock, &name, sizeof(name), 0);
 	User *newUser = new User(sock, name, sizeof(name));
-	newUser->add();
 	users.push_back(newUser);
 	cout << "new connection: " << newUser->getNickName() << endl;
 	 memset(name, '\0', 9);
