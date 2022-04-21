@@ -40,7 +40,7 @@ class Channel {
 		void banUser(std::string);
 		bool userInBlackList(std::string);
 		/* Esta función devuelve true si el canal está en modo invitación */
-		bool inviteMode();
+		bool inviteModeOn();
 		/* Esta función devuelve true si un usuario está invitado al canal
 		 * si devuelve true, el usuario puede unirse al canal, si no no */
 		bool isInvited(std::string);
