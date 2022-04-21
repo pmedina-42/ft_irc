@@ -59,3 +59,30 @@ bool Channel::userInBlackList(std::string name) {
 		return true;
 	return false;
 }
+
+bool Channel::inviteModeOn() {
+	if (_mode == 'i')
+		return true;
+	return false;
+}
+
+bool Channel::isInvited(std::string name) {
+	std::list<User*>::iterator end = _invited_users.end();
+	for (std::list<User*>::iterator user = _invited_users.begin(); user != end; user++) {
+		if (!(*user)->getNickName().compare(name)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void Channel::setUserMode(std::string name, char mode) {
+	if (mode == 'o' || mode == 'v') {
+		std::list<User*>::iterator end = _users.end();
+		for (std::list<User*>::iterator user = _users.begin(); user != end; user++) {
+			if (!(*user)->getNickName().compare(name)) {
+				(*user)->setMode(mode);
+			}
+		}
+	}
+}

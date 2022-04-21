@@ -26,9 +26,10 @@ void Server::addNewUser() {
 		cout << "accept error" << endl;
 		exit(1);
 	}
-	char name[NAME_MAX_SZ];
-	recv(sock, &name, sizeof(name), 0);
-	User *newUser = new User(sock, name, sizeof(name));
+	char name[20];
+	while (strncmp(name, "NICK", 4))
+		recv(sock, &name, sizeof(name), 0);
+	User *newUser = new User(sock, name+5, NAME_MAX_SZ);
 	users.push_back(newUser);
 	cout << "new connection: " << newUser->getNickName() << endl;
 	 memset(name, '\0', 9);
@@ -57,6 +58,7 @@ void Server::sendMessage() {
 			}
 			for (size_t i = 0; i != getUsers().size(); i++) {
 				if (i != index) {
+					cout << "output: " << output << endl;
 					send(getUsers()[i]->getFd(), output.c_str(), output.length(), 0);
 				}
 			}
