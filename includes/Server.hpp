@@ -1,8 +1,6 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#define NAME_MAX_SZ 10
-
 #include "User.hpp"
 #include <vector>
 #include <unistd.h>
@@ -10,6 +8,7 @@
 #include <poll.h>
 
 #define LISTENER_BACKLOG 20
+#define NAME_MAX_SZ 10
 
 class User;
 
