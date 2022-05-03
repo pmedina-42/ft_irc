@@ -17,8 +17,10 @@ Server::Server(void) {
 	}
 }
 
+
 Server::~Server(void) {
 }
+
 
 int get_addrinfo_from_params(const char* hostname, const char *port,
 							 struct addrinfo *hints,
@@ -104,6 +106,12 @@ int Server::setServerInfo(std::string &ip, std::string &port) {
 	return 0;
 }
 
+/*
+ * tries to bind a socket to one of the provided addresses in
+ * the struct addrinfo list provided by servinfo and then, it 
+ * starts listen()ing to it.
+ * return 0 on success, -1 otherwise.
+ */
 int Server::setListener(void) {
 
 	int socketfd = -1;
@@ -142,30 +150,6 @@ int Server::setListener(void) {
 	_info.listener = socketfd;
 	return _info.listener;
 }
-
-int Server::setListener(void) {
-	
-	int socketfd = -1;
-	int yes = 1;
-
-	if (socketfd = socket(AF_UNSPEC, SOCK_STREAM, 0) == -1)
-		return -1;
-	if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR,
-				   &yes, sizeof(yes) == -1)
-		/* assign port to socket */
-		|| bind(socketfd, _info.servinfo->ai_addr, 
-						  _info.servinfo->ai_addrlen) == -1)
-	{
-		if (socketfd != -1) {
-			close(socketfd);
-			return -1;
-		}
-	}
-	if (listen(socketfd, LISTENER_BACKLOG) == -1)
-		return -1;
-	return socketfd;
-}
-
 
 /* To be used on fatal errors only */
 void Server::printError(std::string error) {
