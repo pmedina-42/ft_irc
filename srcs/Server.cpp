@@ -10,8 +10,9 @@ namespace irc {
 
 Server::Server(void)
 	:
-		_info()
-	{
+		_info(),
+		_manager()
+{
 	if (setServerInfo() == -1
 		|| setListener() == -1)
 	{
@@ -157,6 +158,29 @@ void Server::printError(std::string error) {
 	std::cerr << "Server raised following error : " << error << std::endl;
 }
 
+// this might have to manage signals at some point ?? 
+int Server::mainLoop(void) {
+
+	_manager.setUpListener(_info.listener);
+
+	while (42) {
+		/* -1 = wait until some event happens */
+		if (poll(_manager.fds, _manager.fds_size, -1) == -1)
+			return -1;
+		for (int fd_idx = 0; fd_idx < _manager.fds_size; fd_idx++) {
+			if (_manager.hasDataToRead(fd_idx)) {
+				/* listener is always at first entry */
+				if (fd_idx == 0) {
+					_manager.addNewUser();
+					continue;
+				}
+				//else read/show in chat etc etc etc.
+			}
+		}
+	}
+
+}
+
 
 /* serverParams Section -------------------------- */
 
@@ -165,13 +189,65 @@ serverParams::serverParams(void)
 		servinfo(NULL),
 		actual(NULL),
 		listener(-1)
-	{}
+{}
 
 serverParams::~serverParams(void) {
 	if (listener != -1) {
 		close(listener);
 	}
 }
+
+/* serverFds Section -------------------------- */
+
+serverFds::serverFds(void)
+	:
+		fds_size(0)
+{}
+
+serverFds::~serverFds(void) {
+}
+
+void serverFds::setUpListener(int listener) {
+	fds[0].fd = listener;
+	fds[0].events = POLLIN;
+	fds[0].revents = 0;
+	fds_size++;
+}
+
+int serverFds::hasDataToRead(int entry) {
+	return fds[entry].revents & POLLIN;
+}
+
+int serverFds::addNewUser(void) {
+	struct sockaddr_storage client;
+	socklen_t addrlen = sizeof(struct sockaddr_storage);
+	int fd_new = -1;
+	if ((fd_new = accept(fds[0].fd, (struct sockaddr *)&client,
+						 &addrlen)) == -1)
+	{
+		return -1;
+	}
+	fds_size++;
+
+	fds[fds_size - 1].fd = fd_new;
+	fds[fds_size - 1].events = POLLIN;
+	fds[fds_size - 1].revents = 0;
+	if (client.ss_family == AF_INET)  {
+		char str[10];
+		struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
+		inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
+		std::string ip(str);
+		std::cout << "connected to " << ip << std::endl;
+	} else {
+		char str[20];
+		struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
+		inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
+		std::string ip(str);
+		std::cout << "connected to " << ip << std::endl;	
+	}
+	return 0;
+}
+
 
 } /* namespace irc */
 

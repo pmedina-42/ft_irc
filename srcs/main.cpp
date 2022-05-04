@@ -10,16 +10,19 @@
 
 bool running = true;
 
-using namespace std;
+using namespace irc;
 
-void error(string msg) {
-	cout << msg << endl;
+void error(std::string msg) {
+	std::cout << msg << std::endl;
 	exit(1);
 }
 
 int main(int n, char **v) {
+	(void)n;
+	if (v[n] == NULL)
+		return 1;
 	/* ./server [port] */
-	if (n != 2)
+	/*if (n != 2)
 		error("bad arguments");
 	Server server(atoi(v[1]));
 	if (bind(server.fd, (struct sockaddr *)&server.addr, sizeof(server.addr)) == -1)
@@ -38,5 +41,6 @@ int main(int n, char **v) {
 		if (!server.hasUsers()) { 
 			running = false;
 		}
-	}
+	}*/
+	return 0;
 }
