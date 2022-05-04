@@ -8,7 +8,10 @@
 
 namespace irc {
 
-Server::Server(void) {
+Server::Server(void)
+	:
+		_info()
+	{
 	if (setServerInfo() == -1
 		|| setListener() == -1)
 	{
@@ -16,7 +19,6 @@ Server::Server(void) {
 		exit(1);
 	}
 }
-
 
 Server::~Server(void) {
 }
@@ -115,7 +117,6 @@ int Server::setServerInfo(std::string &ip, std::string &port) {
 int Server::setListener(void) {
 
 	int socketfd = -1;
-	
 	/* loop through addresses until bind works */
     for (struct addrinfo *p = _info.servinfo; p != NULL; p = p->ai_next) {
 		/* open a socket given servinfo */

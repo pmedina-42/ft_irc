@@ -14,6 +14,8 @@ class User;
 
 namespace irc {
 
+class serverParams;
+
 class Server {
 
     public:
@@ -29,7 +31,7 @@ class Server {
         int setListener(void);
         
         void printError(std::string error);
-        serverParams _info;
+        serverParams& _info;
 };
 
 class serverParams {
