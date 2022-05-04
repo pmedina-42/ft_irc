@@ -4,6 +4,7 @@
 #include "User.hpp"
 #include <list>
 
+class User;
 /* TODO: comprobar y setear tamaño máximo de usuarios dentro de un canal? */
 
 class Channel {
@@ -38,12 +39,13 @@ class Channel {
         void addUser(User*);
         void deleteUser(std::string);
         void banUser(std::string);
+		void unbanUser(std::string);
         bool userInBlackList(std::string);
         /* Esta función devuelve true si el canal está en modo invitación */
         bool inviteModeOn();
         /* Esta función devuelve true si un usuario está invitado al canal
          * si devuelve true, el usuario puede unirse al canal, si no no */
-        bool isInvited(std::string);
+        bool isInvited(User*);
         void setUserMode(std::string, char);
 
     private:
