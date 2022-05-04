@@ -1,37 +1,51 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#define NAME_MAX_SZ 10
-
 #include "User.hpp"
 #include <vector>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <poll.h>
 
+#define LISTENER_BACKLOG 20
+#define NAME_MAX_SZ 10
+
 class User;
 
+namespace irc {
+
 class Server {
-	public:
-		Server(int);
-		~Server() {
-			for (size_t i = 0; i != fds.size(); i++)
-				close(fds[i].fd);
-		}
 
-		std::vector<User*> getUsers() { return users; }
-		std::vector<pollfd> getFds() { return fds; }
-		struct sockaddr_in* getAddr() { return &addr; }
-
-		int getMyIp();
-		bool hasUsers();
-		void addNewUser();
-		void sendMessage();
-
-		struct sockaddr_in addr;
-		std::vector<User *> users;
-		std::vector<pollfd> fds;
-		int fd;
+    public:
+        Server(void);
+        Server(std::string &ip, std::string &port);
+        Server(Server &rhs);
+        ~Server();
+    
+    private:
+        /* initializators */
+        int setServerInfo(void);
+        int setServerInfo(std::string &ip, std::string &port);
+        int setListener(void);
+        
+        void printError(std::string error);
+        serverParams _info;
 };
+
+class serverParams {
+    public:
+        serverParams(void);
+        serverParams(serverParams &rhs);
+        ~serverParams(void);
+
+        /* ptr to struct addrinfo list */
+        struct addrinfo *servinfo;
+        /* actual list entry being used */
+        struct addrinfo *actual;
+        /* fd set to listen */
+        int listener;
+};
+
+}
 
 #endif
