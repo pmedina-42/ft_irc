@@ -47,6 +47,7 @@ class Channel {
          * si devuelve true, el usuario puede unirse al canal, si no no */
         bool isInvited(User*);
         void setUserMode(std::string, char);
+		void addToWhitelist(User*);
 
     private:
         /* Lista de usuarios que pertenecen al canal */
@@ -54,7 +55,7 @@ class Channel {
         /* Lista de usuarios que son operadores */
         std::list<User*> _oper_users;
         /* Lista de usuarios invitados al canal */
-        std::list<User*> _invited_users;
+        std::list<User*> _whiteList;
         /* Lista de nombres de usuarios baneados */
         std::list<std::string> _blackList;
 

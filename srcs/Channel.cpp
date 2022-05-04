@@ -67,16 +67,25 @@ void Channel::deleteUser(std::string name) {
 	}
 }
 
+/*
+ * Banea a un usuario
+ * */
 void Channel::banUser(std::string name) {
 	_blackList.push_back(name);
 }
 
+/*
+ * Desbanea a un usuario
+ * */
 void Channel::unbanUser(std::string name) {
 	std::vector<std::string>::iterator it = _blackList.find(name);
 	if (it != _blackList.end())
 		_blackList.erase(it);
 }
 
+/*
+ * Comprueba si el usuario está en la lista de baneados
+ * */
 bool Channel::userInBlackList(std::string name) {
 	std::list<std::string>::iterator it = find(_blackList.begin(), _blackList.end(), name);
 	if (it != _blackList.end())
@@ -84,20 +93,36 @@ bool Channel::userInBlackList(std::string name) {
 	return false;
 }
 
+/*
+ * Comprueba si el canal está en modo invitación
+ * */
 bool Channel::inviteModeOn() {
 	if (_mode == 'i')
 		return true;
 	return false;
 }
 
+/*
+ * Añade un nuevo usuario a la whitelist 
+ * */
+void Channel::addToWhitelist(User *user) {
+	_whiteList.push_back(user);
+}
+
+/*
+ * Devuelve true si el usuario está en la whitelist del canal 
+ * */
 bool Channel::isInvited(User *user) {
-	std::list<User*>::iterator it = _invited_users.find(user);
-	if (it != _invited_users.end()) {
+	std::list<User*>::iterator it = _whiteList.find(user);
+	if (it != _whiteList.end()) {
 		return true;
 	}
 	return false;
 }
 
+/*
+ * Función probablemente useless ya que el modo se setea desde el mismo usuario 
+ * */
 void Channel::setUserMode(std::string name, char mode) {
 	if (mode == 'o' || mode == 'v') {
 		std::list<User*>::iterator end = _users.end();
