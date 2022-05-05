@@ -1,4 +1,5 @@
 #include "../includes/User.hpp"
+#include <unistd.h>
 
 User::User(int fd, std::string nick) : _nickName(nick), belongs(true), _fd(fd) {}
 

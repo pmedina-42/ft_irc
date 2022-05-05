@@ -1,4 +1,5 @@
 #include "../includes/Channel.hpp"
+#include <algorithm>
 
 /* 
  * Al crearse el canal se setea al usuario creador el rol 'o' 

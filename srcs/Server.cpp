@@ -3,11 +3,13 @@
 #include <sys/utsname.h>
 #include <iostream>
 #include <netdb.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <string.h>
 
-typedef struct addrinfo address_info;
+namespace irc {
 
 int get_addrinfo_from_params(const char* hostname, const char *port,
 							 struct addrinfo *hints,
@@ -28,8 +30,6 @@ int get_addrinfo_from_params(const char* hostname, const char *port,
 	return 0;
 }
 
-namespace irc {
-
 Server::Server(void)
 	:
 		_info(),
@@ -45,8 +45,6 @@ Server::Server(void)
 
 Server::~Server(void) {
 }
-
-
 
 
 /*

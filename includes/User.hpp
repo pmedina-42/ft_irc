@@ -1,8 +1,6 @@
 #ifndef USER_H
 #define USER_H
 
-#include <unistd.h>
-#include <string.h>
 #include <string>
 
 /* TODO: hace falta el belongs fuera del código de prueba? */

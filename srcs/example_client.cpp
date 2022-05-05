@@ -1,17 +1,20 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <unistd.h>
-#include <iostream>
 #include <signal.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+#include <iostream>
+#include <string>
 
 bool running = true;
 
 using namespace std;
 
-void error(string msg) {
+void error(std::string msg) {
 	cout << msg << endl;
-	exit(1);
+	_exit(1);
 }
 
 int main(int n, char **v) {
@@ -44,7 +47,7 @@ int main(int n, char **v) {
 		/* Mientras el hijo este corriendo va a esperar a recibir
 		 * un input para enviarselo al servidor*/
 		while (running) {
-			string str;
+			std::string str;
 			getline(cin, str);
 			if (!str.compare("exit")) {
 				running = false;
