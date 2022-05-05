@@ -13,31 +13,14 @@
 
 class User;
 
+/* this is needed because of the namespace.
+ * struct addrinfo was not being read correctly
+ * by the lexer, so it had to be compacted
+ * into one word.
+ */
+typedef struct addrinfo address_info;
+
 namespace irc {
-
-class serverParams;
-class serverFds;
-
-class Server {
-
-    public:
-        Server(void);
-        Server(std::string &ip, std::string &port);
-        Server(Server &rhs);
-        ~Server();
-    
-    private:
-        /* initializators */
-        int setServerInfo(void);
-        int setServerInfo(std::string &ip, std::string &port);
-        int setListener(void);
-
-        int mainLoop(void);
-        
-        void printError(std::string error);
-        serverParams& _info;
-        serverFds&     _manager;
-};
 
 class serverParams {
     public:
@@ -70,6 +53,31 @@ class serverFds {
         /* addresses corresponding to each client */
         struct sockaddr *addr[MAX_FDS];
 };
+
+class Server {
+
+    public:
+        Server(void);
+        Server(std::string &ip, std::string &port);
+        Server(Server &rhs);
+        ~Server();
+    
+    private:
+        /* initializators */
+        int setServerInfo(void);
+        int setServerInfo(std::string &ip, std::string &port);
+        int setListener(void);
+
+        int mainLoop(void);
+        
+        void printError(std::string error);
+        serverParams _info;
+        serverFds     _manager;
+};
+
+
+
+
 
 }
 

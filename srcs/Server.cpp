@@ -5,25 +5,9 @@
 #include <netdb.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 
-namespace irc {
-
-Server::Server(void)
-	:
-		_info(),
-		_manager()
-{
-	if (setServerInfo() == -1
-		|| setListener() == -1)
-	{
-		// maybe throw ?
-		exit(1);
-	}
-}
-
-Server::~Server(void) {
-}
-
+typedef struct addrinfo address_info;
 
 int get_addrinfo_from_params(const char* hostname, const char *port,
 							 struct addrinfo *hints,
@@ -44,6 +28,27 @@ int get_addrinfo_from_params(const char* hostname, const char *port,
 	return 0;
 }
 
+namespace irc {
+
+Server::Server(void)
+	:
+		_info(),
+		_manager()
+{
+	if (setServerInfo() == -1
+		|| setListener() == -1)
+	{
+		// maybe throw ?
+		exit(1);
+	}
+}
+
+Server::~Server(void) {
+}
+
+
+
+
 /*
  * sets all entries in internal struct addrinfo. This includes
  * hostname, the list of addresses to be used, the IRC port,
@@ -56,7 +61,7 @@ int get_addrinfo_from_params(const char* hostname, const char *port,
  */
 int Server::setServerInfo(void) {
 	struct addrinfo hints;
-	struct addrinfo *servinfo;
+	struct addrinfo *servinfo = NULL;
 	char hostname[96];
 	size_t hostname_len = 96;
 	const char* port = "6667";
@@ -87,7 +92,7 @@ int Server::setServerInfo(void) {
  */
 int Server::setServerInfo(std::string &ip, std::string &port) {
 	struct addrinfo hints;
-	struct addrinfo *servinfo;
+	struct addrinfo *servinfo = NULL;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC; // Ipv4
