@@ -1,13 +1,12 @@
-#include "../includes/Server.hpp"
-#include <netinet/in.h>
 #include <sys/utsname.h>
 #include <iostream>
 #include <netdb.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "../includes/Server.hpp"
 
 namespace irc {
 

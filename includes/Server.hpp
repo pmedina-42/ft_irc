@@ -1,10 +1,10 @@
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef IRC42_SERVER_H
+#define IRC42_SERVER_H
 
 #include "User.hpp"
-#include <vector>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <sys/types.h>
 #include <poll.h>
 
 #define LISTENER_BACKLOG 20
@@ -12,13 +12,6 @@
 #define MAX_FDS 255
 
 class User;
-
-/* this is needed because of the namespace.
- * struct addrinfo was not being read correctly
- * by the lexer, so it had to be compacted
- * into one word.
- */
-typedef struct addrinfo address_info;
 
 namespace irc {
 
@@ -75,10 +68,6 @@ class Server {
         serverFds     _manager;
 };
 
-
-
-
-
 }
 
-#endif
+#endif /* IRC42_SERVER_H */
