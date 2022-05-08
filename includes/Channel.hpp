@@ -4,6 +4,8 @@
 #include "User.hpp"
 #include <list>
 
+namespace irc {
+
 /* TODO: comprobar y setear tamaño máximo de usuarios dentro de un canal? */
 
 class Channel {
@@ -19,18 +21,15 @@ class Channel {
     
         /* Channel getters & setters */
         inline std::string getName() { return _name; }
-        inline void setName(std::string name) { _name = name; }
-
         inline std::string getTopic() { return _topic; }
-        inline void setTopic(std::string topic) { _topic = topic; }
-
         inline char getMode() { return _mode; }
-        inline void setMode(char mode) { _mode = mode; }
-    
         inline unsigned int getMaxUsers() { return _max_users; }
-        inline void setMaxUsers(unsigned int max) { _max_users = max; }
-
         inline std::string getKey() { return _key; }
+
+        inline void setName(std::string name) { _name = name; }
+        inline void setTopic(std::string topic) { _topic = topic; }
+        inline void setMode(char mode) { _mode = mode; }
+        inline void setMaxUsers(unsigned int max) { _max_users = max; }
         inline void setKey(std::string key) { _key = key; }
 
         /* Class functions */
@@ -68,5 +67,7 @@ class Channel {
         std::string _key;
 
 };
+
+} // namespace
 
 #endif

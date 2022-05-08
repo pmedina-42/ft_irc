@@ -1,6 +1,9 @@
 #include "../includes/Channel.hpp"
 #include <algorithm>
 
+
+namespace irc {
+	
 /* 
  * Al crearse el canal se setea al usuario creador el rol 'o' 
  * el canal al principio no tiene ningún modo. Se setea después 
@@ -87,3 +90,5 @@ void Channel::setUserMode(std::string name, char mode) {
 		}
 	}
 }
+
+} // namespace
