@@ -1,8 +1,9 @@
-#ifndef USER_H
-#define USER_H
+#ifndef IRC42_USER_H
+#define IRC42_USER_H
 
 #include <string>
 
+namespace irc {
 /* TODO: hace falta el belongs fuera del código de prueba? */
 
 class User {
@@ -27,5 +28,7 @@ class User {
         inline bool stillThere() { return belongs; }
         void leave();
 };
+
+}
 
 #endif

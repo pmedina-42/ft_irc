@@ -11,6 +11,9 @@
 #define NAME_MAX_SZ 10
 #define MAX_FDS 255
 
+#define MANUAL 0
+#define AUTOMATIC 1
+
 class User;
 
 namespace irc {

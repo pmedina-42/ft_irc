@@ -23,23 +23,39 @@ int get_addrinfo_from_params(const char* hostname, const char *port,
 	}
 	/* Filter out IPv6 cases (makes me dizzy) */
 	if (servinfo->ai_addrlen != 4) {
+		std::cerr << "ai_addrlen : " << servinfo->ai_addrlen << std::endl;
 		std::cerr << "unsupported IP address length" << std::endl;
 		return -1;
 	}
 	return 0;
 }
 
+/* When called, two modes exist:
+ * MANUAL : prints the first IP address returned by gethostbyname,
+ *          to allow a further call to the server initializer 
+ *          using the IP provided.
+ * AUTOMATIC : the server mounts automatically on an address available.
+ */
 Server::Server(void)
 	:
 		_info(),
 		_manager()
-{
+{	
 	if (setServerInfo() == -1
 		|| setListener() == -1)
 	{
 		// maybe throw ?
 		exit(1);
 	}
+}
+
+Server::Server(std::string &ip, std::string &port) {
+	if (setServerInfo(ip, port) != 0
+		|| setListener() == -1)
+	{
+		std::cout << "Error setting Server Info" << std::endl;
+	}
+	mainLoop();
 }
 
 Server::~Server(void) {
@@ -65,7 +81,7 @@ int Server::setServerInfo(void) {
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET; // Ipv4
-	hints.ai_socktype = SOCK_STREAM; // TCP 
+	hints.ai_socktype = SOCK_STREAM; // TCP
 
 	if (gethostname(&hostname[0], hostname_len) != 0) {
 		printError("gethostname error");
@@ -92,14 +108,16 @@ int Server::setServerInfo(std::string &ip, std::string &port) {
 	struct addrinfo *servinfo = NULL;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC; // Ipv4
-	hints.ai_socktype = SOCK_STREAM; // TCP 
+	hints.ai_family = AF_INET; // Ipv4
+	hints.ai_socktype = SOCK_STREAM; // TCP
 	
 	/* in_addr and sockaddr_in are both just uint32_t */
 	//if (inet_aton(ip.c_str(), (in_addr *)hints.ai_addr) == 0)
 	//	return -1;
 
-	if (get_addrinfo_from_params(ip.c_str(), port.c_str(), &hints, servinfo) == -1) {
+	if (get_addrinfo_from_params(ip.c_str(), port.c_str(), &hints,
+								 servinfo) == -1)
+	{
 		if (servinfo != NULL) {
 			freeaddrinfo(servinfo);
 			return -1;
