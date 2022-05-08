@@ -1,11 +1,24 @@
 #include "../includes/User.hpp"
+#include <unistd.h>
+#include <algorithm>
 
-User::User(int fd, std::string nick) : _nickName(nick), belongs(true), _fd(fd) {}
+namespace irc {
 
-User::User(int fd, char* data, size_t len) : _nickName(data, len), belongs(true), _fd(fd) {}
+User::User(int fd, std::string nick)
+	:
+		_nickName(nick),
+		belongs(true),
+		_fd(fd)
+{}
+
+User::User(int fd, char* data, size_t len)
+	:
+		_nickName(data, len),
+		belongs(true),
+		_fd(fd)
+{}
 
 User::~User() {}
-
 
 /* CLASS FUNCTIONS */
 
@@ -28,7 +41,10 @@ void User::joinChannel(Channel *channel) {
  * 2. Una vez encontrado, se borra el canal de la lista 
  * */
 void User::leaveChannel(Channel *channel) {
-	std::vector<Channel*>::iterator it = _channels.find(channel);
+	std::vector<Channel*>::iterator it = 
+		std::find(_channels.begin(), _channels.end(), channel);
 	if (it != _channels.end())
-		_channels.erase()
+		_channels.erase(it);
 }
+
+} // namespace

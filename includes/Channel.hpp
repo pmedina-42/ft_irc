@@ -3,39 +3,38 @@
 
 #include "User.hpp"
 #include <list>
+#include <string>
+
+namespace irc {
 
 class User;
 /* TODO: comprobar y setear tamaño máximo de usuarios dentro de un canal? */
 
 class Channel {
     public:
-        Channel(std::string, User*);
+        Channel(std::string,  User*);
         ~Channel();
 
         /* User list getters */
         inline std::list<User*> getUsers() { return _users; }
         inline std::list<User*> getOperators() { return _oper_users; }
-        inline std::list<User*> getInvited() { return _invited_users; }
+        inline std::list<User*> getInvited() { return _whiteList; }
         inline std::list<std::string> getBlackList() { return _blackList; }
     
         /* Channel getters & setters */
         inline std::string getName() { return _name; }
-        inline void setName(std::string name) { _name = name; }
-
         inline std::string getTopic() { return _topic; }
-        inline void setTopic(std::string topic) { _topic = topic; }
-
         inline char getMode() { return _mode; }
-        inline void setMode(char mode) { _mode = mode; }
-    
         inline unsigned int getMaxUsers() { return _max_users; }
-        inline void setMaxUsers(unsigned int max) { _max_users = max; }
-
         inline std::string getKey() { return _key; }
+
+        inline void setName(std::string name) { _name = name; }
+        inline void setTopic(std::string topic) { _topic = topic; }
+        inline void setMode(char mode) { _mode = mode; }
+        inline void setMaxUsers(unsigned int max) { _max_users = max; }
         inline void setKey(std::string key) { _key = key; }
 
         /* Class functions */
-
         void addUser(User*);
         void deleteUser(std::string);
         void banUser(std::string);
@@ -71,5 +70,7 @@ class Channel {
         std::string _key;
 
 };
+
+} // namespace
 
 #endif

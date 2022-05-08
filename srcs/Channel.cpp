@@ -1,12 +1,15 @@
 #include "../includes/Channel.hpp"
+#include <algorithm>
 
+namespace irc {
+	
 /* 
  * Al crearse el canal se setea al usuario creador el rol 'o' 
  * el canal al principio no tiene ningún modo. Se setea después 
- * */
+ */
 Channel::Channel(std::string name, User* user) : _name(name) {
 	_mode = 0;
-	user->setMode('o');
+	user->setMode('o'); 
 	_users.push_front(user);
 }
 
@@ -36,7 +39,7 @@ void Channel::addUser(User* user) {
 		}
 	}
 	_users.push_back(user);
-	user->joinChannel(*this);
+	user->joinChannel(this);
 }
 
 /* 
@@ -61,7 +64,7 @@ void Channel::deleteUser(std::string name) {
 			}
 			else
 				_users.erase(user);
-			user->leaveChannel(*this);
+			(*user)->leaveChannel(this);
 			break ;
 		}
 	}
@@ -78,7 +81,8 @@ void Channel::banUser(std::string name) {
  * Desbanea a un usuario
  * */
 void Channel::unbanUser(std::string name) {
-	std::vector<std::string>::iterator it = _blackList.find(name);
+
+	std::list<std::string>::iterator it = std::find(_blackList.begin(), _blackList.end(), name);
 	if (it != _blackList.end())
 		_blackList.erase(it);
 }
@@ -87,7 +91,7 @@ void Channel::unbanUser(std::string name) {
  * Comprueba si el usuario está en la lista de baneados
  * */
 bool Channel::userInBlackList(std::string name) {
-	std::list<std::string>::iterator it = find(_blackList.begin(), _blackList.end(), name);
+	std::list<std::string>::iterator it = std::find(_blackList.begin(), _blackList.end(), name);
 	if (it != _blackList.end())
 		return true;
 	return false;
@@ -111,9 +115,9 @@ void Channel::addToWhitelist(User *user) {
 
 /*
  * Devuelve true si el usuario está en la whitelist del canal 
- * */
+ */
 bool Channel::isInvited(User *user) {
-	std::list<User*>::iterator it = _whiteList.find(user);
+	std::list<User*>::iterator it = std::find(_whiteList.begin(), _whiteList.end(), user);
 	if (it != _whiteList.end()) {
 		return true;
 	}
@@ -133,3 +137,5 @@ void Channel::setUserMode(std::string name, char mode) {
 		}
 	}
 }
+
+} // namespace

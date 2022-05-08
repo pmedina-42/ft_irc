@@ -1,5 +1,5 @@
-#ifndef USER_H
-#define USER_H
+#ifndef IRC42_USER_H
+#define IRC42_USER_H
 
 #include "Channel.hpp"
 
@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+namespace irc {
 /* TODO: hace falta el belongs fuera del código de prueba? */
 
 class Channel;
@@ -40,6 +41,10 @@ class User {
         void leave();
 
 		void leaveChannel(Channel*);
+        void joinChannel(Channel*);
+
 };
+
+}
 
 #endif
