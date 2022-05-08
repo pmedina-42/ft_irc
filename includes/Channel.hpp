@@ -3,20 +3,22 @@
 
 #include "User.hpp"
 #include <list>
+#include <string>
 
 namespace irc {
 
+class User;
 /* TODO: comprobar y setear tamaño máximo de usuarios dentro de un canal? */
 
 class Channel {
     public:
-        Channel(std::string, User*);
+        Channel(std::string,  User*);
         ~Channel();
 
         /* User list getters */
         inline std::list<User*> getUsers() { return _users; }
         inline std::list<User*> getOperators() { return _oper_users; }
-        inline std::list<User*> getInvited() { return _invited_users; }
+        inline std::list<User*> getInvited() { return _whiteList; }
         inline std::list<std::string> getBlackList() { return _blackList; }
     
         /* Channel getters & setters */
@@ -33,17 +35,18 @@ class Channel {
         inline void setKey(std::string key) { _key = key; }
 
         /* Class functions */
-
         void addUser(User*);
         void deleteUser(std::string);
         void banUser(std::string);
+		void unbanUser(std::string);
         bool userInBlackList(std::string);
         /* Esta función devuelve true si el canal está en modo invitación */
         bool inviteModeOn();
         /* Esta función devuelve true si un usuario está invitado al canal
          * si devuelve true, el usuario puede unirse al canal, si no no */
-        bool isInvited(std::string);
+        bool isInvited(User*);
         void setUserMode(std::string, char);
+		void addToWhitelist(User*);
 
     private:
         /* Lista de usuarios que pertenecen al canal */
@@ -51,7 +54,7 @@ class Channel {
         /* Lista de usuarios que son operadores */
         std::list<User*> _oper_users;
         /* Lista de usuarios invitados al canal */
-        std::list<User*> _invited_users;
+        std::list<User*> _whiteList;
         /* Lista de nombres de usuarios baneados */
         std::list<std::string> _blackList;
 

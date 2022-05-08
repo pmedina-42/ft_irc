@@ -72,12 +72,12 @@ void error(std::string msg) {
  */
 int main(int argc, char **argv) {
 	if (argc == 1) {
-		getMyIP();
-		return 0;
+		Server server;
+		return 42;
 	} else {
-		std::string port(argv[1]);
-		std::string host_addr(argv[2]);
-		Server(port, host_addr);
+		std::string hostname(argv[1]);
+		std::string port(argv[2]);
+		Server(hostname, port);
 		// connect to server using params
 		return 1;
 	}

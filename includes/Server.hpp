@@ -61,7 +61,7 @@ class Server {
     private:
         /* initializators */
         int setServerInfo(void);
-        int setServerInfo(std::string &ip, std::string &port);
+        int setServerInfo(std::string &hostname, std::string &port);
         int setListener(void);
 
         int mainLoop(void);

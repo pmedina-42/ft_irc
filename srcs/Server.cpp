@@ -12,18 +12,17 @@ namespace irc {
 
 int get_addrinfo_from_params(const char* hostname, const char *port,
 							 struct addrinfo *hints,
-							 struct addrinfo *servinfo)
+							 struct addrinfo **servinfo)
 {
 	int ret = -1;
 
-	if ((ret = getaddrinfo(hostname, port, hints, &servinfo)) != 0) {
+	if ((ret = getaddrinfo(hostname, port, hints, servinfo)) != 0) {
 		std::string error("getaddrinfo error :");
 		std::cerr << error.append(gai_strerror(ret)) << std::endl;
 		return -1;
 	}
 	/* Filter out IPv6 cases (makes me dizzy) */
-	if (servinfo->ai_addrlen != 4) {
-		std::cerr << "ai_addrlen : " << servinfo->ai_addrlen << std::endl;
+	if ((*servinfo)->ai_family == AF_INET6) {
 		std::cerr << "unsupported IP address length" << std::endl;
 		return -1;
 	}
@@ -40,17 +39,18 @@ Server::Server(void)
 	:
 		_info(),
 		_manager()
-{	
+{
 	if (setServerInfo() == -1
 		|| setListener() == -1)
 	{
 		// maybe throw ?
 		exit(1);
 	}
+	mainLoop();
 }
 
-Server::Server(std::string &ip, std::string &port) {
-	if (setServerInfo(ip, port) != 0
+Server::Server(std::string &hostname, std::string &port) {
+	if (setServerInfo(hostname, port) != 0
 		|| setListener() == -1)
 	{
 		std::cout << "Error setting Server Info" << std::endl;
@@ -87,12 +87,14 @@ int Server::setServerInfo(void) {
 		printError("gethostname error");
 		return -1;
 	}
-	if (get_addrinfo_from_params(hostname, port, &hints, servinfo) == -1) {
+	if (get_addrinfo_from_params(hostname, port, &hints, &servinfo) == -1) {
 		if (servinfo != NULL) {
 			freeaddrinfo(servinfo);
 			return -1;
 		}
 	}
+	if (servinfo == NULL)
+		return -1;
 	/* This struct addrinfo may not be the one that binds, but
 	 * thats one more step from here. */
 	_info.servinfo = servinfo;
@@ -103,7 +105,7 @@ int Server::setServerInfo(void) {
  * Here ip works as the hostname. It is already null terminated
  * when calling std::string c_str method.
  */
-int Server::setServerInfo(std::string &ip, std::string &port) {
+int Server::setServerInfo(std::string &hostname, std::string &port) {
 	struct addrinfo hints;
 	struct addrinfo *servinfo = NULL;
 
@@ -112,17 +114,19 @@ int Server::setServerInfo(std::string &ip, std::string &port) {
 	hints.ai_socktype = SOCK_STREAM; // TCP
 	
 	/* in_addr and sockaddr_in are both just uint32_t */
-	//if (inet_aton(ip.c_str(), (in_addr *)hints.ai_addr) == 0)
+	//if (inet_aton(hostname.c_str(), (in_addr *)hints.ai_addr) == 0)
 	//	return -1;
 
-	if (get_addrinfo_from_params(ip.c_str(), port.c_str(), &hints,
-								 servinfo) == -1)
+	if (get_addrinfo_from_params(hostname.c_str(), port.c_str(), &hints,
+								 &servinfo) == -1)
 	{
 		if (servinfo != NULL) {
 			freeaddrinfo(servinfo);
 			return -1;
 		}
 	}
+	if (servinfo == NULL)
+		return -1;
 	/* This struct addrinfo may not be the one that binds, but
 	 * thats one more step from here. */
 	_info.servinfo = servinfo;
@@ -147,13 +151,8 @@ int Server::setListener(void) {
 			socketfd  = -1;
 			continue;
 		}
-		int yes = 1;
-		/* avoid "address already in use" error */
-		if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR,
-					   &yes, sizeof(yes) == -1)
-			/* assign port to socket */
-			|| bind(socketfd, p->ai_addr, p->ai_addrlen) == -1)
-		{
+		/* assign port to socket */
+		if (bind(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
 			close(socketfd);
 			socketfd = -1;
 			continue;
@@ -169,6 +168,10 @@ int Server::setListener(void) {
 	if (listen(socketfd, LISTENER_BACKLOG) == -1) {
 		return -1;
 	}
+	struct sockaddr_in *sockaddrin = (struct sockaddr_in *)(_info.actual->ai_addr);
+	std::cout << "Server mounted succesfully on "
+			  << inet_ntoa(sockaddrin->sin_addr)
+			  << ":6667" << std::endl;
 	_info.listener = socketfd;
 	return _info.listener;
 }
