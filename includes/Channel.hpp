@@ -15,25 +15,6 @@ class Channel {
         Channel(std::string,  User*);
         ~Channel();
 
-        /* User list getters */
-        inline std::list<User*> getUsers() { return _users; }
-        inline std::list<User*> getOperators() { return _oper_users; }
-        inline std::list<User*> getInvited() { return _whiteList; }
-        inline std::list<std::string> getBlackList() { return _blackList; }
-    
-        /* Channel getters & setters */
-        inline std::string getName() { return _name; }
-        inline std::string getTopic() { return _topic; }
-        inline char getMode() { return _mode; }
-        inline unsigned int getMaxUsers() { return _max_users; }
-        inline std::string getKey() { return _key; }
-
-        inline void setName(std::string name) { _name = name; }
-        inline void setTopic(std::string topic) { _topic = topic; }
-        inline void setMode(char mode) { _mode = mode; }
-        inline void setMaxUsers(unsigned int max) { _max_users = max; }
-        inline void setKey(std::string key) { _key = key; }
-
         /* Class functions */
         void addUser(User*);
         void deleteUser(std::string);
@@ -48,7 +29,7 @@ class Channel {
         void setUserMode(std::string, char);
 		void addToWhitelist(User*);
 
-    private:
+        /* ATTRIBUTES */
         /* Lista de usuarios que pertenecen al canal */
         std::list<User*> _users;
         /* Lista de usuarios que son operadores */

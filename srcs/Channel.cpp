@@ -9,7 +9,7 @@ namespace irc {
  */
 Channel::Channel(std::string name, User* user) : _name(name) {
 	_mode = 0;
-	user->setMode('o'); 
+	user->_mode = 'o';
 	_users.push_front(user);
 }
 
@@ -54,13 +54,13 @@ void Channel::addUser(User* user) {
 void Channel::deleteUser(std::string name) {
 	std::list<User*>::iterator end = _users.end();
 	for (std::list<User*>::iterator user = _users.begin(); user != end; user++) {
-		if (!(*user)->getNickName().compare(name)) {
+		if (!(*user)->_nickName.compare(name)) {
 			if (user == _users.begin()) {
 				_users.pop_front();
 				std::list<User*>::iterator it = _users.begin();
-				while (userInBlackList((*it)->getNickName()))
+				while (userInBlackList((*it)->_nickName))
 					it++;
-				(*it)->setMode('o');
+				(*it)->_mode = 'o';
 			}
 			else
 				_users.erase(user);
@@ -131,8 +131,8 @@ void Channel::setUserMode(std::string name, char mode) {
 	if (mode == 'o' || mode == 'v') {
 		std::list<User*>::iterator end = _users.end();
 		for (std::list<User*>::iterator user = _users.begin(); user != end; user++) {
-			if (!(*user)->getNickName().compare(name)) {
-				(*user)->setMode(mode);
+			if (!(*user)->_nickName.compare(name)) {
+				(*user)->_mode = mode;
 			}
 		}
 	}
