@@ -8,6 +8,19 @@
 
 #include "../includes/Server.hpp"
 
+/* ref https://www.youtube.com/watch?v=dEHZb9JsmOU
+ * 
+ * IRC 'handshake'
+ * http://chi.cs.uchicago.edu/chirc/irc_examples.html
+ * 
+ * install Weechat (Hell) on Ubuntu
+ * https://weechat.org/files/doc/stable/weechat_user.en.html#dependencies
+ * https://weechat.org/files/doc/stable/weechat_user.en.html
+ * 
+ * Userguide to Weechat:
+ * https://www.linode.com/docs/guides/using-weechat-for-irc/
+ */
+
 namespace irc {
 
 int get_addrinfo_from_params(const char* hostname, const char *port,
@@ -87,6 +100,7 @@ int Server::setServerInfo(void) {
 		printError("gethostname error");
 		return -1;
 	}
+	std::cout << hostname << std::endl;
 	if (get_addrinfo_from_params(hostname, port, &hints, &servinfo) == -1) {
 		if (servinfo != NULL) {
 			freeaddrinfo(servinfo);
@@ -196,12 +210,23 @@ int Server::mainLoop(void) {
 				if (fd_idx == 0) {
 					_manager.addNewUser();
 					continue;
+				} else {
+					char msg[100] = {0};
+					int bytes = recv(_manager.fds[fd_idx].fd, msg, sizeof(msg), 0);
+					if (bytes == -1) {
+						std::cerr << "bytes = -1" << std::endl;
+					} else if (bytes == 0) {
+						close(_manager.fds[fd_idx].fd);
+						_manager.fds[fd_idx].fd = -1;
+					} else {
+						std::string message(msg, bytes);
+						std::cout << "fd : " << fd_idx << "Message : [" << message << "]" << std::endl;
+					}
 				}
 				//else read/show in chat etc etc etc.
-			}
+			} 
 		}
 	}
-
 }
 
 

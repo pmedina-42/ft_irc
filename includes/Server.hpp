@@ -63,7 +63,7 @@ class Server {
         int setServerInfo(void);
         int setServerInfo(std::string &hostname, std::string &port);
         int setListener(void);
-
+        
         int mainLoop(void);
         
         void printError(std::string error);

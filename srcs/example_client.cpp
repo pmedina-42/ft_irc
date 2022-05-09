@@ -59,6 +59,7 @@ int main(int n, char **v) {
 		/* Cuando el cliente sale del chat el hijo mata al padre, aunque
 		 * imprime cosa fea por pantalla y con hilos no, pero lo quería
 		 * hacer con procesos */
+		std::cout << "LOL" << std::endl;
 		kill(ppid, SIGKILL);
 	} else {
 		/* Mientras el padre esta corriendo esta pendiente de recibir un
@@ -72,6 +73,7 @@ int main(int n, char **v) {
 			/* Y se vacía para cuando llegue el siguiente mensaje */
 			memset(serveroutput, '\0', 255); 
 		}
+		std::cout << "LOL LOL" << std::endl;
 	}
 	/* Se cierra el fd del socket */
 	close(fd);
