@@ -18,6 +18,7 @@ class User;
 
 namespace irc {
 
+
 class serverParams {
     public:
         serverParams(void);

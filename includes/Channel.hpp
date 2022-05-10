@@ -19,7 +19,7 @@ class Channel {
         void addUser(User*);
         void deleteUser(std::string);
         void banUser(std::string);
-		void unbanUser(std::string);
+        void unbanUser(std::string);
         bool userInBlackList(std::string);
         /* Esta función devuelve true si el canal está en modo invitación */
         bool inviteModeOn();
@@ -27,7 +27,7 @@ class Channel {
          * si devuelve true, el usuario puede unirse al canal, si no no */
         bool isInvited(User*);
         void setUserMode(std::string, char);
-		void addToWhitelist(User*);
+        void addToWhitelist(User*);
 
         /* ATTRIBUTES */
         /* Lista de usuarios que pertenecen al canal */

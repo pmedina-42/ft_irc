@@ -21,7 +21,7 @@ class User {
 
         void leave();
 
-		void leaveChannel(Channel*);
+        void leaveChannel(Channel*);
         void joinChannel(Channel*);
 
         /* ATTRIBUTES */
