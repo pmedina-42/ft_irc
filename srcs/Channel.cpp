@@ -82,7 +82,9 @@ void Channel::banUser(std::string name) {
  * */
 void Channel::unbanUser(std::string name) {
 
-    std::list<std::string>::iterator it = std::find(_blackList.begin(), _blackList.end(), name);
+    std::list<std::string>::iterator it = std::find(_blackList.begin(),
+                                                    _blackList.end(),
+                                                    name);
     if (it != _blackList.end())
         _blackList.erase(it);
 }
@@ -91,7 +93,9 @@ void Channel::unbanUser(std::string name) {
  * Comprueba si el usuario está en la lista de baneados
  * */
 bool Channel::userInBlackList(std::string name) {
-    std::list<std::string>::iterator it = std::find(_blackList.begin(), _blackList.end(), name);
+    std::list<std::string>::iterator it = std::find(_blackList.begin(),
+                                                    _blackList.end(),
+                                                    name);
     if (it != _blackList.end())
         return true;
     return false;
@@ -117,7 +121,9 @@ void Channel::addToWhitelist(User *user) {
  * Devuelve true si el usuario está en la whitelist del canal 
  */
 bool Channel::isInvited(User *user) {
-    std::list<User*>::iterator it = std::find(_whiteList.begin(), _whiteList.end(), user);
+    std::list<User*>::iterator it = std::find(_whiteList.begin(),
+                                              _whiteList.end(),
+                                              user);
     if (it != _whiteList.end()) {
         return true;
     }
@@ -130,9 +136,11 @@ bool Channel::isInvited(User *user) {
 void Channel::setUserMode(std::string name, char mode) {
     if (mode == 'o' || mode == 'v') {
         std::list<User*>::iterator end = _users.end();
-        for (std::list<User*>::iterator user = _users.begin(); user != end; user++) {
-            if (!(*user)->_nickName.compare(name)) {
-                (*user)->_mode = mode;
+        for (std::list<User*>::iterator usr = _users.begin();
+            usr != _users.end(); usr++)
+        {
+            if (!(*usr)->_nickName.compare(name)) {
+                (*usr)->_mode = mode;
             }
         }
     }
