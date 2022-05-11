@@ -135,7 +135,6 @@ bool Channel::isInvited(User *user) {
  * */
 void Channel::setUserMode(std::string name, char mode) {
     if (mode == 'o' || mode == 'v') {
-        std::list<User*>::iterator end = _users.end();
         for (std::list<User*>::iterator usr = _users.begin();
             usr != _users.end(); usr++)
         {
