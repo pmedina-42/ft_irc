@@ -170,6 +170,8 @@ int Server::setListener(void) {
             socketfd  = -1;
             continue;
         }
+        int yes = 1;
+	    setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &yes, sizeof(yes));
         /* assign port to socket */
         if (bind(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(socketfd);
@@ -204,9 +206,9 @@ void Server::printError(string error) {
 int Server::mainLoop(void) {
 
     _manager.setUpListener(_info.listener);
-    string nickname;
-    string name;
-    string hostname;
+    string nickname = "";
+    string username = "";
+    string realname = "";
     while (42) {
         /* -1 = wait until some event happens */
         if (poll(_manager.fds, _manager.fds_size, -1) == -1)
@@ -232,18 +234,40 @@ int Server::mainLoop(void) {
                         char **arr = ft_split(message.c_str(), ' ');
                         if (arr == NULL)
                             std::cerr << "XDDD " << std::endl;
+
+                        /* ft_strlen() - 1 intenta no llevarse el \n del final !! Esto hace
+                         * que el cliente parsee los mensajes de uno en uno y dan cosas raras.
+                         * de esta forma, no sucede */
                         for (int i=0; arr[i] != NULL; i++) {
                             std::string word(arr[i]);
-                            if (word.compare("NICK")) {
-                                nickname = arr[i + 1];
+                            if (word.compare("NICK") == 0) {
+                                nickname = string(arr[i + 1], ft_strlen(arr[i + 1]) - 1);
+                            } else if (word.compare("USER") == 0) {
+                                username = string(arr[i + 1]);
+                            } else if (word[0] == ':') {
+                                // -2 por la misma razon que strlen - 1
+                                realname = word.substr(1, word.size() - 2);
                                 break;
                             }
                         }
+                        for (int i=0; arr[i] != NULL; i++) {
+                            free(arr[i]);
+                        }
+                        free(arr);
                         //send(_manager.fds[fd_idx].fd, "001 ")
                     }
                 }
-                //else read/show in chat etc etc etc.
-            } 
+            }
+        }
+        if (!nickname.empty() && !username.empty() && !realname.empty()) {
+            std::cout << "about to send repl y " << std::endl;
+            struct sockaddr_in *sockaddrin = (struct sockaddr_in *)(_info.actual->ai_addr);
+            string host(inet_ntoa(sockaddrin->sin_addr));
+            // pon aqui tus dos credenciales, es nicknaem!username@hostname o ip
+            string reply = string("001 Bienvenido_a_wassap_2 carce!carce@");
+            reply.append(host + "\n");
+            std::cout << "reply is: " << reply << std::endl;
+            send(_manager.fds[1].fd, reply.c_str(), reply.length(), 0);
         }
     }
 }

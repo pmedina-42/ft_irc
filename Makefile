@@ -23,9 +23,6 @@ LIBFT = libft.a
 
 all: $(NAME)
 
-%.o: %.cpp %.hpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
@@ -34,9 +31,9 @@ $(LIBFT_DIR)$(LIBFT): $(LIBFT_DIR)
 
 $(NAME): $(OBJSS) $(LIBFT_DIR)$(LIBFT)
 	@$(CXX) $(OBJSS) $(LIBFT_MAC) -o  $@
-	make -C $(dir $(LIBFT_DIR)) clean
 
 clean:
+	make -C $(dir $(LIBFT_DIR)) clean
 	@$(RM) $(OBJSS) $(OBJSC)
 	
 fclean	:	clean
@@ -45,3 +42,5 @@ fclean	:	clean
 			$(RM) $(NAME)
 
 re	: clean all
+
+.PHONY:		all clean fclean re
