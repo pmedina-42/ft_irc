@@ -136,7 +136,7 @@ bool Channel::isInvited(User *user) {
 void Channel::setUserMode(std::string name, char mode) {
     if (mode == 'o' || mode == 'v') {
         for (std::list<User*>::iterator usr = _users.begin();
-            usr != _users.end(); usr++)
+            usr != end; usr++)
         {
             if (!(*usr)->_nickName.compare(name)) {
                 (*usr)->_mode = mode;
