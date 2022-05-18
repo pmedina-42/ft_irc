@@ -9,6 +9,7 @@
 
 #include "../includes/Server.hpp"
 #include "../includes/User.hpp"
+#include "../libft/libft.h"
 
 using std::string;
 
@@ -203,7 +204,9 @@ void Server::printError(string error) {
 int Server::mainLoop(void) {
 
     _manager.setUpListener(_info.listener);
-
+    string nickname;
+    string name;
+    string hostname;
     while (42) {
         /* -1 = wait until some event happens */
         if (poll(_manager.fds, _manager.fds_size, -1) == -1)
@@ -219,13 +222,23 @@ int Server::mainLoop(void) {
                     int bytes = recv(_manager.fds[fd_idx].fd, msg, sizeof(msg), 0);
                     if (bytes == -1) {
                         std::cerr << "bytes = -1" << std::endl;
-                    } else if (bytes == 0) {
+                    } else if (bytes == 0) {    
                         std::cout << "fd " << fd_idx << " closed connection" << std::endl;
                         close(_manager.fds[fd_idx].fd);
                         _manager.fds[fd_idx].fd = -1;
                     } else {
                         string message(msg, bytes);
                         std::cout << "fd : " << fd_idx << "Message : [" << message << "]" << std::endl;
+                        char **arr = ft_split(message.c_str(), ' ');
+                        if (arr == NULL)
+                            std::cerr << "XDDD " << std::endl;
+                        for (int i=0; arr[i] != NULL; i++) {
+                            std::string word(arr[i]);
+                            if (word.compare("NICK")) {
+                                nickname = arr[i + 1];
+                                break;
+                            }
+                        }
                         //send(_manager.fds[fd_idx].fd, "001 ")
                     }
                 }
