@@ -1,7 +1,6 @@
 #ifndef IRC42_SERVER_H
 #define IRC42_SERVER_H
 
-#include "User.hpp"
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -10,9 +9,6 @@
 #define LISTENER_BACKLOG 20
 #define NAME_MAX_SZ 10
 #define MAX_FDS 255
-
-#define MANUAL 0
-#define AUTOMATIC 1
 
 class User;
 

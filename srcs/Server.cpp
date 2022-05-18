@@ -5,8 +5,12 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sstream>
 
 #include "../includes/Server.hpp"
+#include "../includes/User.hpp"
+
+using std::string;
 
 /* ref https://www.youtube.com/watch?v=dEHZb9JsmOU
  * 
@@ -30,7 +34,7 @@ int get_addrinfo_from_params(const char* hostname, const char *port,
     int ret = -1;
 
     if ((ret = getaddrinfo(hostname, port, hints, servinfo)) != 0) {
-        std::string error("getaddrinfo error :");
+        string error("getaddrinfo error :");
         std::cerr << error.append(gai_strerror(ret)) << std::endl;
         return -1;
     }
@@ -62,7 +66,7 @@ Server::Server(void)
     mainLoop();
 }
 
-Server::Server(std::string &hostname, std::string &port) {
+Server::Server(string &hostname, string &port) {
     if (setServerInfo(hostname, port) != 0
         || setListener() == -1)
     {
@@ -117,9 +121,9 @@ int Server::setServerInfo(void) {
 
 /*
  * Here ip works as the hostname. It is already null terminated
- * when calling std::string c_str method.
+ * when calling string c_str method.
  */
-int Server::setServerInfo(std::string &hostname, std::string &port) {
+int Server::setServerInfo(string &hostname, string &port) {
     struct addrinfo hints;
     struct addrinfo *servinfo = NULL;
 
@@ -191,7 +195,7 @@ int Server::setListener(void) {
 }
 
 /* To be used on fatal errors only */
-void Server::printError(std::string error) {
+void Server::printError(string error) {
     std::cerr << "Server raised following error : " << error << std::endl;
 }
 
@@ -220,8 +224,9 @@ int Server::mainLoop(void) {
                         close(_manager.fds[fd_idx].fd);
                         _manager.fds[fd_idx].fd = -1;
                     } else {
-                        std::string message(msg, bytes);
+                        string message(msg, bytes);
                         std::cout << "fd : " << fd_idx << "Message : [" << message << "]" << std::endl;
+                        //send(_manager.fds[fd_idx].fd, "001 ")
                     }
                 }
                 //else read/show in chat etc etc etc.
@@ -285,13 +290,13 @@ int serverFds::addNewUser(void) {
         char str[14];
         struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
         inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
-        std::string ip(str);
+        string ip(str);
         std::cout << "connected to " << ip << std::endl;
     } else {
         char str[20];
         struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
         inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
-        std::string ip(str);
+        string ip(str);
         std::cout << "connected to " << ip << std::endl;	
     }
     return 0;
