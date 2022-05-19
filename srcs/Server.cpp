@@ -284,6 +284,7 @@ int Server::mainLoop(void) {
             std::string target_of_reply = username;
             std::string complete_name = nickname + "!" + username + "@" + "192.168.45.85";
             std::cout << "our_host : [" << our_host << "], target_of_reply : [" << target_of_reply << "], complete_name : [" << complete_name << "]" << std::endl;
+            /* IRC USES CRLF !! specified in RFC 1459*/
             string reply = sender_prefix + " " + rpl_welcome + " " + target_of_reply + " :Welcome to wassap 2 " + complete_name + "\r\n";
             std::cout << "reply : [" << reply << "]" << std::endl;
             send(_manager.fds[1].fd, reply.c_str(), reply.length(), 0);
