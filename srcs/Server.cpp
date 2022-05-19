@@ -224,7 +224,7 @@ int Server::mainLoop(void) {
                     int bytes = recv(_manager.fds[fd_idx].fd, msg, sizeof(msg), 0);
                     if (bytes == -1) {
                         std::cerr << "bytes = -1" << std::endl;
-                    } else if (bytes == 0) {    
+                    } else if (bytes == 0) {
                         std::cout << "fd " << fd_idx << " closed connection" << std::endl;
                         close(_manager.fds[fd_idx].fd);
                         _manager.fds[fd_idx].fd = -1;
@@ -234,7 +234,6 @@ int Server::mainLoop(void) {
                         char **arr = ft_split(message.c_str(), ' ');
                         if (arr == NULL)
                             std::cerr << "XDDD " << std::endl;
-
                         /* ft_strlen() - 1 intenta no llevarse el \n del final !! Esto hace
                          * que el cliente parsee los mensajes de uno en uno y dan cosas raras.
                          * de esta forma, no sucede */
@@ -242,6 +241,10 @@ int Server::mainLoop(void) {
                             std::string word(arr[i]);
                             if (word.compare("NICK") == 0) {
                                 nickname = string(arr[i + 1], ft_strlen(arr[i + 1]) - 1);
+                                size_t carriage_return_pos = nickname.find('\r');
+                                if (carriage_return_pos != string::npos) {
+                                    nickname = nickname.substr(0, carriage_return_pos);
+                                }
                             } else if (word.compare("USER") == 0) {
                                 username = string(arr[i + 1]);
                             } else if (word[0] == ':') {
@@ -262,12 +265,29 @@ int Server::mainLoop(void) {
         if (!nickname.empty() && !username.empty() && !realname.empty()) {
             std::cout << "about to send repl y " << std::endl;
             struct sockaddr_in *sockaddrin = (struct sockaddr_in *)(_info.actual->ai_addr);
-            string host(inet_ntoa(sockaddrin->sin_addr));
+            string our_host(inet_ntoa(sockaddrin->sin_addr));
             // pon aqui tus dos credenciales, es nicknaem!username@hostname o ip
-            string reply = string("001 Bienvenido_a_wassap_2 carce!carce@");
-            reply.append(host + "\n");
-            std::cout << "reply is: " << reply << std::endl;
+            // https://stackoverflow.com/questions/662918/how-do-i-concatenate-multiple-c-strings-on-one-line
+            /* Fallaba esto (RFC 2812 section 2.4 (page 7)) :
+             * Most of the messages sent to the server generate a reply of some
+             * sort.  The most common reply is the numeric reply, used for both
+             * errors and normal replies.  The numeric reply MUST be sent as one
+             * message consisting of the sender prefix, the three-digit numeric, and
+             * the target of the reply.
+             * Vale: resulta que weechat está programado en windows o para windows o de alguna
+             * forma relacionado con windows de manera que está introduciendo saltos de linea como
+             * \r\n en vez de \n. Este \r lo que hace es retornar el carro y reescribirme la string
+             * cuando la imprimo por pantalla haciendo que aparezcan cosas super raras.
+             */
+            std::string sender_prefix = ":" + our_host;
+            std::string rpl_welcome("001");
+            std::string target_of_reply = username;
+            std::string complete_name = nickname + "!" + username + "@" + "192.168.45.85";
+            std::cout << "our_host : [" << our_host << "], target_of_reply : [" << target_of_reply << "], complete_name : [" << complete_name << "]" << std::endl;
+            string reply = sender_prefix + " " + rpl_welcome + " " + target_of_reply + " :Welcome to wassap 2 " + complete_name + "\r\n";
+            std::cout << "reply : [" << reply << "]" << std::endl;
             send(_manager.fds[1].fd, reply.c_str(), reply.length(), 0);
+            send(_manager.fds[2].fd, reply.c_str(), reply.length(), 0);
         }
     }
 }
