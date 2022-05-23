@@ -55,6 +55,8 @@ class Server {
         Server(Server &rhs);
         ~Server();
     
+    
+    
     private:
         /* initializators */
         int setServerInfo(void);

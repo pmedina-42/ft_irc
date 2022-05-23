@@ -10,6 +10,7 @@
 #include "../includes/Server.hpp"
 #include "../includes/User.hpp"
 #include "../libft/libft.h"
+#include "Exceptions.hpp"
 
 using std::string;
 
@@ -61,8 +62,7 @@ Server::Server(void)
     if (setServerInfo() == -1
         || setListener() == -1)
     {
-        // maybe throw ?
-        exit(1);
+        throw irc::exc::ServerSetUpError();
     }
     mainLoop();
 }
@@ -71,7 +71,7 @@ Server::Server(string &hostname, string &port) {
     if (setServerInfo(hostname, port) != 0
         || setListener() == -1)
     {
-        std::cout << "Error setting Server Info" << std::endl;
+        throw irc::exc::ServerSetUpError();
     }
     mainLoop();
 }
@@ -102,7 +102,7 @@ int Server::setServerInfo(void) {
     hints.ai_socktype = SOCK_STREAM; // TCP
 
     if (gethostname(&hostname[0], hostname_len) != 0) {
-        printError("gethostname error");
+        std::cerr << "gethostname error" << std::endl;
         return -1;
     }
     std::cout << hostname << std::endl;
@@ -183,7 +183,7 @@ int Server::setListener(void) {
         break;
     }
     if (socketfd == -1) {
-        printError("could not bind socket to any address");
+        std::cerr << "could not bind socket to any address" << std::endl;
         return -1;
     }
     if (listen(socketfd, LISTENER_BACKLOG) == -1) {
@@ -195,11 +195,6 @@ int Server::setListener(void) {
               << ":6667" << std::endl;
     _info.listener = socketfd;
     return _info.listener;
-}
-
-/* To be used on fatal errors only */
-void Server::printError(string error) {
-    std::cerr << "Server raised following error : " << error << std::endl;
 }
 
 // this might have to manage signals at some point ?? 
@@ -220,6 +215,11 @@ int Server::mainLoop(void) {
                     _manager.addNewUser();
                     continue;
                 } else {
+                    // 1. check message format is correct
+                    // 2. parse command & params
+                    // 3. check user can indeed call command (blacklist, is chanop, etc)
+                    // 4. prepare command response.
+                    // 5. exec/send command response.
                     char msg[100] = {0};
                     int bytes = recv(_manager.fds[fd_idx].fd, msg, sizeof(msg), 0);
                     if (bytes == -1) {

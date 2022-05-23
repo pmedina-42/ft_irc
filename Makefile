@@ -10,37 +10,54 @@
 #                                                                              #
 # **************************************************************************** #
 
-NAME	=	ft_irc
-SSRCS	=	srcs/main.cpp srcs/Server.cpp srcs/Channel.cpp srcs/User.cpp
-CXX		=	g++ 
+# 'dir' is used in here to increase readibity, the current usage has no other effect.
+
+NAME		=	ft_irc
+SRCS		=	srcs/main.cpp srcs/Server.cpp srcs/Channel.cpp srcs/User.cpp
+CXX			=	g++ 
 CXXFLAGS	=	-Wall -Wextra -Werror -std=c++98 #-g3 -fsanitize=address
-RM		=	rm -f
-OBJSS		=	$(SSRCS:.cpp=.o)
+RM			=	rm -f
+OBJS		=	$(SRCS:.cpp=.o)
 
 LIBFT_DIR = libft/
-LIBFT_MAC = -L $(LIBFT_DIR) -lft
+LIBFT_LINK = -L $(dir $(LIBFT_DIR)) -lft
 LIBFT = libft.a
 
-all: $(NAME)
+INC_DIR = includes/
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+UNAME := $(shell uname)
 
-$(LIBFT_DIR)$(LIBFT): $(LIBFT_DIR)
-	make -C $(dir $(LIBFT_DIR))
+# Compiles using threads 
+# See https://stackoverflow.com/questions/4778389/automatically-setting-jobs-j-flag-for-a-multicore-machine (Linux)
+# See https://stackoverflow.com/questions/1715580/how-to-discover-number-of-logical-cores-on-mac-os-x (MacosX)
+ifeq ($(UNAME), Linux)
+export MAKEFLAGS="-j $(nproc --all)"
+endif
+ifeq ($(UNAME), Darwin)
+export MAKEFLAGS="-j $(sysctl -n hw.ncpu)"
+endif
 
-$(NAME): $(OBJSS) $(LIBFT_DIR)$(LIBFT)
-	@$(CXX) $(OBJSS) $(LIBFT_MAC) -o  $@
+all: 		$(NAME)
+
+%.o: 		%.cpp
+			$(CXX) $(CXXFLAGS) -I $(dir $(LIBFT_DIR)) -I $(dir $(INC_DIR)) -c $< -o $@
+
+$(LIBFT_DIR)$(LIBFT): \
+			$(LIBFT_DIR)
+			make -C $(dir $(LIBFT_DIR))
+
+# See https://stackoverflow.com/questions/42586080/gcc-linking-object-files-with-warning-optimization-flags
+$(NAME): 	$(OBJS) $(dir $(LIBFT_DIR))$(LIBFT)
+			$(CXX) $(OBJS) $(CXXFLAGS) $(LIBFT_LINK) -o  $@
 
 clean:
-	make -C $(dir $(LIBFT_DIR)) clean
-	@$(RM) $(OBJSS) $(OBJSC)
-	
-fclean	:	clean
-			@$(RM) $(SNAME)
+			make -C $(dir $(LIBFT_DIR)) clean
+			$(RM) $(OBJS)
+
+fclean:		clean
 			make -C $(dir $(LIBFT_DIR)) fclean
 			$(RM) $(NAME)
 
-re	: clean all
+re: 		clean all
 
 .PHONY:		all clean fclean re

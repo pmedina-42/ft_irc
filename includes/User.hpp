@@ -1,8 +1,6 @@
 #ifndef IRC42_USER_H
 #define IRC42_USER_H
 
-#include "Channel.hpp"
-
 #include <unistd.h>
 #include <string.h>
 #include <string>
@@ -30,7 +28,6 @@ class User {
         int _fd;
         char _mode;
         std::vector<Channel*> _channels;
-
 };
 
 }

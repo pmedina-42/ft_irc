@@ -25,4 +25,6 @@ class Message {
     std::string src;
 };
 
+std::ostream&   operator<<( std::ostream &o, Message const &rhs );
+
 }
