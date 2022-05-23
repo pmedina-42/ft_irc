@@ -14,7 +14,7 @@ class User;
 
 class Channel {
     public:
-    Channel(string,  User*);
+    Channel(char prefix, string name,  User&);
     ~Channel();
 
     /* Class functions */
@@ -51,6 +51,8 @@ class Channel {
     unsigned int _max_users;
     /* Clave, si es que la tiene y el modo es k */
     string _key;
+    /* El prefio que va a tener el canal #, &, + o ! */
+    char _prefix;
 
 };
 

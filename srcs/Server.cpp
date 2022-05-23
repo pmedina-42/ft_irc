@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sstream>
+#include <Channel.hpp>
 
 #include "Server.hpp"
 #include "User.hpp"
@@ -249,6 +250,12 @@ int Server::mainLoop(void) {
                             } else if (word.compare("USER") == 0) {
                                 std::cout << "a" << std::endl;
                                 username = string(arr[i + 1]);
+                            } else if (word.compare("JOIN") == 0) {
+                                char prefix = arr[1][0];
+                                string name = arr[1]++;
+                                std::cout << "nuevo canal que se tiene que crear con usuario a saber, prefijo " << prefix << " y nombre " << name << std::endl;
+                                //Channel* channel = new Channel(prefix, name, );
+                                //_channels.push_back(channel);
                             } else if (word[0] == ':') {
                                 // -2 por la misma razon que strlen - 1
                                 realname = word.substr(1, word.size() - 2);
@@ -265,6 +272,7 @@ int Server::mainLoop(void) {
             }
         }
         if (!nickname.empty() && !username.empty()) {
+            //_users.push_back(new irc::User())
             std::cout << "about to send repl y " << std::endl;
             struct sockaddr_in *sockaddrin = (struct sockaddr_in *)(_info.actual->ai_addr);
             string our_host(inet_ntoa(sockaddrin->sin_addr));

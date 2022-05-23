@@ -11,10 +11,11 @@ namespace irc {
  * Al crearse el canal se setea al usuario creador el rol 'o' 
  * el canal al principio no tiene ningún modo. Se setea después 
  */
-Channel::Channel(string name, User* user) : _name(name) {
+Channel::Channel(char prefix, string name, User& user) : _name(name) {
     _mode = 0;
-    user->_mode = 'o';
-    _users.push_front(user);
+    _prefix = prefix;
+    user._mode = 'o';
+    _users.push_front(&user);
 }
 
 /* 

@@ -5,14 +5,17 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <poll.h>
+#include <vector>
 
 #define LISTENER_BACKLOG 20
 #define NAME_MAX_SZ 10
 #define MAX_FDS 255
 
 using std::string;
+using std::vector;
 
 class User;
+class Channel;
 
 namespace irc {
 
@@ -67,6 +70,8 @@ class Server {
     void printError(string error);
     serverParams _info;
     serverFds     _manager;
+    vector<Channel*> _channels;
+    vector<User*> _users;
 };
 
 }
