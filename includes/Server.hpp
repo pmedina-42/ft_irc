@@ -16,58 +16,57 @@ class User;
 
 namespace irc {
 
-
 class serverParams {
     public:
-        serverParams(void);
-        serverParams(serverParams &rhs);
-        ~serverParams(void);
+    serverParams(void);
+    serverParams(serverParams &rhs);
+    ~serverParams(void);
 
-        /* ptr to struct addrinfo list */
-        struct addrinfo *servinfo;
-        /* actual list entry being used */
-        struct addrinfo *actual;
-        /* fd set to listen */
-        int listener;
+    /* ptr to struct addrinfo list */
+    struct addrinfo *servinfo;
+    /* actual list entry being used */
+    struct addrinfo *actual;
+    /* fd set to listen */
+    int listener;
 };
 
 class serverFds {
     public:
-        serverFds(void);
-        serverFds(serverFds &rhs);
-        ~serverFds(void);
+    serverFds(void);
+    serverFds(serverFds &rhs);
+    ~serverFds(void);
 
-        void setUpListener(int listener);
-        int hasDataToRead(int entry);
-        int addNewUser(void);
-        /* fd from clients manager. This includes
-         * the listener, at entry 0.
-         */
-        struct pollfd fds[MAX_FDS];
-        int fds_size;
-        /* addresses corresponding to each client */
-        struct sockaddr *addr[MAX_FDS];
+    void setUpListener(int listener);
+    int hasDataToRead(int entry);
+    int addNewUser(void);
+    /* fd from clients manager. This includes
+        * the listener, at entry 0.
+        */
+    struct pollfd fds[MAX_FDS];
+    int fds_size;
+    /* addresses corresponding to each client */
+    struct sockaddr *addr[MAX_FDS];
 };
 
 class Server {
 
     public:
-        Server(void);
-        Server(string &ip, string &port);
-        Server(Server &rhs);
-        ~Server();
+    Server(void);
+    Server(string &ip, string &port);
+    Server(Server &rhs);
+    ~Server();
     
     private:
-        /* initializators */
-        int setServerInfo(void);
-        int setServerInfo(string &hostname, string &port);
-        int setListener(void);
-        
-        int mainLoop(void);
-        
-        void printError(string error);
-        serverParams _info;
-        serverFds     _manager;
+    /* initializators */
+    int setServerInfo(void);
+    int setServerInfo(string &hostname, string &port);
+    int setListener(void);
+    
+    int mainLoop(void);
+    
+    void printError(string error);
+    serverParams _info;
+    serverFds     _manager;
 };
 
 }

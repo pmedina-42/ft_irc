@@ -16,21 +16,21 @@ class Channel;
 class User {
 
     public:
-        User(int fd, string nick);
-        User(int fd, char* nick, size_t size);
-        ~User();
+    User(int fd, string nick);
+    User(int fd, char* nick, size_t size);
+    ~User();
 
-        void leave();
+    void leave();
 
-        void leaveChannel(Channel*);
-        void joinChannel(Channel*);
+    void leaveChannel(Channel*);
+    void joinChannel(Channel*);
 
-        /* ATTRIBUTES */
-        string _nickName;
-        string _mask;
-        int _fd;
-        char _mode;
-        vector<Channel*> _channels;
+    /* ATTRIBUTES */
+    string _nickName;
+    string _mask;
+    int _fd;
+    char _mode;
+    vector<Channel*> _channels;
 };
 
 }
