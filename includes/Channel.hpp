@@ -1,9 +1,11 @@
 #ifndef CHANNEL_H
 #define CHANNEL_H
 
-#include "User.hpp"
 #include <list>
 #include <string>
+
+using std::list;
+using std::string;
 
 namespace irc {
 
@@ -12,43 +14,43 @@ class User;
 
 class Channel {
     public:
-        Channel(std::string,  User*);
+        Channel(string,  User*);
         ~Channel();
 
         /* Class functions */
         void addUser(User*);
-        void deleteUser(std::string);
-        void banUser(std::string);
-        void unbanUser(std::string);
-        bool userInBlackList(std::string);
+        void deleteUser(string);
+        void banUser(string);
+        void unbanUser(string);
+        bool userInBlackList(string);
         /* Esta función devuelve true si el canal está en modo invitación */
         bool inviteModeOn();
         /* Esta función devuelve true si un usuario está invitado al canal
          * si devuelve true, el usuario puede unirse al canal, si no no */
         bool isInvited(User*);
-        void setUserMode(std::string, char);
+        void setUserMode(string, char);
         void addToWhitelist(User*);
 
         /* ATTRIBUTES */
         /* Lista de usuarios que pertenecen al canal */
-        std::list<User*> _users;
+        list<User*> _users;
         /* Lista de usuarios que son operadores */
-        std::list<User*> _oper_users;
+        list<User*> _oper_users;
         /* Lista de usuarios invitados al canal */
-        std::list<User*> _whiteList;
+        list<User*> _whiteList;
         /* Lista de nombres de usuarios baneados */
-        std::list<std::string> _blackList;
+        list<string> _blackList;
 
         /* Nombre del canal */
-        std::string _name;
+        string _name;
         /* Tema del canal */
-        std::string _topic;
+        string _topic;
         /* Modo del canal */
         char _mode;
         /* Maximo de usuarios en el canal */
         unsigned int _max_users;
         /* Clave, si es que la tiene y el modo es k */
-        std::string _key;
+        string _key;
 
 };
 

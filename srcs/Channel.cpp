@@ -1,5 +1,9 @@
-#include "../includes/Channel.hpp"
+#include "Channel.hpp"
+#include "User.hpp"
 #include <algorithm>
+
+using std::string;
+using std::list;
 
 namespace irc {
 
@@ -7,7 +11,7 @@ namespace irc {
  * Al crearse el canal se setea al usuario creador el rol 'o' 
  * el canal al principio no tiene ningún modo. Se setea después 
  */
-Channel::Channel(std::string name, User* user) : _name(name) {
+Channel::Channel(string name, User* user) : _name(name) {
     _mode = 0;
     user->_mode = 'o';
     _users.push_front(user);
@@ -51,13 +55,13 @@ void Channel::addUser(User* user) {
  * 2.2 Si es un usuario normal o cualquier otro operador, se borra sin más
  * 3. Se borra el canal de la lista de canales del usuario
  * */
-void Channel::deleteUser(std::string name) {
-    std::list<User*>::iterator end = _users.end();
-    for (std::list<User*>::iterator user = _users.begin(); user != end; user++) {
+void Channel::deleteUser(string name) {
+    list<User*>::iterator end = _users.end();
+    for (list<User*>::iterator user = _users.begin(); user != end; user++) {
         if (!(*user)->_nickName.compare(name)) {
             if (user == _users.begin()) {
                 _users.pop_front();
-                std::list<User*>::iterator it = _users.begin();
+                list<User*>::iterator it = _users.begin();
                 while (userInBlackList((*it)->_nickName))
                     it++;
                 (*it)->_mode = 'o';
@@ -73,16 +77,16 @@ void Channel::deleteUser(std::string name) {
 /*
  * Banea a un usuario
  * */
-void Channel::banUser(std::string name) {
+void Channel::banUser(string name) {
     _blackList.push_back(name);
 }
 
 /*
  * Desbanea a un usuario
  * */
-void Channel::unbanUser(std::string name) {
+void Channel::unbanUser(string name) {
 
-    std::list<std::string>::iterator it = std::find(_blackList.begin(),
+    list<string>::iterator it = std::find(_blackList.begin(),
                                                     _blackList.end(),
                                                     name);
     if (it != _blackList.end())
@@ -92,8 +96,8 @@ void Channel::unbanUser(std::string name) {
 /*
  * Comprueba si el usuario está en la lista de baneados
  * */
-bool Channel::userInBlackList(std::string name) {
-    std::list<std::string>::iterator it = std::find(_blackList.begin(),
+bool Channel::userInBlackList(string name) {
+    list<string>::iterator it = std::find(_blackList.begin(),
                                                     _blackList.end(),
                                                     name);
     if (it != _blackList.end())
@@ -121,7 +125,7 @@ void Channel::addToWhitelist(User *user) {
  * Devuelve true si el usuario está en la whitelist del canal 
  */
 bool Channel::isInvited(User *user) {
-    std::list<User*>::iterator it = std::find(_whiteList.begin(),
+    list<User*>::iterator it = std::find(_whiteList.begin(),
                                               _whiteList.end(),
                                               user);
     if (it != _whiteList.end()) {
@@ -133,9 +137,9 @@ bool Channel::isInvited(User *user) {
 /*
  * Función probablemente useless ya que el modo se setea desde el mismo usuario 
  * */
-void Channel::setUserMode(std::string name, char mode) {
+void Channel::setUserMode(string name, char mode) {
     if (mode == 'o' || mode == 'v') {
-        for (std::list<User*>::iterator usr = _users.begin();
+        for (list<User*>::iterator usr = _users.begin();
             usr != _users.end(); usr++)
         {
             if (!(*usr)->_nickName.compare(name)) {

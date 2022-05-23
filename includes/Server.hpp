@@ -10,6 +10,8 @@
 #define NAME_MAX_SZ 10
 #define MAX_FDS 255
 
+using std::string;
+
 class User;
 
 namespace irc {
@@ -51,21 +53,19 @@ class Server {
 
     public:
         Server(void);
-        Server(std::string &ip, std::string &port);
+        Server(string &ip, string &port);
         Server(Server &rhs);
         ~Server();
-    
-    
     
     private:
         /* initializators */
         int setServerInfo(void);
-        int setServerInfo(std::string &hostname, std::string &port);
+        int setServerInfo(string &hostname, string &port);
         int setListener(void);
         
         int mainLoop(void);
         
-        void printError(std::string error);
+        void printError(string error);
         serverParams _info;
         serverFds     _manager;
 };

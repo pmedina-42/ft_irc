@@ -5,7 +5,7 @@
 #include <netdb.h>
 #include <sys/utsname.h>
 
-#include "../includes/Server.hpp"
+#include "Server.hpp"
 
 #define NAME_MAX_SZ 10
 

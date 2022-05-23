@@ -1,4 +1,9 @@
+#ifndef IRC42_MESSAGE_H
+#define IRC42_MESSAGE_H
+
 #include <string>
+
+using std::string;
 
 namespace irc {
 
@@ -19,12 +24,14 @@ class Message {
     int sendMessage();
     int recvMessage();
 
-    std::string prefix;
-    std::string buffer;
-    std::string dest;
-    std::string src;
+    string prefix;
+    string buffer;
+    string dest;
+    string src;
 };
 
 std::ostream&   operator<<( std::ostream &o, Message const &rhs );
 
 }
+
+#endif /* IRC42_MESSAGE_H */

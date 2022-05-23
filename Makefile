@@ -26,7 +26,6 @@ LIBFT = libft.a
 INC_DIR = includes/
 
 UNAME := $(shell uname)
-
 # Compiles using threads 
 # See https://stackoverflow.com/questions/4778389/automatically-setting-jobs-j-flag-for-a-multicore-machine (Linux)
 # See https://stackoverflow.com/questions/1715580/how-to-discover-number-of-logical-cores-on-mac-os-x (MacosX)

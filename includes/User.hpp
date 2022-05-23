@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+using std::string;
+using std::vector;
+
 namespace irc {
 
 class Channel;
@@ -13,7 +16,7 @@ class Channel;
 class User {
 
     public:
-        User(int fd, std::string nick);
+        User(int fd, string nick);
         User(int fd, char* nick, size_t size);
         ~User();
 
@@ -23,11 +26,11 @@ class User {
         void joinChannel(Channel*);
 
         /* ATTRIBUTES */
-        std::string _nickName;
-        std::string _mask;
+        string _nickName;
+        string _mask;
         int _fd;
         char _mode;
-        std::vector<Channel*> _channels;
+        vector<Channel*> _channels;
 };
 
 }
