@@ -243,9 +243,11 @@ int Server::mainLoop(void) {
                                 nickname = string(arr[i + 1], ft_strlen(arr[i + 1]) - 1);
                                 size_t carriage_return_pos = nickname.find('\r');
                                 if (carriage_return_pos != string::npos) {
+                                    std::cout << "b" << std::endl;
                                     nickname = nickname.substr(0, carriage_return_pos);
                                 }
                             } else if (word.compare("USER") == 0) {
+                                std::cout << "a" << std::endl;
                                 username = string(arr[i + 1]);
                             } else if (word[0] == ':') {
                                 // -2 por la misma razon que strlen - 1
@@ -262,7 +264,7 @@ int Server::mainLoop(void) {
                 }
             }
         }
-        if (!nickname.empty() && !username.empty() && !realname.empty()) {
+        if (!nickname.empty() && !username.empty()) {
             std::cout << "about to send repl y " << std::endl;
             struct sockaddr_in *sockaddrin = (struct sockaddr_in *)(_info.actual->ai_addr);
             string our_host(inet_ntoa(sockaddrin->sin_addr));

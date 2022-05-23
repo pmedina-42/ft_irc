@@ -17,15 +17,13 @@ namespace irc {
 class Message {
 
     public:
-    Message(void);
-    Message();
+    Message(string& to_parse);
     ~Message(void);
 
-    int sendMessage();
-    int recvMessage();
+    void parseMessage(void);
 
+    string buffer[512];
     string prefix;
-    string buffer;
     string dest;
     string src;
 };
