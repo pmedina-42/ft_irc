@@ -45,6 +45,7 @@ using std::string;
  * https://stackoverflow.com/questions/22923236/c-stdmap-memory-management
  * Por qué usar unordered_map en vez de map :
  * https://stackoverflow.com/questions/2196995/is-there-any-advantage-of-using-map-over-unordered-map-in-case-of-trivial-keys
+ * https://cpp-optimizations.netlify.app/dont_need_map/
  * 
  */
 namespace irc {
