@@ -30,7 +30,12 @@ class User {
     string _mask;
     int _fd;
     char _mode;
-    vector<Channel*> _channels;
+    vector<Channel*> _channels; /*
+                                 * Borrar a futuro. Cuando usuario envia comando para hablar
+                                 * en canal, el servidor llama al mapa de canales para 
+                                 * averiguar si el usuario está o no en ese canal y hacer
+                                 * lo correspondiente.
+                                 */
 };
 
 }
