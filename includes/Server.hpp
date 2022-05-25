@@ -5,14 +5,14 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <poll.h>
-#include <vector>
+#include <map>
 
 #define LISTENER_BACKLOG 20
 #define NAME_MAX_SZ 10
 #define MAX_FDS 255
 
 using std::string;
-using std::vector;
+using std::map;
 
 class User;
 class Channel;
@@ -70,8 +70,8 @@ class Server {
     void printError(string error);
     serverParams _info;
     serverFds     _manager;
-    vector<Channel*> _channels;
-    vector<User*> _users;
+    map<string, Channel*> channels;
+    map<string, User*> users;
 };
 
 }

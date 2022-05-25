@@ -2,44 +2,45 @@
 #define CHANNEL_H
 
 #include <list>
+#include <map>
 #include <string>
 
 using std::list;
+using std::vector;
+using std::map;
 using std::string;
 
 namespace irc {
 
-class User;
+class ChannelUser;
 /* TODO: comprobar y setear tamaño máximo de usuarios dentro de un canal? */
 
 class Channel {
     public:
-    Channel(char prefix, string name,  User&);
+    Channel(char prefix, string name, ChannelUser&);
     ~Channel();
 
     /* Class functions */
-    void addUser(User*);
-    void deleteUser(string);
-    void banUser(string);
-    void unbanUser(string);
-    bool userInBlackList(string);
+    void addUser(ChannelUser&);
+    void deleteUser(ChannelUser&);
+    void banUser(ChannelUser&);
+    void unbanUser(ChannelUser&);
+    bool userInBlackList(ChannelUser&);
     /* Esta función devuelve true si el canal está en modo invitación */
     bool inviteModeOn();
     /* Esta función devuelve true si un usuario está invitado al canal
         * si devuelve true, el usuario puede unirse al canal, si no no */
-    bool isInvited(User*);
-    void setUserMode(string, char);
-    void addToWhitelist(User*);
+    bool isInvited(ChannelUser&);
+    void setUserMode(ChannelUser&, char);
+    void addToWhitelist(ChannelUser&);
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */
-    list<User*> _users;
+    map<string, ChannelUser&> users;
     /* Lista de usuarios que son operadores */
-    list<User*> _oper_users;
+    list<ChannelUser*> _oper_users;
     /* Lista de usuarios invitados al canal */
-    list<User*> _whiteList;
-    /* Lista de nombres de usuarios baneados */
-    list<string> _blackList;
+    map<string, ChannelUser&> whiteList;
 
     /* Nombre del canal */
     string _name;
@@ -53,6 +54,17 @@ class Channel {
     string _key;
     /* El prefio que va a tener el canal #, &, + o ! */
     char _prefix;
+
+    /**
+     * Si tenemos un mapa de usuarios necesitamos 2 cosas:
+     * 1. Un int que nos indique el tamaño actual del canal
+     * 2. Otro int que nos indique el índice de usuario por el que vamos:
+     *      Si se ha ido el usuario de pos 1, tenemos que encontrar el usuario de pos 2
+     *      (y comprobar que no esta baneado) para darle a el el rol de operador.
+     *      Si se va el 2 ahora necesitaremos darle el rol de operador a index + 1
+     */
+     int actualSize;
+     int userIndex;
 
 };
 
