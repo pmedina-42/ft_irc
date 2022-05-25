@@ -40,6 +40,12 @@ using std::string;
  * - modo del canal, 
  * 
  * 
+ * Para no preocuparse sobre cómo el mapa aloja o no memoria al añadir
+ * elementos :
+ * https://stackoverflow.com/questions/22923236/c-stdmap-memory-management
+ * Por qué usar unordered_map en vez de map :
+ * https://stackoverflow.com/questions/2196995/is-there-any-advantage-of-using-map-over-unordered-map-in-case-of-trivial-keys
+ * 
  */
 namespace irc {
 
