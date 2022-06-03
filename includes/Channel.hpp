@@ -5,8 +5,10 @@
 #include <map>
 #include <string>
 
+#include <Types.hpp>
+#include <ChannelUser.hpp>
+
 using std::list;
-using std::vector;
 using std::map;
 using std::string;
 
@@ -36,11 +38,11 @@ class Channel {
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */
-    map<string, ChannelUser&> users;
+    ChannelUserMap users;
     /* Lista de usuarios que son operadores */
     list<ChannelUser*> _oper_users;
     /* Lista de usuarios invitados al canal */
-    map<string, ChannelUser&> whiteList;
+    map<string, ChannelUser> whiteList; // list maybe  ?
 
     /* Nombre del canal */
     string _name;

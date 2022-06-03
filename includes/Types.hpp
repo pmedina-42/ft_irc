@@ -3,23 +3,18 @@
 
 /* Archivo para meter enums, typedefs y mierdas que puedan ser necesarias */
 
-#include <unordered_map>
+#include <map>
 
-using std::string;
+namespace irc{
 
 class Channel;
 class User;
 class ChannelUser; // cambiar al nombre que haga falta cuando sea.
 
-namespace irc {
-
-    typedef std::unordered_map<string, Channel> channel_map;
-    typedef std::unordered_map<string, User> user_map;
-    typedef std::unordered_map<string, ChannelUser> channel_user_map;
+typedef std::map<std::string, irc::Channel> ChannelMap;
+typedef std::map<std::string, irc::User> UserMap;
+typedef std::map<std::string, irc::ChannelUser> ChannelUserMap;
 
 }
-
-
-
 
 #endif

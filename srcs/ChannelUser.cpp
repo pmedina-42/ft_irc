@@ -5,18 +5,18 @@
 namespace irc {
 
 ChannelUser::ChannelUser(int fd, std::string nick)
-	:
-		User(fd, nick)
+:
+	User(fd, nick)
 {}
 
 ChannelUser::ChannelUser(int fd, char* data, size_t len)
-	:
-        User(fd, data, len)
+:
+    User(fd, data, len)
 {}
 
 ChannelUser::ChannelUser(User &user)
-        :
-        User(user)
+:
+    User(user)
 {}
 
 ChannelUser::~ChannelUser() {}

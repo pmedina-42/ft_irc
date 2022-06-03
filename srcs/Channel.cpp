@@ -2,6 +2,8 @@
 #include "ChannelUser.hpp"
 #include <algorithm>
 
+#include <Types.hpp>
+
 using std::string;
 using std::list;
 using std::pair;
@@ -16,7 +18,7 @@ Channel::Channel(char prefix, string name, ChannelUser& user) : _name(name) {
     _mode = 0;
     _prefix = prefix;
     user.mode = 'o';
-    users.insert(pair<string, ChannelUser&>(user.getNick(), user));
+    users.insert(pair<string, ChannelUser>(user.getNick(), user));
 }
 
 /* 
@@ -44,7 +46,7 @@ void Channel::addUser(ChannelUser &user) {
             //return ;
         //}
     }
-    users.insert(pair<string, ChannelUser&>(user.getNick(), user));
+    users.insert(pair<string, ChannelUser>(user.getNick(), user));
 }
 
 /**
@@ -108,14 +110,14 @@ bool Channel::inviteModeOn() {
  * Añade un nuevo usuario a la whitelist 
  */
 void Channel::addToWhitelist(ChannelUser &user) {
-    whiteList.insert(pair<string, ChannelUser&>(user.getNick(), user));
+    whiteList.insert(pair<string, ChannelUser>(user.getNick(), user));
 }
 
 /**
  * Devuelve true si el usuario está en la whitelist del canal 
  */
 bool Channel::isInvited(ChannelUser &user) {
-    map<string, ChannelUser&>::iterator it;
+    ChannelUserMap::iterator it;
     it = whiteList.find(user.getNick());
     if (it != whiteList.end()) {
         return true;

@@ -7,13 +7,12 @@
 #include "User.hpp"
 
 using std::string;
-using std::vector;
 
 namespace irc {
 
 class Channel;
 
-class ChannelUser : virtual public User {
+class ChannelUser : public User {
 
     public:
     ChannelUser(int fd, string nick);

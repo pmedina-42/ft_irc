@@ -56,9 +56,9 @@ int get_addrinfo_from_params(const char* hostname, const char *port,
  * AUTOMATIC : the server mounts automatically on an address available.
  */
 Server::Server(void)
-    :
-        _info(),
-        _manager()
+:
+    _info(),
+    _manager()
 {
     if (setServerInfo() == -1
         || setListener() == -1)
@@ -307,10 +307,10 @@ int Server::mainLoop(void) {
 /* serverParams Section -------------------------- */
 
 serverParams::serverParams(void)
-    :
-        servinfo(NULL),
-        actual(NULL),
-        listener(-1)
+:
+    servinfo(NULL),
+    actual(NULL),
+    listener(-1)
 {}
 
 serverParams::~serverParams(void) {
@@ -322,8 +322,8 @@ serverParams::~serverParams(void) {
 /* serverFds Section -------------------------- */
 
 serverFds::serverFds(void)
-    :
-        fds_size(0)
+:
+    fds_size(0)
 {}
 
 serverFds::~serverFds(void) {
