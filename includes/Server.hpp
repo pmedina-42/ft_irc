@@ -16,11 +16,11 @@ class User;
 
 namespace irc {
 
-class serverParams {
+class AddressInfo {
     public:
-    serverParams(void);
-    serverParams(serverParams &rhs);
-    ~serverParams(void);
+    AddressInfo(void);
+    AddressInfo(AddressInfo &rhs);
+    ~AddressInfo(void);
 
     /* ptr to struct addrinfo list */
     struct addrinfo *servinfo;
@@ -30,18 +30,18 @@ class serverParams {
     int listener;
 };
 
-class serverFds {
+class FdManager {
     public:
-    serverFds(void);
-    serverFds(serverFds &rhs);
-    ~serverFds(void);
+    FdManager(void);
+    FdManager(FdManager &rhs);
+    ~FdManager(void);
 
     void setUpListener(int listener);
     int hasDataToRead(int entry);
     int addNewUser(void);
     /* fd from clients manager. This includes
-        * the listener, at entry 0.
-        */
+    * the listener, at entry 0.
+    */
     struct pollfd fds[MAX_FDS];
     int fds_size;
     /* addresses corresponding to each client */
@@ -65,9 +65,16 @@ class Server {
     int mainLoop(void);
     
     void printError(string error);
-    serverParams _info;
-    serverFds     _manager;
+    AddressInfo _info;
+    FdManager    _fd_manager;
 };
+
+/**
+ * fd : 2Message : [NICK carce
+ *   USER carce 0 * :carce
+ *  ]
+ * 
+ */
 
 }
 
