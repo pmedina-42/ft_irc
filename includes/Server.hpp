@@ -70,10 +70,11 @@ class Server {
 };
 
 /**
- * fd : 2Message : [NICK carce
+ * Weechat handshake init Message : [NICK carce
  *   USER carce 0 * :carce
  *  ]
  * 
+ * Metodos authenticated
  */
 
 }
