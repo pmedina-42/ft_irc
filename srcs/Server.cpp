@@ -58,7 +58,7 @@ int get_addrinfo_from_params(const char* hostname, const char *port,
 Server::Server(void)
 :
     _info(),
-    _manager()
+    _fd_manager()
 {
     if (setServerInfo() == -1
         || setListener() == -1)
@@ -201,19 +201,19 @@ int Server::setListener(void) {
 // this might have to manage signals at some point ?? 
 int Server::mainLoop(void) {
 
-    _manager.setUpListener(_info.listener);
+    _fd_manager.setUpListener(_info.listener);
     string nickname = "";
     string username = "";
     string realname = "";
     while (42) {
         /* -1 = wait until some event happens */
-        if (poll(_manager.fds, _manager.fds_size, -1) == -1)
+        if (poll(_fd_manager.fds, _fd_manager.fds_size, -1) == -1)
             return -1;
-        for (int fd_idx = 0; fd_idx < _manager.fds_size; fd_idx++) {
-            if (_manager.hasDataToRead(fd_idx)) {
+        for (int fd_idx = 0; fd_idx < _fd_manager.fds_size; fd_idx++) {
+            if (_fd_manager.hasDataToRead(fd_idx)) {
                 /* listener is always at first entry */
                 if (fd_idx == 0) {
-                    _manager.addNewUser();
+                    _fd_manager.addNewUser();
                     continue;
                 } else {
                     // 1. check message format is correct
@@ -222,13 +222,13 @@ int Server::mainLoop(void) {
                     // 4. prepare command response.
                     // 5. exec/send command response.
                     char msg[100] = {0};
-                    int bytes = recv(_manager.fds[fd_idx].fd, msg, sizeof(msg), 0);
+                    int bytes = recv(_fd_manager.fds[fd_idx].fd, msg, sizeof(msg), 0);
                     if (bytes == -1) {
                         std::cerr << "bytes = -1" << std::endl;
                     } else if (bytes == 0) {
                         std::cout << "fd " << fd_idx << " closed connection" << std::endl;
-                        close(_manager.fds[fd_idx].fd);
-                        _manager.fds[fd_idx].fd = -1;
+                        close(_fd_manager.fds[fd_idx].fd);
+                        _fd_manager.fds[fd_idx].fd = -1;
                     } else {
                         string message(msg, bytes);
                         std::cout << "fd : " << fd_idx << "Message : [" << message << "]" << std::endl;
@@ -266,7 +266,7 @@ int Server::mainLoop(void) {
                             free(arr[i]);
                         }
                         free(arr);
-                        //send(_manager.fds[fd_idx].fd, "001 ")
+                        //send(_fd_manager.fds[fd_idx].fd, "001 ")
                     }
                 }
             }
@@ -297,50 +297,48 @@ int Server::mainLoop(void) {
             /* IRC USES CRLF !! specified in RFC 1459*/
             string reply = sender_prefix + " " + rpl_welcome + " " + target_of_reply + " :Welcome to wassap 2 " + complete_name + "\r\n";
             std::cout << "reply : [" << reply << "]" << std::endl;
-            send(_manager.fds[1].fd, reply.c_str(), reply.length(), 0);
-            send(_manager.fds[2].fd, reply.c_str(), reply.length(), 0);
+            send(_fd_manager.fds[1].fd, reply.c_str(), reply.length(), 0);
+            send(_fd_manager.fds[2].fd, reply.c_str(), reply.length(), 0);
         }
     }
 }
 
 
-/* serverParams Section -------------------------- */
-
-serverParams::serverParams(void)
+/* AddressInfo Section -------------------------- */
+AddressInfo::AddressInfo(void)
 :
     servinfo(NULL),
     actual(NULL),
     listener(-1)
 {}
 
-serverParams::~serverParams(void) {
+AddressInfo::~AddressInfo(void) {
     if (listener != -1) {
         close(listener);
     }
 }
 
-/* serverFds Section -------------------------- */
-
-serverFds::serverFds(void)
+/* FdManager Section -------------------------- */
+FdManager::FdManager(void)
 :
     fds_size(0)
 {}
 
-serverFds::~serverFds(void) {
+FdManager::~FdManager(void) {
 }
 
-void serverFds::setUpListener(int listener) {
+void FdManager::setUpListener(int listener) {
     fds[0].fd = listener;
     fds[0].events = POLLIN;
     fds[0].revents = 0;
     fds_size++;
 }
 
-int serverFds::hasDataToRead(int entry) {
+int FdManager::hasDataToRead(int entry) {
     return fds[entry].revents & POLLIN;
 }
 
-int serverFds::addNewUser(void) {
+int FdManager::addNewUser(void) {
     struct sockaddr_storage client;
     socklen_t addrlen = sizeof(struct sockaddr_storage);
     int fd_new = -1;

@@ -17,7 +17,7 @@ using std::string;
 using std::vector;
 
 namespace irc {
-namespace utils {
+namespace tools {
 
 /* cpp adaptation to split C function (using native calls)
  *
@@ -42,7 +42,34 @@ vector<string>& split(vector<string> &to_fill, string &str, char sep) {
     return to_fill;
 }
 
-} // utils 
+/* More potent version. Does not use dynamic allocation explicitly,
+ * and splits by string delimiters. It also parses bytearrays instead
+ * of null terminated strings.
+ */
+vector<string>& split(vector<string> &to_fill, const char* buff,
+                      size_t bufflen, string &del)
+{
+    std::string str(buff, bufflen);
+    int start = 0;
+    int end = str.find(del);
+    while (end != -1) {
+        to_fill.push_back(str.substr(start, end - start));
+        start = end + del.size();
+        end = str.find(del, start);
+    }
+    to_fill.push_back(str.substr(start, end - start));
+    return to_fill;
+}
+
+bool is_upper_case(std::string &str) {
+    for (string::iterator it = str.begin(); it < str.end(); it++) {
+        if (*it < 'A' && *it > 'Z')
+            return false;
+    }
+    return true;
+}
+
+} // tools 
 } // irc
 
 #endif /* IRC42_UTILS_H */
