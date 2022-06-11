@@ -9,6 +9,32 @@ using std::string;
 
 namespace irc {
 
+/* los comandos son muy user dependent. Si alguien envia un comando,
+ * lo mejor es que sea desde el objeto que representa ese alguien que
+ * se haga lo relacionado con mensaje.
+ * Si no, es un follon estar parseando desde una clase que no tiene ni
+ * idea de si el usuario existe, de si esta en tal canal, de qué
+ * modo tiene, etc etc. Un palazo.
+ * 
+ * 
+ * Todo comando tiene fases:
+ * - 1. Asegurarse que el comando es correcto (tiene sintaxis correcta o
+ *  aparentemente correcta).
+ * - 1.5 Si el comando es correcto pero no está finalizado (enviando ctrl + D con netcat),
+ *  esperar a que el comando esté entero (si no timeout?).
+ * - 2. Comprobar si el usuario cumple con los requisitos para que el comando
+ *  sea ejecutado (está en el canal, el destinatario está también, tiene
+ *   los permisos necesarios, etc.).
+ * - 3. Ejecutar el comando.
+ * 
+ * La parte 3 se tiene que necesariamente hacer desde el Servidor, y la parte
+ * 2 en muchos casos tambien.
+ * Parece ser necesario conectar las clases User y
+ * Channel de forma que de uno puedas ir al otro y del otro al uno. Algo como
+ * que user tenga acceso a la clase channel de los canales a los que pertenece.
+ * Y viceversa, asi, desde user_A podría mirar en #channel_X si user_B está.
+ */
+
 class User {
 
     public:
