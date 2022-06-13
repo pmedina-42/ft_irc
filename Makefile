@@ -14,7 +14,7 @@
 
 NAME		=	ft_irc
 SRCS		=	srcs/main.cpp srcs/Server.cpp srcs/Channel.cpp srcs/User.cpp srcs/ChannelUser.cpp \
-				srcs/Utils.cpp
+				srcs/Tools.cpp srcs/Command.cpp
 CXX			=	g++ 
 CXXFLAGS	=	-Wall -Wextra -Werror -std=c++98 #-g3 -fsanitize=address
 RM			=	rm -f

@@ -6,13 +6,13 @@
 #include <sys/types.h>
 #include <poll.h>
 #include <map>
+#include "Types.hpp"
 
 #define LISTENER_BACKLOG 20
 #define NAME_MAX_SZ 10
 #define MAX_FDS 255
 
 using std::string;
-using std::map;
 
 class User;
 class Channel;
@@ -67,8 +67,9 @@ class Server {
     int mainLoop(void);
     
     void printError(string error);
-    map<string, Channel*> channels;
-    map<string, User*> users;
+
+    ChannelMap channel_map;
+    UserMap user_map;
     AddressInfo _info;
     FdManager    _fd_manager;
 };

@@ -1,7 +1,4 @@
-#ifndef IRC42_UTILS_H
-#define IRC42_UTILS_H
-
-#include "Utils.hpp"
+#include "Tools.hpp"
 #include "Exceptions.hpp"
 
 #include <vector>
@@ -61,6 +58,18 @@ vector<string>& split(vector<string> &to_fill, const char* buff,
     return to_fill;
 }
 
+vector<string>& split(vector<string> &to_fill, string &str, string del) {
+    int start = 0;
+    int end = str.find(del);
+    while (end != -1) {
+        to_fill.push_back(str.substr(start, end - start));
+        start = end + del.size();
+        end = str.find(del, start);
+    }
+    to_fill.push_back(str.substr(start, end - start));
+    return to_fill;
+}
+
 bool is_upper_case(std::string &str) {
     for (string::iterator it = str.begin(); it < str.end(); it++) {
         if (*it < 'A' && *it > 'Z')
@@ -69,7 +78,38 @@ bool is_upper_case(std::string &str) {
     return true;
 }
 
+/* Checks that the buffer recieved, in case it has a colon, 
+ * it is places separating two pieces of text.
+ * msg = * : * OK
+ */
+bool colon_placed_incorrectly(string &str) {
+    vector<string> result;
+    result = split(result, str, string(":"));
+    size_t size = result.size();
+    if (size < 1 || size > 2) {
+        return true;
+    }
+    if (result[0].empty()) {
+        return true;
+    }
+    /* si no viene despues de un espacio, tampoco vale. Basta con
+     * ver si la penúltima string acaba en espacio. Esto
+     * es funcdamental de cara a hacer primero un split de ':' y
+     * luego uno de ' ' */
+    string before_end = result[result.size() - 2];
+    if (before_end[before_end.size() - 1] != ' ') {
+        return true;
+    }
+    return false;
+}
+
+bool newlines_left(string &str) {
+    for (string::iterator it = str.begin(); it < str.end(); it++) {
+        if (*it == '\n' && *it == '\r')
+            return true;
+    }
+    return false;
+}
+
 } // tools 
 } // irc
-
-#endif /* IRC42_UTILS_H */

@@ -4,6 +4,7 @@
 /* Archivo para meter enums, typedefs y mierdas que puedan ser necesarias */
 
 #include <map>
+#include <list>
 
 namespace irc{
 
