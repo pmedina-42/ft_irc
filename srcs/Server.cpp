@@ -321,7 +321,7 @@ int Server::mainLoop(void) {
 int Server::MessageFromUser(int fd_idx) {
 
     (void)fd_idx;
-    string cmd_string = string(srv_buff, srv_buff_size);
+    string cmd_string(srv_buff, srv_buff_size);
 
     /* reset server buff */
     tools::clean_buffer(srv_buff, srv_buff_size);
@@ -336,9 +336,9 @@ int Server::MessageFromUser(int fd_idx) {
     }
     int cmd_vector_size = cmd_vector.size();
     for (int i = 0; i < cmd_vector_size; i++) {
-        //std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << std::endl;
-        Command command(cmd_vector[i]);
-        command.Parse();
+        std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << "] " << std::endl;
+        Command command;
+        command.Parse(cmd_vector[i]);
     }
     return CLEAN;
 }

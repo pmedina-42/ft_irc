@@ -10,9 +10,7 @@ using std::vector;
 
 namespace irc {
 
-Command::Command(string &recieved)
-:
-    cmd(recieved)
+Command::Command(void)
 {}
 
 Command::~Command() 
@@ -30,7 +28,7 @@ Command::~Command()
  * dentro de Parse, ya que según el RFC los comandos vacíos 
  * deben ignorarse.
  */
-int Command::Parse() {
+int Command::Parse(string &cmd) {
 
     if (tools::newlines_left(cmd)) {
         return ERR_NEWLINES;

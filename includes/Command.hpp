@@ -17,7 +17,7 @@ namespace irc {
 class Command {
 
     public:
-    Command(std::string &recieved);
+    Command();
     ~Command();
 
     typedef enum PARSE_RESULT {
@@ -32,7 +32,7 @@ class Command {
      * va en un solo argumento, junto a ':'.
      * Si un comando es válido sólo una string contendrá el valor ':'.
      */
-    int Parse();
+    int Parse(string &cmd);
     std::string Name();
 
     /* Esto tendrá que tener en su momento, una especie de mapa s.t.:
@@ -42,9 +42,7 @@ class Command {
      * .
      * .
      */
-    std::string cmd;
     vector<string> args;
-
 
     private:
     void debugCommand() const;

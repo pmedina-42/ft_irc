@@ -90,8 +90,10 @@ bool is_upper_case(std::string &str) {
  * messages (must be ignored, but still).
  */
 bool colon_placed_incorrectly(string &str) {
+    
     vector<string> result;
-    result = split(result, str, string(":"));
+    string del(":");
+    split(result, str, del);
     size_t size = result.size();
     if (size < 1 || size > 2) {
         return true;
@@ -103,9 +105,10 @@ bool colon_placed_incorrectly(string &str) {
      * ver si la penúltima string acaba en espacio. Esto
      * es funcdamental de cara a hacer primero un split de ':' y
      * luego uno de ' ' */
-    string before_end = result[result.size() - 2];
-    if (before_end[before_end.size() - 1] != ' ') {
-        return true;
+    if (size == 2) {
+        if ((result[0])[result[0].size() - 1] != ' ') {
+            return true;
+        }
     }
     return false;
 }
