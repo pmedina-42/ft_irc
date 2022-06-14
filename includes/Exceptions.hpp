@@ -2,6 +2,7 @@
 #define IRC42_EXCEPTIONS_H
 
 #include <exception>
+#include <iostream>
 
 namespace irc {
 namespace exc {
@@ -9,7 +10,7 @@ namespace exc {
 class MallocError : public std::exception {
     public:
     virtual const char* what() const throw() {
-        return( "Fatal error (malloc)" );
+        return ("Fatal error (malloc)");
     }
 };
 
@@ -18,6 +19,20 @@ class ServerSetUpError : public std::exception {
     virtual const char* what() const throw() {
         return ("Server : Set up error");
     }
+};
+
+class FatalError : public std::exception {
+    
+    public:
+    FatalError(const string& msg) : m_msg(msg) {}
+    virtual ~FatalError() throw() {}
+
+    virtual const char* what() const throw ()  {
+            std::cerr << "Fatal internal error : " << std::endl;
+            return m_msg.c_str();
+    }
+
+   const string m_msg;
 };
 
 }

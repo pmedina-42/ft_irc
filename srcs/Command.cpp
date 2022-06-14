@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 #include "Tools.hpp"
+#include <iostream>
+
 
 using std::string;
 using std::vector;
@@ -26,7 +28,7 @@ Command::~Command()
  * tamaño del buffer o se de un error.
  * De esta forma también evitamos tener que gestionar CRLF a secas
  * dentro de Parse, ya que según el RFC los comandos vacíos 
- * deben ignorarse. 
+ * deben ignorarse.
  */
 int Command::Parse() {
 
@@ -35,6 +37,13 @@ int Command::Parse() {
     }
     if (tools::colon_placed_incorrectly(cmd)) {
         return ERR_COLONS;
+    }
+    if (cmd[0] == ':') {
+        int prefix_end = cmd.find(" ");
+        // eliminate prefix in case specified
+        if (prefix_end != -1) {
+            cmd = cmd.substr(prefix_end);
+        }
     }
 
     vector<string> colon_split;
@@ -56,6 +65,7 @@ int Command::Parse() {
     if (colon_split.size() == 2) {
         args.push_back(colon_split[1]);
     }
+    debugCommand();
     return OK;
 }
 
@@ -65,5 +75,17 @@ string Command::Name() {
     }
     return "";
 }
+
+void Command::debugCommand() const {
+    std::cout << std::endl << "COMMAND RESULT : " << std::endl;
+    size_t size = args.size();
+    std::cout << "Command vector size : " << args.size();
+    std::cout << ", content :" << std::endl;
+    for (size_t it = 0; it < size; it++) {
+        std::cout << it << ": [" << args[it] << "]" << std::endl;
+    }
+    std::cout << std::endl;
+}
+
 
 } // namespace

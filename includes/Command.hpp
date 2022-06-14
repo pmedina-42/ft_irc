@@ -47,6 +47,7 @@ class Command {
 
 
     private:
+    void debugCommand() const;
 };
 
 } // namespace

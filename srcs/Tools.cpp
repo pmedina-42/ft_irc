@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 #include "libft.h"
 
@@ -80,7 +81,13 @@ bool is_upper_case(std::string &str) {
 
 /* Checks that the buffer recieved, in case it has a colon, 
  * it is places separating two pieces of text.
- * msg = * : * OK
+ * (1) msg = * : * OK 
+ * (2) msg = :* * :* OK
+ * (3) msg = :* * OK
+ * (4) msg = *
+ * anything else throws an error. Second example corresponds
+ * to some clients that send :user_info as a prefix to all
+ * messages (must be ignored, but still).
  */
 bool colon_placed_incorrectly(string &str) {
     vector<string> result;
@@ -109,6 +116,15 @@ bool newlines_left(string &str) {
             return true;
     }
     return false;
+}
+
+void clean_buffer(char *buff, size_t size) {
+    if (size > 0 && buff != NULL)
+    memset(buff, '\0', size);
+}
+
+void printError(string error_str) {
+    std::cerr << error_str << std::endl;
 }
 
 } // tools 

@@ -10,8 +10,8 @@
 #define NAME_MAX_SZ 10
 
 /**
- * See https://modern.ircdocs.horse/ for numeric replies
- * */
+ * https://modern.ircdocs.horse/ for numeric replies
+ */
 
 bool running = true;
 

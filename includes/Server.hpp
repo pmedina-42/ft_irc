@@ -12,6 +12,8 @@
 #define NAME_MAX_SZ 10
 #define MAX_FDS 255
 
+#define SERVER_BUFF_MAX_SIZE 512
+
 using std::string;
 
 class User;
@@ -40,7 +42,7 @@ class FdManager {
     ~FdManager(void);
 
     void setUpListener(int listener);
-    int hasDataToRead(int entry);
+    bool hasDataToRead(int entry);
     int addNewUser(void);
     /* fd from clients manager. This includes
     * the listener, at entry 0.
@@ -52,6 +54,7 @@ class FdManager {
 };
 
 class Server {
+
     public:
     Server(void);
     Server(string &ip, string &port);
@@ -59,14 +62,24 @@ class Server {
     ~Server();
     
     private:
-    /* initializators */
+    /* Setup */
     int setServerInfo(void);
     int setServerInfo(string &hostname, string &port);
     int setListener(void);
+
+    /* parses message into commands, calls 
+     * commands from user until finished. */
+    int MessageFromUser(int fd_idx);
     
     int mainLoop(void);
+
+    typedef enum BUFFER_STATE {
+        CLEAN = 0,
+        PENDING_DATA = 1,
+    } BUFFER_STATE;
     
-    void printError(string error);
+    char srv_buff[513];
+    int srv_buff_size;
 
     ChannelMap channel_map;
     UserMap user_map;

@@ -6,12 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sstream>
-#include <Channel.hpp>
+
+#include "libft.h"
 
 #include "Server.hpp"
 #include "User.hpp"
-#include "libft.h"
 #include "Exceptions.hpp"
+#include "Command.hpp"
+#include "Tools.hpp"
+#include "Channel.hpp"
 
 using std::string;
 
@@ -65,15 +68,20 @@ Server::Server(void)
     {
         throw irc::exc::ServerSetUpError();
     }
+    memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
+    srv_buff_size = 0;
     mainLoop();
 }
 
 Server::Server(string &hostname, string &port) {
+
     if (setServerInfo(hostname, port) != 0
         || setListener() == -1)
     {
         throw irc::exc::ServerSetUpError();
     }
+    memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
+    srv_buff_size = 0;
     mainLoop();
 }
 
@@ -167,12 +175,14 @@ int Server::setListener(void) {
         /* open a socket given servinfo */
         if ((socketfd = socket(p->ai_family,
                                p->ai_socktype,
-                               p->ai_protocol)) == -1) {
+                               p->ai_protocol)) == -1)
+        {
             socketfd  = -1;
             continue;
         }
         int yes = 1;
-	    setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &yes, sizeof(yes));
+	    setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+                   &yes, sizeof(yes));
         /* assign port to socket */
         if (bind(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(socketfd);
@@ -190,8 +200,9 @@ int Server::setListener(void) {
     if (listen(socketfd, LISTENER_BACKLOG) == -1) {
         return -1;
     }
-    struct sockaddr_in *sockaddrin = (struct sockaddr_in *)(_info.actual->ai_addr);
-    std::cout << "Server mounted succesfully on "
+    struct sockaddr_in *sockaddrin = (struct sockaddr_in *)
+                                      (_info.actual->ai_addr);
+    std::cout << "Server mounted succesfully on " 
               << inet_ntoa(sockaddrin->sin_addr)
               << ":6667" << std::endl;
     _info.listener = socketfd;
@@ -210,72 +221,76 @@ int Server::mainLoop(void) {
         if (poll(_fd_manager.fds, _fd_manager.fds_size, -1) == -1)
             return -1;
         for (int fd_idx = 0; fd_idx < _fd_manager.fds_size; fd_idx++) {
-            if (_fd_manager.hasDataToRead(fd_idx)) {
-                /* listener is always at first entry */
-                if (fd_idx == 0) {
-                    _fd_manager.addNewUser();
-                    continue;
-                } else {
-                    // 1. check message format is correct
-                    // 2. parse command & params
-                    // 3. check user can indeed call command (blacklist, is chanop, etc)
-                    // 4. prepare command response.
-                    // 5. exec/send command response.
-                    char msg[100] = {0};
-                    int bytes = recv(_fd_manager.fds[fd_idx].fd, msg, sizeof(msg), 0);
-                    if (bytes == -1) {
-                        std::cerr << "bytes = -1" << std::endl;
-                    } else if (bytes == 0) {
-                        std::cout << "fd " << fd_idx << " closed connection" << std::endl;
-                        close(_fd_manager.fds[fd_idx].fd);
-                        _fd_manager.fds[fd_idx].fd = -1;
-                    } else {
-                        string message(msg, bytes);
-                        std::cout << "fd : " << fd_idx << "Message : [" << message << "]" << std::endl;
-                        char **arr = ft_split(message.c_str(), ' ');
-                        if (arr == NULL)
-                            std::cerr << "XDDD " << std::endl;
-                        /* ft_strlen() - 1 intenta no llevarse el \n del final !! Esto hace
-                         * que el cliente parsee los mensajes de uno en uno y dan cosas raras.
-                         * de esta forma, no sucede */
-                        for (int i=0; arr[i] != NULL; i++) {
-                            std::string word(arr[i]);
-                            if (word.compare("NICK") == 0) {
-                                nickname = string(arr[i + 1], ft_strlen(arr[i + 1]) - 1);
-                                size_t carriage_return_pos = nickname.find('\r');
-                                if (carriage_return_pos != string::npos) {
-                                    std::cout << "b" << std::endl;
-                                    nickname = nickname.substr(0, carriage_return_pos);
-                                }
-                            } else if (word.compare("USER") == 0) {
-                                std::cout << "a" << std::endl;
-                                username = string(arr[i + 1]);
-                            } else if (word.compare("JOIN") == 0) {
-                                char prefix = arr[1][0];
-                                string name = arr[1]++;
-                                std::cout << "nuevo canal que se tiene que crear con usuario a saber, prefijo " << prefix << " y nombre " << name << std::endl;
-                                //Channel* channel = new Channel(prefix, name, );
-                                //_channels.push_back(channel);
-                            } else if (word[0] == ':') {
-                                // -2 por la misma razon que strlen - 1
-                                realname = word.substr(1, word.size() - 2);
-                                break;
-                            }
-                        }
-                        for (int i=0; arr[i] != NULL; i++) {
-                            free(arr[i]);
-                        }
-                        free(arr);
-                        //send(_fd_manager.fds[fd_idx].fd, "001 ")
+            if (_fd_manager.hasDataToRead(fd_idx) == false) {
+                continue;
+            }
+            /* listener is always at first entry */
+            if (fd_idx == 0) {
+                _fd_manager.addNewUser();
+                continue;
+            }
+            // 1. check message format is correct
+            // 2. parse command & params
+            // 3. check user can indeed call command (blacklist, is chanop, etc)
+            // 4. prepare command response.
+            // 5. exec/send command response.
+            srv_buff_size = recv(_fd_manager.fds[fd_idx].fd, srv_buff,
+                             sizeof(srv_buff), 0);
+            if (srv_buff_size == -1) {
+                string exception_msg("recv = -1");
+                throw exc::FatalError(exception_msg);
+            }
+            if (srv_buff_size == 0) {
+                // MANAGE CLOSED CONNECTION
+                close(_fd_manager.fds[fd_idx].fd);
+                _fd_manager.fds[fd_idx].fd = -1;
+                continue;
+            }
+            MessageFromUser(fd_idx);
+            tools::clean_buffer(srv_buff, srv_buff_size);
+            /*string message(msg, bytes);
+            char **arr = ft_split(message.c_str(), ' ');
+            if (arr == NULL)
+                std::cerr << "XDDD " << std::endl;
+             //ft_strlen() - 1 intenta no llevarse el \n del final !! Esto hace
+               // * que el cliente parsee los mensajes de uno en uno y dan cosas raras.
+               // * de esta forma, no sucede 
+            for (int i=0; arr[i] != NULL; i++) {
+                std::string word(arr[i]);
+                if (word.compare("NICK") == 0) {
+                    nickname = string(arr[i + 1], ft_strlen(arr[i + 1]) - 1);
+                    size_t carriage_return_pos = nickname.find('\r');
+                    if (carriage_return_pos != string::npos) {
+                        std::cout << "b" << std::endl;
+                        nickname = nickname.substr(0, carriage_return_pos);
                     }
+                } else if (word.compare("USER") == 0) {
+                    std::cout << "a" << std::endl;
+                    username = string(arr[i + 1]);
+                } else if (word.compare("JOIN") == 0) {
+                    char prefix = arr[1][0];
+                    string name = arr[1]++;
+                    std::cout << "nuevo canal que se tiene que crear con usuario a saber, prefijo " << prefix << " y nombre " << name << std::endl; 
+                    //Channel* channel = new Channel(prefix, name, );
+                    //_channels.push_back(channel);
+                } else if (word[0] == ':') {
+                    // -2 por la misma razon que strlen - 1
+                    realname = word.substr(1, word.size() - 2);
+                    break;
                 }
+            }
+            for (int i=0; arr[i] != NULL; i++) {
+                free(arr[i]);
+            }
+            free(arr);
+            //send(_fd_manager.fds[fd_idx].fd, "001 ")
             }
         }
         if (!nickname.empty() && !username.empty()) {
             //_users.push_back(new irc::User())
             std::cout << "about to send repl y " << std::endl;
             struct sockaddr_in *sockaddrin = (struct sockaddr_in *)(_info.actual->ai_addr);
-            string our_host(inet_ntoa(sockaddrin->sin_addr));
+            string our_host(inet_ntoa(sockaddrin->sin_addr));*/
             // pon aqui tus dos credenciales, es nicknaem!username@hostname o ip
             // https://stackoverflow.com/questions/662918/how-do-i-concatenate-multiple-c-strings-on-one-line
             /* Fallaba esto (RFC 2812 section 2.4 (page 7)) :
@@ -289,19 +304,45 @@ int Server::mainLoop(void) {
              * \r\n en vez de \n. Este \r lo que hace es retornar el carro y reescribirme la string
              * cuando la imprimo por pantalla haciendo que aparezcan cosas super raras.
              */
-            std::string sender_prefix = ":" + our_host;
+            /*std::string sender_prefix = ":" + our_host;
             std::string rpl_welcome("001");
             std::string target_of_reply = username;
             std::string complete_name = nickname + "!" + username + "@" + "192.168.45.85";
             std::cout << "our_host : [" << our_host << "], target_of_reply : [" << target_of_reply << "], complete_name : [" << complete_name << "]" << std::endl;
-            /* IRC USES CRLF !! specified in RFC 1459*/
+             IRC USES CRLF !! specified in RFC 1459
             string reply = sender_prefix + " " + rpl_welcome + " " + target_of_reply + " :Welcome to wassap 2 " + complete_name + "\r\n";
             std::cout << "reply : [" << reply << "]" << std::endl;
             send(_fd_manager.fds[1].fd, reply.c_str(), reply.length(), 0);
-            send(_fd_manager.fds[2].fd, reply.c_str(), reply.length(), 0);
+            send(_fd_manager.fds[2].fd, reply.c_str(), reply.length(), 0);*/
         }
     }
 }
+
+int Server::MessageFromUser(int fd_idx) {
+
+    (void)fd_idx;
+    string cmd_string = string(srv_buff, srv_buff_size);
+
+    /* reset server buff */
+    tools::clean_buffer(srv_buff, srv_buff_size);
+    srv_buff_size = 0;
+
+    /* parse all commands */
+    vector<string> cmd_vector;
+    tools::split(cmd_vector, cmd_string, CRLF);
+    /* ignore empty commands */
+    if (cmd_vector.empty()) {
+        return CLEAN;
+    }
+    int cmd_vector_size = cmd_vector.size();
+    for (int i = 0; i < cmd_vector_size; i++) {
+        //std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << std::endl;
+        Command command(cmd_vector[i]);
+        command.Parse();
+    }
+    return CLEAN;
+}
+
 
 
 /* AddressInfo Section -------------------------- */
@@ -334,8 +375,8 @@ void FdManager::setUpListener(int listener) {
     fds_size++;
 }
 
-int FdManager::hasDataToRead(int entry) {
-    return fds[entry].revents & POLLIN;
+bool FdManager::hasDataToRead(int entry) {
+    return (fds[entry].revents & POLLIN) ? true : false;
 }
 
 int FdManager::addNewUser(void) {

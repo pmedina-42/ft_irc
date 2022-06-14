@@ -6,6 +6,8 @@
 #include <map>
 #include <list>
 
+#define CRLF "\r\n"
+
 namespace irc{
 
 class Channel;
