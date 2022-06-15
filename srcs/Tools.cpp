@@ -31,7 +31,7 @@ vector<string>& split(vector<string> &to_fill, string &str, char sep) {
         throw irc::exc::MallocError();
     }
     for (int i = 0; c_matrix[i] != NULL; i++) {
-        std::string aux(c_matrix[i], strlen(c_matrix[i]));
+        string aux(c_matrix[i], strlen(c_matrix[i]));
         to_fill.push_back(aux);
         /* once written to the vector, free */
         free(c_matrix[i]);
@@ -47,7 +47,7 @@ vector<string>& split(vector<string> &to_fill, string &str, char sep) {
 vector<string>& split(vector<string> &to_fill, const char* buff,
                       size_t bufflen, string &del)
 {
-    std::string str(buff, bufflen);
+    string str(buff, bufflen);
     int start = 0;
     int end = str.find(del);
     while (end != -1) {
@@ -67,11 +67,33 @@ vector<string>& split(vector<string> &to_fill, string &str, string del) {
         start = end + del.size();
         end = str.find(del, start);
     }
-    to_fill.push_back(str.substr(start, end - start));
+    std::string last = str.substr(start, end - start);
+    if (!last.empty()) {
+        to_fill.push_back(str.substr(start, end - start));
+    }
     return to_fill;
 }
 
-bool is_upper_case(std::string &str) {
+string& trim_repeated_char(string& str, char c) {
+    std::cout << "in : [" << str << "] " << std::endl;
+    string clean_str;
+    size_t src_size = str.size();
+    clean_str.reserve(src_size); // max possible
+    
+    for (size_t i = 0; i < src_size; i++) {
+        clean_str.push_back(str[i]);
+        if (str[i] == c) {
+            while (str[i] == c) {
+                i++;
+            }
+            i--; // counter increment
+        }
+    }
+    str = clean_str;
+    return str;
+}
+
+bool is_upper_case(string &str) {
     for (string::iterator it = str.begin(); it < str.end(); it++) {
         if (*it < 'A' && *it > 'Z')
             return false;

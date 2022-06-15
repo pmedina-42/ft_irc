@@ -36,6 +36,8 @@ int Command::Parse(string &cmd) {
     if (tools::colon_placed_incorrectly(cmd)) {
         return ERR_COLONS;
     }
+    cmd = tools::trim_repeated_char(cmd, ' ');
+    
     if (cmd[0] == ':') {
         int prefix_end = cmd.find(" ");
         // eliminate prefix in case specified
@@ -43,7 +45,6 @@ int Command::Parse(string &cmd) {
             cmd = cmd.substr(prefix_end);
         }
     }
-
     vector<string> colon_split;
     vector<string> space_split;
 
@@ -51,9 +52,14 @@ int Command::Parse(string &cmd) {
     /* If there was a colon split, only split in spaces first arg. */
     if (colon_split.size() == 2) {
         space_split = tools::split(space_split, colon_split[0], " ");
+        colon_split[1].insert(0, ":");
     /* else just split in spaces original command */
     } else {
         space_split = tools::split(space_split, cmd, " ");
+    }
+
+    for (int i = 0; i < (int)space_split.size(); i++) {
+        std::cout << "sp_split : [" << space_split[i] << "]"<< std::endl;
     }
 
     if (tools::is_upper_case(space_split[0]) == false) {

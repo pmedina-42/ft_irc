@@ -336,7 +336,7 @@ int Server::MessageFromUser(int fd_idx) {
     }
     int cmd_vector_size = cmd_vector.size();
     for (int i = 0; i < cmd_vector_size; i++) {
-        std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << "] " << std::endl;
+        //std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << "] " << std::endl;
         Command command;
         command.Parse(cmd_vector[i]);
     }
