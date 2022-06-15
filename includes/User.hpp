@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <string>
+#include "Server.hpp"
 
 using std::string;
 
@@ -35,19 +36,23 @@ namespace irc {
  * Y viceversa, asi, desde user_A podría mirar en #channel_X si user_B está.
  */
 
+
 class User {
 
     public:
-    User(int fd, string nick);
-    User(int fd, char* nick, size_t size);
-    virtual ~User();
+    User(int fd, string nick, string realname);
+    ~User();
 
     /* ATTRIBUTES */
-    string _nickName;
-    string _mask;
-    int _fd;
+    string nickName;
+    string fullname;
+    string prefix;
+    string mask;
+    int fd;
+    char buffer[SERVER_BUFF_MAX_SIZE];
+    int buffer_size;
 
-    inline string getNick() { return _nickName; }
+    inline string getNick() { return nickName; }
 };
 
 }

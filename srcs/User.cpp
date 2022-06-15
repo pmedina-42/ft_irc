@@ -4,19 +4,19 @@
 
 namespace irc {
 
-User::User(int fd, std::string nick)
+User::User(int fd, std::string nick, string realname)
 	:
-		_nickName(nick),
-		_fd(fd)
-{}
+		nickName(nick),
+        fullname(realname),
+		fd(fd)
+{
+    memset(buffer, '\0', SERVER_BUFF_MAX_SIZE);
+    buffer_size = 0;
+}
 
-User::User(int fd, char* data, size_t len)
-	:
-		_nickName(data, len),
-		_fd(fd)
-{}
+User::~User() {
 
-User::~User() {}
+}
 
 
 } // namespace

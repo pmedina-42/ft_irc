@@ -15,7 +15,7 @@ class Channel;
 class ChannelUser : public User {
 
     public:
-    ChannelUser(int fd, string nick);
+    ChannelUser(int fd, string nick, string realname);
     ChannelUser(int fd, char* nick, size_t size);
     ChannelUser(User&);
     ~ChannelUser();
