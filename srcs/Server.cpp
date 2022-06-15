@@ -30,6 +30,10 @@ using std::string;
  * 
  * Userguide to Weechat:
  * https://www.linode.com/docs/guides/using-weechat-for-irc/
+ * 
+ * Pointers to member functions :
+ * https://cplusplus.com/forum/beginner/47833/
+ * https://stackoverflow.com/questions/6265851/
  */
 
 namespace irc {
