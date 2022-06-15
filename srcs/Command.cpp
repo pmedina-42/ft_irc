@@ -58,9 +58,9 @@ int Command::Parse(string &cmd) {
         space_split = tools::split(space_split, cmd, " ");
     }
 
-    for (int i = 0; i < (int)space_split.size(); i++) {
+    /*for (int i = 0; i < (int)space_split.size(); i++) {
         std::cout << "sp_split : [" << space_split[i] << "]"<< std::endl;
-    }
+    }*/
 
     if (tools::is_upper_case(space_split[0]) == false) {
         return ERR_NO_COMMAND;

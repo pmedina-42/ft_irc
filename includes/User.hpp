@@ -40,19 +40,20 @@ namespace irc {
 class User {
 
     public:
-    User(int fd, string nick, string realname);
-    ~User();
+    User(int fd, string nick);
+    virtual ~User();
 
     /* ATTRIBUTES */
-    string nickName;
-    string fullname;
-    string prefix;
-    string mask;
+    string nick;
+    string name;
+    string full_name;
+    string prefix; // nse si hara falta dis shit
+    string mask; // ¿¿¿ XD
     int fd;
     char buffer[SERVER_BUFF_MAX_SIZE];
     int buffer_size;
 
-    inline string getNick() { return nickName; }
+    inline string getNick() { return nick; }
 };
 
 }

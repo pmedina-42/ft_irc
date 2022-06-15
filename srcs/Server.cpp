@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sstream>
+#include <utility>
 
 #include "libft.h"
 
@@ -33,7 +34,7 @@ using std::string;
 
 namespace irc {
 
-int get_addrinfo_from_params(const char* hostname, const char *port,
+static int get_addrinfo_from_params(const char* hostname, const char *port,
                              struct addrinfo *hints,
                              struct addrinfo **servinfo)
 {
@@ -70,6 +71,7 @@ Server::Server(void)
     }
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
+    loadCommandMap();
     mainLoop();
 }
 
@@ -82,6 +84,7 @@ Server::Server(string &hostname, string &port) {
     }
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
+    loadCommandMap();
     mainLoop();
 }
 
@@ -209,6 +212,11 @@ int Server::setListener(void) {
     return _info.listener;
 }
 
+void Server::loadCommandMap(void) {
+    cmd_map.insert(std::make_pair(string("NICK"), (&Server::NICK)));
+}
+
+
 // this might have to manage signals at some point ?? 
 int Server::mainLoop(void) {
 
@@ -335,12 +343,64 @@ int Server::MessageFromUser(int fd_idx) {
         return CLEAN;
     }
     int cmd_vector_size = cmd_vector.size();
+
+    bool needs_previous_info = false;
+    std::string previous_info;
+    (void)previous_info;
+    (void)needs_previous_info;
     for (int i = 0; i < cmd_vector_size; i++) {
         //std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << "] " << std::endl;
         Command command;
-        command.Parse(cmd_vector[i]);
+        if (command.Parse(cmd_vector[i]) != command.OK) {
+            break;
+        }
+        /* command does not exist / ill formatted command */
+        if (!cmd_map.count(command.Name())) {
+            break;
+        }
+        CommandMap::iterator it = cmd_map.find(command.Name());
+        int ret = (*this.*it->second)(command, fd_idx); // XD
+        if (ret == DONE) {
+            continue;
+        }
+        // Aquí viene la matriz de comandos.
     }
     return CLEAN;
+}
+
+/**
+ * Command: NICK
+ * Parameters: <nickname>
+ */
+int Server::NICK(Command &cmd, int fd) {
+
+    int size = cmd.args.size();
+    if (size != 2) {
+        return ERR_NO_REPLY;
+    }
+    string nick = cmd.Name();
+    User new_user(fd, nick);   
+
+    if (user_map.empty() || user_map.count(nick)) {
+        user_map.insert(std::make_pair(nick, new_user));
+        return DONE;
+    }
+    /* molaría aquí construir el reply de error,
+     * y enviarlo al correspondiente fd.
+     */
+    return SEND_ERR_REPLY;
+}
+
+
+/**
+ * Command: USER
+ * Parameters: <username> 0 * <realname>
+ * 
+ */
+int Server::USER(Command &cmd, int fd) {
+    (void)cmd;
+    (void)fd;
+    return DONE;
 }
 
 

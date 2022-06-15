@@ -21,6 +21,7 @@ class Channel;
 
 namespace irc {
 
+
 class AddressInfo {
     public:
     AddressInfo(void);
@@ -66,6 +67,7 @@ class Server {
     int setServerInfo(void);
     int setServerInfo(string &hostname, string &port);
     int setListener(void);
+    void loadCommandMap(void);
 
     /* parses message into commands, calls 
      * commands from user until finished. */
@@ -77,6 +79,12 @@ class Server {
         CLEAN = 0,
         PENDING_DATA = 1,
     } BUFFER_STATE;
+
+    typedef enum COMMAND_RESULT {
+        DONE = 0, // nada que hacer
+        SEND_ERR_REPLY, // not sure
+        ERR_NO_REPLY // not sure either
+    } COMMAND_RESULT;
     
     char srv_buff[513];
     int srv_buff_size;
@@ -85,6 +93,11 @@ class Server {
     UserMap user_map;
     AddressInfo _info;
     FdManager    _fd_manager;
+    CommandMap cmd_map;
+
+    /* command implementations */
+    int NICK(Command &cmd, int fd);
+    int USER(Command &cmd, int fd);
 };
 
 /**

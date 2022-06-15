@@ -4,10 +4,9 @@
 
 namespace irc {
 
-User::User(int fd, std::string nick, string realname)
+User::User(int fd, std::string nick)
 	:
-		nickName(nick),
-        fullname(realname),
+		nick(nick),
 		fd(fd)
 {
     memset(buffer, '\0', SERVER_BUFF_MAX_SIZE);
