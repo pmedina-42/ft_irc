@@ -57,12 +57,6 @@ static int get_addrinfo_from_params(const char* hostname, const char *port,
     return 0;
 }
 
-/* When called, two modes exist:
- * MANUAL : prints the first IP address returned by gethostbyname,
- *          to allow a further call to the server initializer 
- *          using the IP provided.
- * AUTOMATIC : the server mounts automatically on an address available.
- */
 Server::Server(void)
 :
     _info(),
@@ -76,6 +70,7 @@ Server::Server(void)
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
+    loadNickVector();
     mainLoop();
 }
 
@@ -89,6 +84,7 @@ Server::Server(string &hostname, string &port) {
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
+    loadNickVector();
     mainLoop();
 }
 
@@ -209,7 +205,7 @@ int Server::setListener(void) {
     }
     struct sockaddr_in *sockaddrin = (struct sockaddr_in *)
                                       (_info.actual->ai_addr);
-    std::cout << "Server mounted succesfully on " 
+    std::cout << "Server mounted succesfully on "
               << inet_ntoa(sockaddrin->sin_addr)
               << ":6667" << std::endl;
     _info.listener = socketfd;
@@ -218,6 +214,14 @@ int Server::setListener(void) {
 
 void Server::loadCommandMap(void) {
     cmd_map.insert(std::make_pair(string("NICK"), (&Server::NICK)));
+    cmd_map.insert(std::make_pair(string("USER"), (&Server::USER)));
+}
+
+void Server::loadNickVector(void) {
+    nick_vector.reserve(MAX_FDS);
+    for (int i=0; i < MAX_FDS; i++) {
+        nick_vector.push_back("");
+    }
 }
 
 
@@ -225,9 +229,6 @@ void Server::loadCommandMap(void) {
 int Server::mainLoop(void) {
 
     _fd_manager.setUpListener(_info.listener);
-    string nickname = "";
-    string username = "";
-    string realname = "";
     while (42) {
         /* -1 = wait until some event happens */
         if (poll(_fd_manager.fds, _fd_manager.fds_size, -1) == -1)
@@ -332,9 +333,7 @@ int Server::mainLoop(void) {
 
 int Server::MessageFromUser(int fd_idx) {
 
-    (void)fd_idx;
     string cmd_string(srv_buff, srv_buff_size);
-
     /* reset server buff */
     tools::clean_buffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
@@ -346,12 +345,8 @@ int Server::MessageFromUser(int fd_idx) {
     if (cmd_vector.empty()) {
         return CLEAN;
     }
-    int cmd_vector_size = cmd_vector.size();
 
-    bool needs_previous_info = false;
-    std::string previous_info;
-    (void)previous_info;
-    (void)needs_previous_info;
+    int cmd_vector_size = cmd_vector.size();
     for (int i = 0; i < cmd_vector_size; i++) {
         //std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << "] " << std::endl;
         Command command;
@@ -389,6 +384,7 @@ int Server::NICK(Command &cmd, int fd) {
         user_map.insert(std::make_pair(nick, new_user));
         return DONE;
     }
+    nick_vector[fd] = nick;
     /* molaría aquí construir el reply de error,
      * y enviarlo al correspondiente fd.
      */
@@ -399,11 +395,24 @@ int Server::NICK(Command &cmd, int fd) {
 /**
  * Command: USER
  * Parameters: <username> 0 * <realname>
- * 
  */
 int Server::USER(Command &cmd, int fd) {
-    (void)cmd;
-    (void)fd;
+
+    int size = cmd.args.size();
+    if (size != 5) {
+        return ERR_NO_REPLY;
+    }
+    string nick = nick_vector[fd];
+    if (!user_map.count(nick)) {
+        // needs nick first, maybe it has an error message here.
+        return ERR_NO_REPLY;
+    }
+    UserMap::iterator it = user_map.find(nick);
+    User user = it->second;
+
+    user.name = cmd.args[1];
+    user.full_name = cmd.args[size - 1];
+
     return DONE;
 }
 

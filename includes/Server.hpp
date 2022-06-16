@@ -5,7 +5,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <poll.h>
-#include <map>
+#include <vector>
 #include "Types.hpp"
 
 #define LISTENER_BACKLOG 20
@@ -15,6 +15,7 @@
 #define SERVER_BUFF_MAX_SIZE 512
 
 using std::string;
+using std::vector;
 
 class User;
 class Channel;
@@ -68,6 +69,7 @@ class Server {
     int setServerInfo(string &hostname, string &port);
     int setListener(void);
     void loadCommandMap(void);
+    void loadNickVector(void);
 
     /* parses message into commands, calls 
      * commands from user until finished. */
@@ -88,11 +90,16 @@ class Server {
     
     char srv_buff[513];
     int srv_buff_size;
+    
+    ChannelMap channel_map; /* Find channels by name */
+    UserMap user_map;  /* Find users by nickname */
+    vector<string> nick_vector; /* Find nickname by fd_idx */
 
-    ChannelMap channel_map;
-    UserMap user_map;
+    /* Socket related stuff */
     AddressInfo _info;
     FdManager    _fd_manager;
+
+    /* Map with all comand responses */
     CommandMap cmd_map;
 
     /* command implementations */
