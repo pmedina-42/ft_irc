@@ -15,10 +15,8 @@ vector<string>& split(vector<string> &to_fill, const char* buff,
                       size_t bufflen, string &del);
 vector<string>& split(vector<string> &to_fill, string &str, string del);
 
-
-bool is_upper_case(std::string &str);
-bool colon_placed_incorrectly(std::string &str);
-bool newlines_left(std::string &str);
+bool is_upper_case(const string &str);
+bool is_equal(const string &str1, const string &str2);
 
 string& trim_repeated_char(string& str, char c);
 

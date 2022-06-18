@@ -43,6 +43,7 @@ class User {
     User(int fd, string nick);
     virtual ~User();
 
+    void setPrefixFromHost(string &host);
     /* ATTRIBUTES */
     string nick;
     string name;
@@ -52,6 +53,8 @@ class User {
     int fd;
     char buffer[SERVER_BUFF_MAX_SIZE];
     int buffer_size;
+
+    bool registered;
 
     inline string getNick() { return nick; }
 };

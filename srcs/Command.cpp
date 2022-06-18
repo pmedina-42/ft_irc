@@ -30,10 +30,10 @@ Command::~Command()
  */
 int Command::Parse(string &cmd) {
 
-    if (tools::newlines_left(cmd)) {
+    if (newlines_left(cmd)) {
         return ERR_NEWLINES;
     }
-    if (tools::colon_placed_incorrectly(cmd)) {
+    if (colon_placed_incorrectly(cmd)) {
         return ERR_COLONS;
     }
     cmd = tools::trim_repeated_char(cmd, ' ');
@@ -78,6 +78,50 @@ string Command::Name() {
     }
     return "";
 }
+
+/* Checks that the buffer recieved, in case it has a colon, 
+ * it is places separating two pieces of text.
+ * (1) msg = * : * OK 
+ * (2) msg = :* * :* OK
+ * (3) msg = :* * OK
+ * (4) msg = *
+ * anything else throws an error. Second example corresponds
+ * to some clients that send :user_info as a prefix to all
+ * messages (must be ignored, but still).
+ */
+bool Command::colon_placed_incorrectly(string &str) {
+    
+    vector<string> result;
+    string del(":");
+    tools::split(result, str, del);
+    size_t size = result.size();
+    if (size < 1 || size > 2) {
+        return true;
+    }
+    if (result[0].empty()) {
+        return true;
+    }
+    /* si no viene despues de un espacio, tampoco vale. Basta con
+     * ver si la penúltima string acaba en espacio. Esto
+     * es funcdamental de cara a hacer primero un split de ':' y
+     * luego uno de ' ' */
+    if (size == 2) {
+        if ((result[0])[result[0].size() - 1] != ' ') {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Command::newlines_left(string &str) {
+    for (string::iterator it = str.begin(); it < str.end(); it++) {
+        if (*it == '\n' && *it == '\r')
+            return true;
+    }
+    return false;
+}
+
+
 
 void Command::debugCommand() const {
     std::cout << std::endl << "COMMAND RESULT : " << std::endl;

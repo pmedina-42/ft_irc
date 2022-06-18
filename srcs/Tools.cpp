@@ -75,7 +75,6 @@ vector<string>& split(vector<string> &to_fill, string &str, string del) {
 }
 
 string& trim_repeated_char(string& str, char c) {
-    std::cout << "in : [" << str << "] " << std::endl;
     string clean_str;
     size_t src_size = str.size();
     clean_str.reserve(src_size); // max possible
@@ -93,54 +92,27 @@ string& trim_repeated_char(string& str, char c) {
     return str;
 }
 
-bool is_upper_case(string &str) {
-    for (string::iterator it = str.begin(); it < str.end(); it++) {
+bool is_upper_case(const string &str) {
+    for (string::const_iterator it = str.begin(); it < str.end(); it++) {
         if (*it < 'A' && *it > 'Z')
             return false;
     }
     return true;
 }
 
-/* Checks that the buffer recieved, in case it has a colon, 
- * it is places separating two pieces of text.
- * (1) msg = * : * OK 
- * (2) msg = :* * :* OK
- * (3) msg = :* * OK
- * (4) msg = *
- * anything else throws an error. Second example corresponds
- * to some clients that send :user_info as a prefix to all
- * messages (must be ignored, but still).
- */
-bool colon_placed_incorrectly(string &str) {
-    
-    vector<string> result;
-    string del(":");
-    split(result, str, del);
-    size_t size = result.size();
-    if (size < 1 || size > 2) {
-        return true;
+/* checks if a string is equal to another, ignoring case
+ * differences (HellO = hELlo) */
+bool is_equal(const string &str1, const string &str2) {
+    if (str1.length() != str2.length()) {
+        return false;
     }
-    if (result[0].empty()) {
-        return true;
-    }
-    /* si no viene despues de un espacio, tampoco vale. Basta con
-     * ver si la penúltima string acaba en espacio. Esto
-     * es funcdamental de cara a hacer primero un split de ':' y
-     * luego uno de ' ' */
-    if (size == 2) {
-        if ((result[0])[result[0].size() - 1] != ' ') {
-            return true;
+    size_t len = str1.length();
+    for (size_t i = 0; i < len; i++) {
+        if (std::tolower(str1[i]) != std::tolower(str2[i])) {
+            return false;
         }
     }
-    return false;
-}
-
-bool newlines_left(string &str) {
-    for (string::iterator it = str.begin(); it < str.end(); it++) {
-        if (*it == '\n' && *it == '\r')
-            return true;
-    }
-    return false;
+    return true;
 }
 
 void clean_buffer(char *buff, size_t size) {

@@ -16,6 +16,7 @@
 #include "Command.hpp"
 #include "Tools.hpp"
 #include "Channel.hpp"
+#include "NumericReplies.hpp"
 
 using std::string;
 
@@ -67,6 +68,9 @@ Server::Server(void)
     {
         throw irc::exc::ServerSetUpError();
     }
+    struct sockaddr_in *sockaddrin = (struct sockaddr_in *)
+                                        (_info.actual->ai_addr);
+    hostname = (inet_ntoa(sockaddrin->sin_addr));
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
@@ -81,6 +85,9 @@ Server::Server(string &hostname, string &port) {
     {
         throw irc::exc::ServerSetUpError();
     }
+    struct sockaddr_in *sockaddrin = (struct sockaddr_in *)
+                                        (_info.actual->ai_addr);
+    hostname = (inet_ntoa(sockaddrin->sin_addr));
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
@@ -205,8 +212,9 @@ int Server::setListener(void) {
     }
     struct sockaddr_in *sockaddrin = (struct sockaddr_in *)
                                       (_info.actual->ai_addr);
+    hostname = inet_ntoa(sockaddrin->sin_addr);
     std::cout << "Server mounted succesfully on "
-              << inet_ntoa(sockaddrin->sin_addr)
+              << hostname
               << ":6667" << std::endl;
     _info.listener = socketfd;
     return _info.listener;
@@ -234,19 +242,19 @@ int Server::mainLoop(void) {
         if (poll(_fd_manager.fds, _fd_manager.fds_size, -1) == -1)
             return -1;
         for (int fd_idx = 0; fd_idx < _fd_manager.fds_size; fd_idx++) {
+            std::cout << "fd_idx : " << fd_idx << std::endl;
             if (_fd_manager.hasDataToRead(fd_idx) == false) {
                 continue;
             }
             /* listener is always at first entry */
             if (fd_idx == 0) {
-                _fd_manager.addNewUser();
+                if (_fd_manager.AcceptConnection() == -1) {
+                    string exception_msg("accept = -1");
+                    throw irc::exc::FatalError(exception_msg);
+                }
+                /* accepted connections get other fd's */
                 continue;
             }
-            // 1. check message format is correct
-            // 2. parse command & params
-            // 3. check user can indeed call command (blacklist, is chanop, etc)
-            // 4. prepare command response.
-            // 5. exec/send command response.
             srv_buff_size = recv(_fd_manager.fds[fd_idx].fd, srv_buff,
                              sizeof(srv_buff), 0);
             if (srv_buff_size == -1) {
@@ -259,79 +267,15 @@ int Server::mainLoop(void) {
                 _fd_manager.fds[fd_idx].fd = -1;
                 continue;
             }
-            MessageFromUser(fd_idx);
-            tools::clean_buffer(srv_buff, srv_buff_size);
-            /*string message(msg, bytes);
-            char **arr = ft_split(message.c_str(), ' ');
-            if (arr == NULL)
-                std::cerr << "XDDD " << std::endl;
-             //ft_strlen() - 1 intenta no llevarse el \n del final !! Esto hace
-               // * que el cliente parsee los mensajes de uno en uno y dan cosas raras.
-               // * de esta forma, no sucede 
-            for (int i=0; arr[i] != NULL; i++) {
-                std::string word(arr[i]);
-                if (word.compare("NICK") == 0) {
-                    nickname = string(arr[i + 1], ft_strlen(arr[i + 1]) - 1);
-                    size_t carriage_return_pos = nickname.find('\r');
-                    if (carriage_return_pos != string::npos) {
-                        std::cout << "b" << std::endl;
-                        nickname = nickname.substr(0, carriage_return_pos);
-                    }
-                } else if (word.compare("USER") == 0) {
-                    std::cout << "a" << std::endl;
-                    username = string(arr[i + 1]);
-                } else if (word.compare("JOIN") == 0) {
-                    char prefix = arr[1][0];
-                    string name = arr[1]++;
-                    std::cout << "nuevo canal que se tiene que crear con usuario a saber, prefijo " << prefix << " y nombre " << name << std::endl; 
-                    //Channel* channel = new Channel(prefix, name, );
-                    //_channels.push_back(channel);
-                } else if (word[0] == ':') {
-                    // -2 por la misma razon que strlen - 1
-                    realname = word.substr(1, word.size() - 2);
-                    break;
-                }
+            if (DataFromUser(fd_idx) == ERR_FATAL) {
+                string exception_msg("internal fatal error");
+                throw exc::FatalError(exception_msg);
             }
-            for (int i=0; arr[i] != NULL; i++) {
-                free(arr[i]);
-            }
-            free(arr);
-            //send(_fd_manager.fds[fd_idx].fd, "001 ")
-            }
-        }
-        if (!nickname.empty() && !username.empty()) {
-            //_users.push_back(new irc::User())
-            std::cout << "about to send repl y " << std::endl;
-            struct sockaddr_in *sockaddrin = (struct sockaddr_in *)(_info.actual->ai_addr);
-            string our_host(inet_ntoa(sockaddrin->sin_addr));*/
-            // pon aqui tus dos credenciales, es nicknaem!username@hostname o ip
-            // https://stackoverflow.com/questions/662918/how-do-i-concatenate-multiple-c-strings-on-one-line
-            /* Fallaba esto (RFC 2812 section 2.4 (page 7)) :
-             * Most of the messages sent to the server generate a reply of some
-             * sort.  The most common reply is the numeric reply, used for both
-             * errors and normal replies.  The numeric reply MUST be sent as one
-             * message consisting of the sender prefix, the three-digit numeric, and
-             * the target of the reply.
-             * Vale: resulta que weechat está programado en windows o para windows o de alguna
-             * forma relacionado con windows de manera que está introduciendo saltos de linea como
-             * \r\n en vez de \n. Este \r lo que hace es retornar el carro y reescribirme la string
-             * cuando la imprimo por pantalla haciendo que aparezcan cosas super raras.
-             */
-            /*std::string sender_prefix = ":" + our_host;
-            std::string rpl_welcome("001");
-            std::string target_of_reply = username;
-            std::string complete_name = nickname + "!" + username + "@" + "192.168.45.85";
-            std::cout << "our_host : [" << our_host << "], target_of_reply : [" << target_of_reply << "], complete_name : [" << complete_name << "]" << std::endl;
-             IRC USES CRLF !! specified in RFC 1459
-            string reply = sender_prefix + " " + rpl_welcome + " " + target_of_reply + " :Welcome to wassap 2 " + complete_name + "\r\n";
-            std::cout << "reply : [" << reply << "]" << std::endl;
-            send(_fd_manager.fds[1].fd, reply.c_str(), reply.length(), 0);
-            send(_fd_manager.fds[2].fd, reply.c_str(), reply.length(), 0);*/
         }
     }
 }
 
-int Server::MessageFromUser(int fd_idx) {
+int Server::DataFromUser(int fd_idx) {
 
     string cmd_string(srv_buff, srv_buff_size);
     /* reset server buff */
@@ -343,11 +287,11 @@ int Server::MessageFromUser(int fd_idx) {
     tools::split(cmd_vector, cmd_string, CRLF);
     /* ignore empty commands */
     if (cmd_vector.empty()) {
-        return CLEAN;
+        return OK;
     }
-
     int cmd_vector_size = cmd_vector.size();
-    for (int i = 0; i < cmd_vector_size; i++) {
+    int ret = OK;
+    for (int i = 0; i < cmd_vector_size && ret == OK; i++) {
         //std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << "] " << std::endl;
         Command command;
         if (command.Parse(cmd_vector[i]) != command.OK) {
@@ -358,64 +302,20 @@ int Server::MessageFromUser(int fd_idx) {
             break;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
-        int ret = (*this.*it->second)(command, fd_idx); // XD
-        if (ret == DONE) {
-            continue;
-        }
-        // Aquí viene la matriz de comandos.
+        ret = (*this.*it->second)(command, fd_idx); // XD
     }
-    return CLEAN;
+    return ret;
 }
 
-/**
- * Command: NICK
- * Parameters: <nickname>
- */
-int Server::NICK(Command &cmd, int fd) {
-
-    int size = cmd.args.size();
-    if (size != 2) {
-        return ERR_NO_REPLY;
+int Server::DataToUser(int fd_idx, string &msg) {
+    msg.insert(0, ":" + hostname);
+    msg.insert(msg.size(), CRLF);
+    //std::cout << "sending : [" << msg << "]" << std::endl;
+    if (send(_fd_manager.fds[fd_idx].fd, msg.c_str(), msg.size(), 0) == -1) {
+        return -1;
     }
-    string nick = cmd.Name();
-    User new_user(fd, nick);   
-
-    if (user_map.empty() || user_map.count(nick)) {
-        user_map.insert(std::make_pair(nick, new_user));
-        return DONE;
-    }
-    nick_vector[fd] = nick;
-    /* molaría aquí construir el reply de error,
-     * y enviarlo al correspondiente fd.
-     */
-    return SEND_ERR_REPLY;
+    return 0;
 }
-
-
-/**
- * Command: USER
- * Parameters: <username> 0 * <realname>
- */
-int Server::USER(Command &cmd, int fd) {
-
-    int size = cmd.args.size();
-    if (size != 5) {
-        return ERR_NO_REPLY;
-    }
-    string nick = nick_vector[fd];
-    if (!user_map.count(nick)) {
-        // needs nick first, maybe it has an error message here.
-        return ERR_NO_REPLY;
-    }
-    UserMap::iterator it = user_map.find(nick);
-    User user = it->second;
-
-    user.name = cmd.args[1];
-    user.full_name = cmd.args[size - 1];
-
-    return DONE;
-}
-
 
 
 /* AddressInfo Section -------------------------- */
@@ -452,12 +352,12 @@ bool FdManager::hasDataToRead(int entry) {
     return (fds[entry].revents & POLLIN) ? true : false;
 }
 
-int FdManager::addNewUser(void) {
+int FdManager::AcceptConnection(void) {
     struct sockaddr_storage client;
     socklen_t addrlen = sizeof(struct sockaddr_storage);
     int fd_new = -1;
     if ((fd_new = accept(fds[0].fd, (struct sockaddr *)&client,
-                         &addrlen)) == -1)
+                         &addrlen)) == -1)  
     {
         return -1;
     }

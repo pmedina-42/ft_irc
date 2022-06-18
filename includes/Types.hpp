@@ -5,6 +5,7 @@
 
 #include <map>
 #include <list>
+#include <string>
 
 #define CRLF "\r\n"
 

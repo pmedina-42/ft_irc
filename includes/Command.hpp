@@ -46,6 +46,8 @@ class Command {
 
     private:
     void debugCommand() const;
+    bool colon_placed_incorrectly(string &str);
+    bool newlines_left(string &str);
 };
 
 } // namespace

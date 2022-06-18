@@ -14,9 +14,9 @@
 
 NAME		=	ft_irc
 SRCS		=	srcs/main.cpp srcs/Server.cpp srcs/Channel.cpp srcs/User.cpp srcs/ChannelUser.cpp \
-				srcs/Tools.cpp srcs/Command.cpp
+				srcs/Tools.cpp srcs/Command.cpp srcs/ServerCommands.cpp
 CXX			=	g++ 
-CXXFLAGS	=	-Wall -Wextra -Werror -std=c++98 -g3 -fsanitize=address
+CXXFLAGS	=	-Wall -Wextra -Werror -std=c++98 -Wno-c++0x-compat -pedantic -g3 
 RM			=	rm -f
 OBJS		=	$(SRCS:.cpp=.o)
 

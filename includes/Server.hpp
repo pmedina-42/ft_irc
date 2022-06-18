@@ -45,7 +45,7 @@ class FdManager {
 
     void setUpListener(int listener);
     bool hasDataToRead(int entry);
-    int addNewUser(void);
+    int AcceptConnection(void);
     /* fd from clients manager. This includes
     * the listener, at entry 0.
     */
@@ -73,23 +73,23 @@ class Server {
 
     /* parses message into commands, calls 
      * commands from user until finished. */
-    int MessageFromUser(int fd_idx);
-    
+    int DataFromUser(int fd_idx);
+    int DataToUser(int fd_idx, string &data);
+
+    /* loop through all poll fd's */
     int mainLoop(void);
 
-    typedef enum BUFFER_STATE {
-        CLEAN = 0,
-        PENDING_DATA = 1,
-    } BUFFER_STATE;
-
+    /* Esto no es definitivo ni mucho menos. Seguramente
+     * cada comando acabe gestionandose a si mismo,
+     * en vez de trabajar con un return generalizado. */
     typedef enum COMMAND_RESULT {
-        DONE = 0, // nada que hacer
-        SEND_ERR_REPLY, // not sure
-        ERR_NO_REPLY // not sure either
+        OK = 0, // nada que hacer
+        ERR_FATAL
     } COMMAND_RESULT;
     
     char srv_buff[513];
     int srv_buff_size;
+    string hostname;
     
     ChannelMap channel_map; /* Find channels by name */
     UserMap user_map;  /* Find users by nickname */
@@ -105,6 +105,8 @@ class Server {
     /* command implementations */
     int NICK(Command &cmd, int fd);
     int USER(Command &cmd, int fd);
+
+    bool nickAlreadyInUse(string &nickname);
 };
 
 /**
