@@ -13,7 +13,7 @@
 # 'dir' is used in here to increase readibity, the current usage has no other effect.
 
 NAME		=	ft_irc
-SRCS		=	srcs/main.cpp srcs/Server.cpp srcs/Channel.cpp srcs/User.cpp srcs/ChannelUser.cpp \
+SRCS		=	srcs/main.cpp srcs/Server.cpp srcs/User.cpp srcs/Channel.cpp srcs/ChannelUser.cpp\
 				srcs/Tools.cpp srcs/Command.cpp srcs/ServerCommands.cpp
 CXX			=	g++ 
 CXXFLAGS	=	-Wall -Wextra -Werror -std=c++98 -Wno-c++0x-compat -pedantic -g3 

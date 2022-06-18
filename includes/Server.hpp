@@ -22,7 +22,6 @@ class Channel;
 
 namespace irc {
 
-
 class AddressInfo {
     public:
     AddressInfo(void);
@@ -45,7 +44,9 @@ class FdManager {
 
     void setUpListener(int listener);
     bool hasDataToRead(int entry);
+    bool hasHangUp(int entry);
     int AcceptConnection(void);
+    void CloseConnection(int fd_idx);
     /* fd from clients manager. This includes
     * the listener, at entry 0.
     */
@@ -69,15 +70,16 @@ class Server {
     int setServerInfo(string &hostname, string &port);
     int setListener(void);
     void loadCommandMap(void);
-    void loadNickVector(void);
 
     /* parses message into commands, calls 
      * commands from user until finished. */
-    int DataFromUser(int fd_idx);
+    void DataFromUser(int fd, int fd_idx);
     int DataToUser(int fd_idx, string &data);
 
     /* loop through all poll fd's */
     int mainLoop(void);
+    void AddNewUser(int fd);
+    void RemoveUser(int fd);
 
     /* Esto no es definitivo ni mucho menos. Seguramente
      * cada comando acabe gestionandose a si mismo,
@@ -92,8 +94,8 @@ class Server {
     string hostname;
     
     ChannelMap channel_map; /* Find channels by name */
-    UserMap user_map;  /* Find users by nickname */
-    vector<string> nick_vector; /* Find nickname by fd_idx */
+    NickFdMap nick_fd_map;  /* Find users by nickname */
+    FdUserMap fd_user_map; /* Find nickname by fd_idx (entry of fds[]) */
 
     /* Socket related stuff */
     AddressInfo _info;
@@ -114,7 +116,28 @@ class Server {
  *   USER carce 0 * :carce
  *  ]
  * 
- * Metodos authenticated
+ * Funcionamiento interno de las estructuras del servidor:
+ * Cuando un usuario se conecta, de él solo se conoce el
+ * fd asociado, o la ENTRADA que ocupa en la matriz de fds
+ * que usa poll. Ni nickname, ni username, ni nada.
+ * Por este motivo, existe un FdUserMap que en función de su
+ * índice de fd que ocupe en la matriz de poll, se corresponde
+ * con una entrada de User. A su vez, existirá, para amenizar 
+ * el envío de mensajes privados o mensajes a canal o peticiones
+ * con necesidad de lookup de nombre de usuario, un mapa de
+ * clave nickname y valor fd. De esta forma, cuando se tenga un nickname
+ * en vez de un fd, se usará el mapa para encontrar el fd correpsondiente,
+ * y luego se buscará al usuario dentro del FdUserMap.
+ * 
+ * 
+ * 
+ * 
+ * Para gestionar mensajes de NICK / USER iniciales en
+ * redes con banda ancha muy mala, o troleos con netcat más bien
+ * ya que no existe a día de hoy una red que no pueda procesar por
+ * tcp en un solo paquete 30 bytes, es necesario poder reconocer
+ * a un usuario por su fd antes incluso de que nos haya proporcionado
+ * un nickname. Y cuando s
  */
 
 }

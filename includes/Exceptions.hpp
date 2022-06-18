@@ -4,6 +4,12 @@
 #include <exception>
 #include <iostream>
 
+/* Throw is cost ineficcient when used as a return value.
+ * These exceptions are not to be used to guide program
+ * branching. These exceptions are meant to provide information
+ * on a problem that the program cannot continue running with.
+ */
+
 namespace irc {
 namespace exc {
 
@@ -24,7 +30,7 @@ class ServerSetUpError : public std::exception {
 class FatalError : public std::exception {
     
     public:
-    FatalError(const string& msg) : m_msg(msg) {}
+    FatalError(const string msg) : m_msg(msg) {}
     virtual ~FatalError() throw() {}
 
     virtual const char* what() const throw ()  {

@@ -9,7 +9,7 @@
 
 #define CRLF "\r\n"
 
-namespace irc{
+namespace irc {
 
 class Channel;
 class User;
@@ -18,9 +18,11 @@ class Command;
 class Server;
 
 typedef std::map<std::string, irc::Channel> ChannelMap;
-typedef std::map<std::string, irc::User> UserMap;
 typedef std::map<std::string, irc::ChannelUser> ChannelUserMap;
 typedef std::list<irc::Command> CommandList;
+
+typedef std::map<int, irc::User> FdUserMap;
+typedef std::map<std::string, int> NickFdMap;
 
 typedef int (irc::Server::*CommandFnx)(Command &cmd, int fd); //este es pa enmarcarlo xdd
 typedef std::map<std::string, CommandFnx> CommandMap;

@@ -40,8 +40,11 @@ namespace irc {
 class User {
 
     public:
-    User(int fd, string nick);
+    User(int fd);
+    User(const User &other);
     virtual ~User();
+
+    User& operator=(const User &other);
 
     void setPrefixFromHost(string &host);
     /* ATTRIBUTES */

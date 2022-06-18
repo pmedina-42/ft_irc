@@ -16,7 +16,7 @@ class User;
 class ChannelUser : public User {
 
     public:
-    ChannelUser(int fd, string nick);
+    ChannelUser(int fd);
     ~ChannelUser();
 
     /* ATTRIBUTES */

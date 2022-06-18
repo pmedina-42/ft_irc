@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sstream>
 #include <utility>
+#include <fcntl.h>
 
 #include "libft.h"
 
@@ -74,7 +75,6 @@ Server::Server(void)
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
-    loadNickVector();
     mainLoop();
 }
 
@@ -91,13 +91,11 @@ Server::Server(string &hostname, string &port) {
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
-    loadNickVector();
     mainLoop();
 }
 
 Server::~Server(void) {
 }
-
 
 /*
  * sets all entries in internal struct addrinfo. This includes
@@ -124,7 +122,6 @@ int Server::setServerInfo(void) {
         std::cerr << "gethostname error" << std::endl;
         return -1;
     }
-    std::cout << hostname << std::endl;
     if (get_addrinfo_from_params(hostname, port, &hints, &servinfo) == -1) {
         if (servinfo != NULL) {
             freeaddrinfo(servinfo);
@@ -150,11 +147,6 @@ int Server::setServerInfo(string &hostname, string &port) {
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; // Ipv4
     hints.ai_socktype = SOCK_STREAM; // TCP
-    
-    /* in_addr and sockaddr_in are both just uint32_t */
-    //if (inet_aton(hostname.c_str(), (in_addr *)hints.ai_addr) == 0)
-    //	return -1;
-
     if (get_addrinfo_from_params(hostname.c_str(), port.c_str(), &hints,
                                  &servinfo) == -1)
     {
@@ -225,13 +217,6 @@ void Server::loadCommandMap(void) {
     cmd_map.insert(std::make_pair(string("USER"), (&Server::USER)));
 }
 
-void Server::loadNickVector(void) {
-    nick_vector.reserve(MAX_FDS);
-    for (int i=0; i < MAX_FDS; i++) {
-        nick_vector.push_back("");
-    }
-}
-
 
 // this might have to manage signals at some point ?? 
 int Server::mainLoop(void) {
@@ -242,57 +227,75 @@ int Server::mainLoop(void) {
         if (poll(_fd_manager.fds, _fd_manager.fds_size, -1) == -1)
             return -1;
         for (int fd_idx = 0; fd_idx < _fd_manager.fds_size; fd_idx++) {
-            std::cout << "fd_idx : " << fd_idx << std::endl;
+            if (_fd_manager.hasHangUp(fd_idx) == true) {
+                _fd_manager.CloseConnection(fd_idx);
+                continue;
+            }
             if (_fd_manager.hasDataToRead(fd_idx) == false) {
                 continue;
             }
             /* listener is always at first entry */
             if (fd_idx == 0) {
-                if (_fd_manager.AcceptConnection() == -1) {
-                    string exception_msg("accept = -1");
-                    throw irc::exc::FatalError(exception_msg);
-                }
-                /* accepted connections get other fd's */
+                int new_fd = _fd_manager.AcceptConnection();
+                AddNewUser(new_fd);
                 continue;
             }
-            srv_buff_size = recv(_fd_manager.fds[fd_idx].fd, srv_buff,
-                             sizeof(srv_buff), 0);
-            if (srv_buff_size == -1) {
-                string exception_msg("recv = -1");
-                throw exc::FatalError(exception_msg);
-            }
-            if (srv_buff_size == 0) {
-                // MANAGE CLOSED CONNECTION
-                close(_fd_manager.fds[fd_idx].fd);
-                _fd_manager.fds[fd_idx].fd = -1;
-                continue;
-            }
-            if (DataFromUser(fd_idx) == ERR_FATAL) {
-                string exception_msg("internal fatal error");
-                throw exc::FatalError(exception_msg);
-            }
+            int fd = _fd_manager.fds[fd_idx].fd;
+            srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
+            DataFromUser(fd, fd_idx);
         }
     }
 }
 
-int Server::DataFromUser(int fd_idx) {
+void Server::AddNewUser(int fd) {
+    User user(fd);
+    fd_user_map.insert(std::make_pair(fd, user));
+}
 
+void Server::RemoveUser(int fd) {
+    FdUserMap::iterator it = fd_user_map.find(fd);
+    User user = it->second;
+    /* If the user had a nick registered, erase it */
+    if (nick_fd_map.count(user.nick)) {
+        nick_fd_map.erase(user.nick);
+    }
+    /* erase user from fd map (this entry is created after connection) */
+    fd_user_map.erase(fd);
+}
+
+void Server::DataFromUser(int fd, int fd_idx) {
+
+    if (srv_buff_size == -1) {
+        throw irc::exc::FatalError("recv -1");
+    }
+    if (srv_buff_size == 0) {
+        _fd_manager.CloseConnection(fd_idx);
+        RemoveUser(fd);
+        return ;
+    }
     string cmd_string(srv_buff, srv_buff_size);
-    /* reset server buff */
     tools::clean_buffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
+    // GESTIONAR BUFFER INTERNO DEL USER 
+
+    /* Get current output + remains, then work with it. If command
+     * + remains give ____ CRLF ___, then execute first command, and save
+     * second one. It is indeed a fucking mess but what else can I do.
+    */
+    /* If the command is incomplete, save content on user
+     * buffer */
 
     /* parse all commands */
     vector<string> cmd_vector;
     tools::split(cmd_vector, cmd_string, CRLF);
     /* ignore empty commands */
     if (cmd_vector.empty()) {
-        return OK;
+        return ;
     }
     int cmd_vector_size = cmd_vector.size();
     int ret = OK;
     for (int i = 0; i < cmd_vector_size && ret == OK; i++) {
-        //std::cout << "cmd_vector[" << i << "] : [" << cmd_vector[i] << "] " << std::endl;
+        //std::cout << "cmd vector : [" << cmd_vector[i] << "]" << std::endl;
         Command command;
         if (command.Parse(cmd_vector[i]) != command.OK) {
             break;
@@ -302,16 +305,19 @@ int Server::DataFromUser(int fd_idx) {
             break;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
-        ret = (*this.*it->second)(command, fd_idx); // XD
+        std::cout << "fd : " << fd << std::endl;
+        ret = (*this.*it->second)(command, fd);
     }
-    return ret;
+    if (ret == ERR_FATAL) {
+        throw irc::exc::FatalError("command execution fatal error");
+    }
 }
 
-int Server::DataToUser(int fd_idx, string &msg) {
+int Server::DataToUser(int fd, string &msg) {
     msg.insert(0, ":" + hostname);
     msg.insert(msg.size(), CRLF);
-    //std::cout << "sending : [" << msg << "]" << std::endl;
-    if (send(_fd_manager.fds[fd_idx].fd, msg.c_str(), msg.size(), 0) == -1) {
+    std::cout << "sending : [" << msg << "]" << std::endl;
+    if (send(fd, msg.c_str(), msg.size(), 0) == -1) {
         return -1;
     }
     return 0;
@@ -352,34 +358,56 @@ bool FdManager::hasDataToRead(int entry) {
     return (fds[entry].revents & POLLIN) ? true : false;
 }
 
+bool FdManager::hasHangUp(int entry) {
+    return (fds[entry].revents & POLLHUP) ? true : false;
+}
+
+/* calls accept, and prepares the fd returned to be polled correctly. 
+ * Throws in case of fatal error.
+ */
 int FdManager::AcceptConnection(void) {
     struct sockaddr_storage client;
     socklen_t addrlen = sizeof(struct sockaddr_storage);
     int fd_new = -1;
+    /* get new fd from accepted connection */
     if ((fd_new = accept(fds[0].fd, (struct sockaddr *)&client,
-                         &addrlen)) == -1)  
+                         &addrlen)) == -1)
     {
-        return -1;
+        throw irc::exc::FatalError("accept -1");
     }
     fds_size++;
-
+    /* set to non blocking fd */
+    if (fcntl(fd_new, F_SETFL, O_NONBLOCK) == -1) {
+        throw irc::exc::FatalError("fctnl -1");
+    }
+    /* set up fd for poll */
     fds[fds_size - 1].fd = fd_new;
     fds[fds_size - 1].events = POLLIN;
+    fds[fds_size - 1].events += POLLHUP;
     fds[fds_size - 1].revents = 0;
+
+    /* debug information */
     if (client.ss_family == AF_INET)  {
         char str[14];
         struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
         inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
-        string ip(str);
-        std::cout << "connected to " << ip << std::endl;
+        std::cout << "connected to " << str << std::endl;
     } else {
         char str[20];
-        struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
-        inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
-        string ip(str);
-        std::cout << "connected to " << ip << std::endl;	
+        struct sockaddr_in6 *ptr = (struct sockaddr_in6 *)&client;
+        inet_ntop(AF_INET6, &(ptr->sin6_addr), str, sizeof(str));
+        std::cout << "connected to " << str << std::endl;
     }
-    return 0;
+    return fd_new;
+}
+
+/* Maybe eventually handle closing connections in such a way
+ * we dont end up with all fd's at -1 ? */
+void FdManager::CloseConnection(int fd_idx) {
+    if (close(fds[fd_idx].fd) == -1) {
+        throw irc::exc::FatalError("close -1");
+    }
+    fds[fd_idx].fd = -1;
 }
 
 

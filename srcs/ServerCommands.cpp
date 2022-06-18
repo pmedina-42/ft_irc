@@ -27,13 +27,14 @@ static bool nickFormatOk(string &nickname) {
             return false;
         }
     }
-
     return true;
 }
 
 bool Server::nickAlreadyInUse(string &nickname) {
-    for (UserMap::iterator it = user_map.begin(); it != user_map.end(); it++) {
-        if (tools::is_equal(nickname, it->first)) {
+    for (FdUserMap::iterator it = fd_user_map.begin();
+                        it != fd_user_map.end(); it++)
+    {
+        if (tools::is_equal(nickname, it->second.nick)) {
             return true;
         }
     }
@@ -45,7 +46,6 @@ bool Server::nickAlreadyInUse(string &nickname) {
  * Parameters: <nickname>
  */
 int Server::NICK(Command &cmd, int fd) {
-
     int size = cmd.args.size();
     if (size != 2) {
         string reply(ERR_NONICKNAMEGIVEN"*"STR_NONICKNAMEGIVEN);
@@ -68,17 +68,20 @@ int Server::NICK(Command &cmd, int fd) {
         }
         return OK;
     }
+    FdUserMap::iterator it = fd_user_map.find(fd);
+    User user = it->second;
     /* case nickname change (fd is recognised, nickname is not) */
-    if (!nick_vector[fd].empty()) {
-        UserMap::iterator it = user_map.find(nick_vector[fd]);
-        it->second.nick = nick;
-        nick_vector[fd] = nick;
+    if (!user.nick.empty()) {
+        nick_fd_map.erase(user.nick);
+        nick_fd_map.insert(std::make_pair(nick, fd));
+        user.nick = nick;
+        it->second = user;
         return OK;
     }
-    /* case new user */
-    User new_user(fd, nick);
-    user_map.insert(std::make_pair(nick, new_user));
-    nick_vector[fd] = nick;
+    /* case the nickname is the first recieved from this user */
+    user.nick = nick;
+    it->second = user;
+    nick_fd_map.insert(std::make_pair(nick, fd));
     return OK;
 }
 
@@ -96,15 +99,11 @@ int Server::USER(Command &cmd, int fd) {
         }
         return OK;
     }
-    string nick = nick_vector[fd];
-    if (nick.empty()) {
-        return OK;
-    }
-    if (!user_map.count(nick)) {
-        return OK;
-    }
-    UserMap::iterator it = user_map.find(nick);
+    FdUserMap::iterator it = fd_user_map.find(fd);
     User user = it->second;
+    if (user.nick.empty()) {
+        return OK; // ignore user data from nicknameless user
+    }
     if (user.registered == true) {
         string reply(ERR_ALREADYREGISTERED""STR_ALREADYREGISTERED);
         if (DataToUser(fd, reply) == -1) {
@@ -116,6 +115,7 @@ int Server::USER(Command &cmd, int fd) {
     user.full_name = cmd.args[size - 1];
     user.setPrefixFromHost(hostname);
     user.registered = true;
+    it->second = user; // is this necessary ?
     string welcome_msg(RPL_WELCOME+user.name+RPL_WELCOME_STR_1+user.prefix);
     if (DataToUser(fd, welcome_msg) == -1) {
         return ERR_FATAL;

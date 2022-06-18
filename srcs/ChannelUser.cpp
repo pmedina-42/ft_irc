@@ -7,9 +7,9 @@ using std::string;
 namespace irc {
 
 /* Creo que es mejor quereciba un User */
-ChannelUser::ChannelUser(int fd, string nick)
+ChannelUser::ChannelUser(int fd)
 :
-	User(fd, nick)
+	User(fd)
 {}
 
 ChannelUser::~ChannelUser() {}
