@@ -50,15 +50,18 @@ void Server::NICK(Command &cmd, int fd) {
     if (size != 2) {
         string reply(ERR_NONICKNAMEGIVEN"*"STR_NONICKNAMEGIVEN);
         DataToUser(fd, reply);
+        return ;
     }
     string nick = cmd.args[1];
     if (nickFormatOk(nick) == false) {
         string reply(ERR_ERRONEUSNICKNAME+nick+STR_ERRONEUSNICKNAME);
         DataToUser(fd, reply);
+        return ;
     }
     if (nickAlreadyInUse(nick)) {
         string reply(ERR_NICKNAMEINUSE+nick+STR_NICKNAMEINUSE);
         DataToUser(fd, reply);
+        return ;
     }
     FdUserMap::iterator it = fd_user_map.find(fd);
     User user = it->second;
@@ -68,6 +71,7 @@ void Server::NICK(Command &cmd, int fd) {
         nick_fd_map.insert(std::make_pair(nick, fd));
         user.nick = nick;
         it->second = user;
+        return ;
     }
     /* case the nickname is the first recieved from this user */
     user.nick = nick;
@@ -85,6 +89,7 @@ void Server::USER(Command &cmd, int fd) {
     if (size != 5) {
         string reply(ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
         DataToUser(fd, reply);
+        return;
     }
     FdUserMap::iterator it = fd_user_map.find(fd);
     User user = it->second;
@@ -94,6 +99,7 @@ void Server::USER(Command &cmd, int fd) {
     if (user.registered == true) {
         string reply(ERR_ALREADYREGISTERED""STR_ALREADYREGISTERED);
         DataToUser(fd, reply);
+        return ;
     }
     user.name = cmd.args[1];
     user.full_name = cmd.args[size - 1];
