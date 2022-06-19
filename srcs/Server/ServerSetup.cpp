@@ -66,7 +66,7 @@ int Server::setServerInfo(void) {
         return -1;
     /* This struct addrinfo may not be the one that binds, but
      * thats one more step from here. */
-    this->servinfo = servinfo;
+    fd_manager.servinfo = servinfo;
     return 0;
 }
 
@@ -93,7 +93,7 @@ int Server::setServerInfo(string &hostname, string &port) {
         return -1;
     /* This struct addrinfo may not be the one that binds, but
      * thats one more step from here. */
-    this->servinfo = servinfo;
+    fd_manager.servinfo = servinfo;
     return 0;
 }
 
@@ -107,7 +107,7 @@ int Server::setListener(void) {
 
     int socketfd = -1;
     /* loop through addresses until bind works */
-    for (struct addrinfo *p = servinfo; p != NULL; p = p->ai_next) {
+    for (struct addrinfo *p = fd_manager.servinfo; p != NULL; p = p->ai_next) {
         /* open a socket given servinfo */
         if ((socketfd = socket(p->ai_family,
                                p->ai_socktype,
@@ -126,7 +126,7 @@ int Server::setListener(void) {
             continue;
         }
         /* if it gets to this point everything should be fine */
-        servinfo = p;
+        fd_manager.servinfo = p;
         break;
     }
     if (socketfd == -1) {
@@ -137,13 +137,13 @@ int Server::setListener(void) {
         return -1;
     }
     struct sockaddr_in *sockaddrin = (struct sockaddr_in *)
-                                      (servinfo->ai_addr);
+                                      (fd_manager.servinfo->ai_addr);
     hostname = inet_ntoa(sockaddrin->sin_addr);
-    std::cout << "Server mounted succesfully on "
-              << hostname
+    /* debug, might not need it in the end */
+    std::cout << "Server mounted succesfully on " << hostname
               << ":6667" << std::endl;
-    listener = socketfd;
-    return listener;
+    fd_manager.listener = socketfd;
+    return socketfd;
 }
 
 void Server::loadCommandMap(void) {

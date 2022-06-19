@@ -67,11 +67,9 @@ Server::~Server(void) {
 // this might have to manage signals at some point ?? 
 int Server::mainLoop(void) {
 
-    fd_manager.setUpListener(listener);
+    fd_manager.setUpListener();
     while (42) {
-        /* -1 = wait until some event happens */
-        if (poll(fd_manager.fds, fd_manager.fds_size, -1) == -1)
-            return -1;
+        fd_manager.Poll();
         for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
             if (fd_manager.hasHangUp(fd_idx) == true) {
                 fd_manager.CloseConnection(fd_idx);
@@ -88,7 +86,7 @@ int Server::mainLoop(void) {
             }
             int fd = fd_manager.fds[fd_idx].fd;
             srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
-            DataFromUser(fd, fd_idx);
+            DataFromUser(fd_idx);
         }
     }
 }
@@ -109,8 +107,9 @@ void Server::RemoveUser(int fd) {
     fd_user_map.erase(fd);
 }
 
-void Server::DataFromUser(int fd, int fd_idx) {
+void Server::DataFromUser(int fd_idx) {
 
+    int fd = fd_manager.fds[fd_idx].fd;
     if (srv_buff_size == -1) {
         throw irc::exc::FatalError("recv -1");
     }

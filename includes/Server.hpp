@@ -26,11 +26,12 @@ class FdManager {
     FdManager(FdManager &rhs);
     ~FdManager(void);
 
-    void setUpListener(int listener);
+    void setUpListener(void);
     bool hasDataToRead(int entry);
     bool hasHangUp(int entry);
     int AcceptConnection(void);
     void CloseConnection(int fd_idx);
+    void Poll(void);
     /* fd from clients manager. This includes
     * the listener, at entry 0.
     */
@@ -38,6 +39,9 @@ class FdManager {
     int fds_size;
     /* addresses corresponding to each client */
     struct sockaddr *addr[MAX_FDS];
+
+    struct addrinfo *servinfo;
+    int listener;
 };
 
 class Server {
@@ -57,7 +61,7 @@ class Server {
 
     /* parses message into commands, calls 
      * commands from user until finished. */
-    void DataFromUser(int fd, int fd_idx);
+    void DataFromUser(int fd_idx);
     int DataToUser(int fd_idx, string &data);
 
     /* loop through all poll fd's */
@@ -65,18 +69,9 @@ class Server {
     void AddNewUser(int fd);
     void RemoveUser(int fd);
 
-    /* Esto no es definitivo ni mucho menos. Seguramente
-     * cada comando acabe gestionandose a si mismo,
-     * en vez de trabajar con un return generalizado. */
-    typedef enum COMMAND_RESULT {
-        OK = 0, // nada que hacer
-        ERR_FATAL
-    } COMMAND_RESULT;
-    
     char srv_buff[SERVER_BUFF_MAX_SIZE];
     int srv_buff_size;
     string hostname;
-
     
     ChannelMap channel_map; /* Find channels by name */
     NickFdMap nick_fd_map;  /* Find users by nickname */
@@ -84,10 +79,8 @@ class Server {
 
     /* Socket related stuff */
     FdManager    fd_manager;
-    struct addrinfo* servinfo;
-    int listener;
 
-    /* Map with all comand responses */
+    /* Map with all command responses */
     CommandMap cmd_map;
 
     /* command implementations */

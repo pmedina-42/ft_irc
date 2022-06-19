@@ -17,11 +17,18 @@ FdManager::FdManager(void)
 FdManager::~FdManager(void) {
 }
 
-void FdManager::setUpListener(int listener) {
+void FdManager::setUpListener(void) {
     fds[0].fd = listener;
     fds[0].events = POLLIN;
     fds[0].revents = 0;
     fds_size++;
+}
+
+void FdManager::Poll(void) {
+    /* -1 = wait until some event happens */
+    if (poll(fds, fds_size, -1) == -1) {
+        throw irc::exc::FatalError("poll -1");
+    }
 }
 
 bool FdManager::hasDataToRead(int entry) {
