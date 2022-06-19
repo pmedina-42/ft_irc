@@ -1,5 +1,5 @@
-#ifndef CHANNEL_H
-#define CHANNEL_H
+#ifndef IRC42_CHANNEL_H
+#define IRC42_CHANNEL_H
 
 #include <list>
 #include <map>

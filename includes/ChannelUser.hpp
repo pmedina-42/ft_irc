@@ -1,5 +1,5 @@
-#ifndef IRC42_USER_H
-#define IRC42_USER_H
+#ifndef IRC42_CHANNELUSER_H
+#define IRC42_CHANNELUSER_H
 
 #include <unistd.h>
 #include <string.h>

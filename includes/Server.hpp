@@ -1,22 +1,15 @@
 #ifndef IRC42_SERVER_H
-#define IRC42_SERVER_H
+# define IRC42_SERVER_H
 
-#include <unistd.h>
-#include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
 #include <poll.h>
-#include <vector>
+#include "Channel.hpp" // without this, it doesnt compile
 #include "Types.hpp"
-#include "Channel.hpp"
 
 using std::string;
-using std::vector;
-
-class User;
-class Channel;
 
 namespace irc {
 

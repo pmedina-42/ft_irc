@@ -1,9 +1,6 @@
-#ifndef IRC42_IUSER_H
-#define IRC42_IUSER_H
+#ifndef IRC42_USER_H
+# define IRC42_USER_H
 
-#include <unistd.h>
-#include <string.h>
-#include <string>
 #include "Types.hpp"
 
 using std::string;

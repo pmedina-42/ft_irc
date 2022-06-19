@@ -1,5 +1,6 @@
 #include "Channel.hpp"
 #include "ChannelUser.hpp"
+#include "Server.hpp"
 #include <algorithm>
 
 #include <Types.hpp>

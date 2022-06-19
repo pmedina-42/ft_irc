@@ -1,9 +1,7 @@
 #include <iostream>
-
-#include <string.h>
 #include <utility>
 
-#include "libft.h"
+#include <string.h>
 
 #include "Server.hpp"
 #include "User.hpp"
@@ -62,7 +60,6 @@ Server::Server(string &hostname, string &port) {
 
 Server::~Server(void) {
 }
-
 
 // this might have to manage signals at some point ?? 
 int Server::mainLoop(void) {
