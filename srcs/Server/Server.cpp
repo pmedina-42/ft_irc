@@ -71,11 +71,11 @@ int Server::mainLoop(void) {
     while (42) {
         fd_manager.Poll();
         for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
-            if (fd_manager.hasHangUp(fd_idx) == true) {
+            if (fd_manager.hasHangUp(fd_idx)) {
                 fd_manager.CloseConnection(fd_idx);
                 continue;
             }
-            if (fd_manager.hasDataToRead(fd_idx) == false) {
+            if (!fd_manager.hasDataToRead(fd_idx)) {
                 continue;
             }
             /* listener is always at first entry */
