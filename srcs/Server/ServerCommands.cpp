@@ -45,28 +45,20 @@ bool Server::nickAlreadyInUse(string &nickname) {
  * Command: NICK
  * Parameters: <nickname>
  */
-int Server::NICK(Command &cmd, int fd) {
+void Server::NICK(Command &cmd, int fd) {
     int size = cmd.args.size();
     if (size != 2) {
         string reply(ERR_NONICKNAMEGIVEN"*"STR_NONICKNAMEGIVEN);
-        if (DataToUser(fd, reply) == -1) {
-            return ERR_FATAL;
-        }
+        DataToUser(fd, reply);
     }
     string nick = cmd.args[1];
     if (nickFormatOk(nick) == false) {
         string reply(ERR_ERRONEUSNICKNAME+nick+STR_ERRONEUSNICKNAME);
-        if (DataToUser(fd, reply) == -1) {
-            return ERR_FATAL;
-        }
-        return OK;
+        DataToUser(fd, reply);
     }
     if (nickAlreadyInUse(nick)) {
         string reply(ERR_NICKNAMEINUSE+nick+STR_NICKNAMEINUSE);
-        if (DataToUser(fd, reply) == -1) {
-            return ERR_FATAL;
-        }
-        return OK;
+        DataToUser(fd, reply);
     }
     FdUserMap::iterator it = fd_user_map.find(fd);
     User user = it->second;
@@ -76,40 +68,32 @@ int Server::NICK(Command &cmd, int fd) {
         nick_fd_map.insert(std::make_pair(nick, fd));
         user.nick = nick;
         it->second = user;
-        return OK;
     }
     /* case the nickname is the first recieved from this user */
     user.nick = nick;
     it->second = user;
     nick_fd_map.insert(std::make_pair(nick, fd));
-    return OK;
 }
 
 /**
  * Command: USER
  * Parameters: <username> 0 * <realname>
  */
-int Server::USER(Command &cmd, int fd) {
+void Server::USER(Command &cmd, int fd) {
 
     int size = cmd.args.size();
     if (size != 5) {
         string reply(ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-        if (DataToUser(fd, reply) == -1) {
-            return ERR_FATAL;
-        }
-        return OK;
+        DataToUser(fd, reply);
     }
     FdUserMap::iterator it = fd_user_map.find(fd);
     User user = it->second;
     if (user.nick.empty()) {
-        return OK; // ignore user data from nicknameless user
+        return ;
     }
     if (user.registered == true) {
         string reply(ERR_ALREADYREGISTERED""STR_ALREADYREGISTERED);
-        if (DataToUser(fd, reply) == -1) {
-            return ERR_FATAL;
-        }
-        return OK;
+        DataToUser(fd, reply);
     }
     user.name = cmd.args[1];
     user.full_name = cmd.args[size - 1];
@@ -117,10 +101,7 @@ int Server::USER(Command &cmd, int fd) {
     user.registered = true;
     it->second = user; // is this necessary ?
     string welcome_msg(RPL_WELCOME+user.name+RPL_WELCOME_STR_1+user.prefix);
-    if (DataToUser(fd, welcome_msg) == -1) {
-        return ERR_FATAL;
-    }
-    return OK;
+    DataToUser(fd, welcome_msg);
 }
 
 } // namespace irc

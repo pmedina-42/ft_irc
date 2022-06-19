@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <string>
-#include "Server.hpp"
+#include "Types.hpp"
 
 using std::string;
 

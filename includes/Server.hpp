@@ -4,15 +4,13 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 #include <poll.h>
 #include <vector>
 #include "Types.hpp"
-
-#define LISTENER_BACKLOG 20
-#define NAME_MAX_SZ 10
-#define MAX_FDS 255
-
-#define SERVER_BUFF_MAX_SIZE 512
+#include "Channel.hpp"
 
 using std::string;
 using std::vector;
@@ -21,20 +19,6 @@ class User;
 class Channel;
 
 namespace irc {
-
-class AddressInfo {
-    public:
-    AddressInfo(void);
-    AddressInfo(AddressInfo &rhs);
-    ~AddressInfo(void);
-
-    /* ptr to struct addrinfo list */
-    struct addrinfo *servinfo;
-    /* actual list entry being used */
-    struct addrinfo *actual;
-    /* fd set to listen */
-    int listener;
-};
 
 class FdManager {
     public:
@@ -89,24 +73,26 @@ class Server {
         ERR_FATAL
     } COMMAND_RESULT;
     
-    char srv_buff[513];
+    char srv_buff[SERVER_BUFF_MAX_SIZE];
     int srv_buff_size;
     string hostname;
+
     
     ChannelMap channel_map; /* Find channels by name */
     NickFdMap nick_fd_map;  /* Find users by nickname */
     FdUserMap fd_user_map; /* Find nickname by fd_idx (entry of fds[]) */
 
     /* Socket related stuff */
-    AddressInfo _info;
-    FdManager    _fd_manager;
+    FdManager    fd_manager;
+    struct addrinfo* servinfo;
+    int listener;
 
     /* Map with all comand responses */
     CommandMap cmd_map;
 
     /* command implementations */
-    int NICK(Command &cmd, int fd);
-    int USER(Command &cmd, int fd);
+    void NICK(Command &cmd, int fd);
+    void USER(Command &cmd, int fd);
 
     bool nickAlreadyInUse(string &nickname);
 };
@@ -139,7 +125,6 @@ class Server {
  * a un usuario por su fd antes incluso de que nos haya proporcionado
  * un nickname. Y cuando s
  */
-
 }
 
 #endif /* IRC42_SERVER_H */

@@ -5,8 +5,8 @@
 #include <map>
 #include <string>
 
-#include <Types.hpp>
-#include <ChannelUser.hpp>
+#include "Types.hpp"
+#include "ChannelUser.hpp"
 
 using std::list;
 using std::map;
