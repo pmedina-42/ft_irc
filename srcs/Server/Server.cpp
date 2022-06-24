@@ -93,6 +93,10 @@ int Server::mainLoop(void) {
 }
 
 void Server::AddNewUser(int fd) {
+    /* case server is full of users */
+    if (fd == -1) {
+        return ;
+    }
     User user(fd);
     fd_user_map.insert(std::make_pair(fd, user));
 }

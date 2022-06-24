@@ -57,16 +57,36 @@ int FdManager::AcceptConnection(void) {
     {
         throw irc::exc::FatalError("accept -1");
     }
-    fds_size++;
     /* set to non blocking fd */
     if (fcntl(fd_new, F_SETFL, O_NONBLOCK) == -1) {
         throw irc::exc::FatalError("fctnl -1");
     }
+    int fd_new_idx = -1;
+    for (int i=0; i < fds_size; i++) {
+        /* If there's a -1 somewhere, add new user there. */
+        if (fds[i].fd == -1) {
+            fd_new_idx = i;
+            break;
+        }
+    }
+    /* If all entries are occupied, increase number of fd's */
+    if (fd_new_idx == -1) {
+        /* case server is at full users */
+        if (fds_size == MAX_FDS) {
+            if (close(fd_new) == -1) {
+                throw irc::exc::FatalError("close -1");
+            }
+            return -1;
+        }
+        /* else just increment the size, and add at new last position */
+        fds_size++;
+        fd_new_idx = fds_size - 1;
+    }
     /* set up fd for poll */
-    fds[fds_size - 1].fd = fd_new;
-    fds[fds_size - 1].events = POLLIN;
-    fds[fds_size - 1].events += POLLHUP;
-    fds[fds_size - 1].revents = 0;
+    fds[fd_new_idx].fd = fd_new;
+    fds[fd_new_idx].events = POLLIN;
+    fds[fd_new_idx].events += POLLHUP; // useless I think
+    fds[fd_new_idx].revents = 0;
 
     /* debug information */
     if (client.ss_family == AF_INET)  {
