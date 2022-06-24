@@ -40,6 +40,10 @@ bool FdManager::hasHangUp(int entry) {
     return (fds[entry].revents & POLLHUP) ? true : false;
 }
 
+bool FdManager::skipFd(int fd_idx) {
+    return (fds[fd_idx].fd == -1);
+}
+
 /* calls accept, and prepares the fd returned to be polled correctly. 
  * Throws in case of fatal error.
  */

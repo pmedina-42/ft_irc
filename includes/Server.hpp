@@ -22,6 +22,7 @@ class FdManager {
     void setUpListener(void);
     bool hasDataToRead(int entry);
     bool hasHangUp(int entry);
+    bool skipFd(int fd_idx);
     int AcceptConnection(void);
     void CloseConnection(int fd_idx);
     void Poll(void);

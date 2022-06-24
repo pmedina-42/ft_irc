@@ -68,10 +68,16 @@ int Server::mainLoop(void) {
     while (42) {
         fd_manager.Poll();
         for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
-            if (fd_manager.hasHangUp(fd_idx)) {
-                fd_manager.CloseConnection(fd_idx);
+            if (fd_manager.skipFd(fd_idx)) {
                 continue;
             }
+            /* this next if block seems useless. */
+            /*if (fd_manager.hasHangUp(fd_idx)) {
+                std::cout << "here" << std::endl;
+                RemoveUser(fd_idx);
+                fd_manager.CloseConnection(fd_idx);
+                continue;
+            }*/
             if (!fd_manager.hasDataToRead(fd_idx)) {
                 continue;
             }
@@ -81,8 +87,6 @@ int Server::mainLoop(void) {
                 AddNewUser(new_fd);
                 continue;
             }
-            int fd = fd_manager.fds[fd_idx].fd;
-            srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
             DataFromUser(fd_idx);
         }
     }
@@ -93,7 +97,9 @@ void Server::AddNewUser(int fd) {
     fd_user_map.insert(std::make_pair(fd, user));
 }
 
-void Server::RemoveUser(int fd) {
+void Server::RemoveUser(int fd_idx) {
+    int fd = fd_manager.fds[fd_idx].fd;
+    std::cout << "User with fd : " << fd << " disconnected " << std::endl;
     FdUserMap::iterator it = fd_user_map.find(fd);
     User user = it->second;
     /* If the user had a nick registered, erase it */
@@ -107,12 +113,14 @@ void Server::RemoveUser(int fd) {
 void Server::DataFromUser(int fd_idx) {
 
     int fd = fd_manager.fds[fd_idx].fd;
+    srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
+
     if (srv_buff_size == -1) {
         throw irc::exc::FatalError("recv -1");
     }
     if (srv_buff_size == 0) {
+        RemoveUser(fd_idx);
         fd_manager.CloseConnection(fd_idx);
-        RemoveUser(fd);
         return ;
     }
     string cmd_string(srv_buff, srv_buff_size);
