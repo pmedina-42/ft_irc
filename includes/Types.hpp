@@ -11,7 +11,7 @@
 
 #define LISTENER_BACKLOG 20
 #define NAME_MAX_SZ 10
-#define MAX_FDS 255
+#define MAX_FDS 10
 
 #define SERVER_BUFF_MAX_SIZE 512
 

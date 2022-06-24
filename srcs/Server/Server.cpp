@@ -103,7 +103,7 @@ void Server::AddNewUser(int fd) {
 
 void Server::RemoveUser(int fd_idx) {
     int fd = fd_manager.fds[fd_idx].fd;
-    std::cout << "User with fd : " << fd << " disconnected " << std::endl;
+    //std::cout << "User with fd : " << fd << " disconnected " << std::endl;
     FdUserMap::iterator it = fd_user_map.find(fd);
     User user = it->second;
     /* If the user had a nick registered, erase it */
@@ -127,17 +127,20 @@ void Server::DataFromUser(int fd_idx) {
         fd_manager.CloseConnection(fd_idx);
         return ;
     }
+    /*
+     * - First, check if it contains a CRLF.
+     * - IF it contains CRLF, check for remains and insert at beggining. 
+     * - If it does not, save on remains.
+     */
     string cmd_string(srv_buff, srv_buff_size);
     tools::clean_buffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
     // GESTIONAR BUFFER INTERNO DEL USER 
 
     /* Get current output + remains, then work with it. If command
-     * + remains give ____ CRLF ___, then execute first command, and save
+     * + remains give ____ CRLF _____ CRLF ____, then execute first command, and save
      * second one. It is indeed a fucking mess but what else can I do.
     */
-    /* If the command is incomplete, save content on user
-     * buffer */
 
     /* parse all commands */
     vector<string> cmd_vector;

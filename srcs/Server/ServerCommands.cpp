@@ -48,7 +48,7 @@ bool Server::nickAlreadyInUse(string &nickname) {
 void Server::NICK(Command &cmd, int fd) {
     int size = cmd.args.size();
     if (size != 2) {
-        string reply(ERR_NONICKNAMEGIVEN"*"STR_NONICKNAMEGIVEN);
+        string reply(ERR_NONICKNAMEGIVEN "*" STR_NONICKNAMEGIVEN);
         DataToUser(fd, reply);
         return ;
     }
@@ -97,7 +97,7 @@ void Server::USER(Command &cmd, int fd) {
         return ;
     }
     if (user.registered == true) {
-        string reply(ERR_ALREADYREGISTERED""STR_ALREADYREGISTERED);
+        string reply(ERR_ALREADYREGISTERED "" STR_ALREADYREGISTERED);
         DataToUser(fd, reply);
         return ;
     }
