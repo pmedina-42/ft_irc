@@ -85,11 +85,24 @@ class Server {
 };
 
 /**
- * Weechat handshake init Message : [NICK carce
- *   USER carce 0 * :carce
- *  ]
+ * Reglas propias servidor :
+ * - El número mázimo de usuarios conectados a la vez será de 255 (MAX_FDS).
+ * - Los usuarios se guardan, con comandos no finalizados en CRLF, un buffer
+ *  interno, de donde reconstruir un comando que se haya enviado troceado.
+ *  La suma de los bytes en este buffer y los del comando al que se añaden
+ *  nunca podrá ser superior a 512.
+ * e.g. Si tengo 200 bytes guardados de USer A (un mensaje muy largo), y 
+ * me llega el final de éste ( <loquesea> CRLF), insertaré esos 200 bytes
+ * al pricnipio de <loquesea>, y si 200 + len(<loquesea> CRLF) > 512, este
+ * comando no será ejecutado y se le enviará al usuario un error de input
+ * too long.
+ * De forma silenciosa, cuando el buffer interno (que será de 512 bytes) 
+ * se llene, cuando llegue un nuevo mensaje que añadir a lo que ya hay 
+ * se enviará tambien error de input too long.
+ * 
  * 
  * Funcionamiento interno de las estructuras del servidor:
+ * 
  * Cuando un usuario se conecta, de él solo se conoce el
  * fd asociado, o la ENTRADA que ocupa en la matriz de fds
  * que usa poll. Ni nickname, ni username, ni nada.

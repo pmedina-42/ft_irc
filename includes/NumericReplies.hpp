@@ -37,4 +37,8 @@
 # define ERR_BADCHANNELKEY " 475 "
 # define STR_BADCHANNELKEY " :Cannot join channel (+k)"
 
+# define ERR_INPUTTOOLONG " 417 "
+# define STR_INPUTTOOLONG " :Input line was too long"
+
+
 #endif /* IRC42_NUMERICREPLIES_H */

@@ -115,6 +115,16 @@ bool is_equal(const string &str1, const string &str2) {
     return true;
 }
 
+/* Check if str ends with suffix */
+bool ends_with(std::string const &str, std::string const &suffix) {
+    if (str.length() < suffix.length()) {
+        return false;
+    }
+    return (str.compare(str.length() - suffix.length(),
+                        suffix.length(), suffix) == 0);
+}
+
+
 void clean_buffer(char *buff, size_t size) {
     if (size > 0 && buff != NULL)
     memset(buff, '\0', size);
