@@ -127,14 +127,20 @@ void Server::DataFromUser(int fd_idx) {
         fd_manager.CloseConnection(fd_idx);
         return ;
     }
-    /*
-     * - First, check if it contains a CRLF.
-     * - IF it contains CRLF, check for remains and insert at beggining. 
-     * - If it does not, save on remains.
-     */
     string cmd_string(srv_buff, srv_buff_size);
     tools::clean_buffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
+
+    
+    /*
+     * - First, check if it ENDS in CRLF.
+     * - If it does not END in CRLF, but CONTAINS CRLF, theres new remains at end.
+     * 
+     * - IF it contains CRLF, check for remains and insert at beggining. 
+     * - If it does not, save on remains.
+     * 
+     * 
+     */
     // GESTIONAR BUFFER INTERNO DEL USER 
 
     /* Get current output + remains, then work with it. If command

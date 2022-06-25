@@ -25,4 +25,8 @@
 # define ERR_ALREADYREGISTERED " 462 "
 # define STR_ALREADYREGISTERED " :You may not reregister"
 
+# define ERR_INPUTTOOLONG " 417 "
+# define STR_INPUTTOOLONG " :Input line was too long"
+
+
 #endif /* IRC42_NUMERICREPLIES_H */
