@@ -6,7 +6,6 @@
 #include <string>
 
 #include "Types.hpp"
-#include "ChannelUser.hpp"
 
 using std::list;
 using std::map;
@@ -38,11 +37,11 @@ class Channel {
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */
-    ChannelUserMap users;
+    ChannelUserList users;
     /* Lista de usuarios que son operadores */
-    list<ChannelUser*> _oper_users;
+    ChannelUserList _oper_users;
     /* Lista de usuarios invitados al canal */
-    map<string, ChannelUser> whiteList; // list maybe  ?
+    ChannelUserMap whiteList; // list maybe  ?
 
     /* Nombre del canal */
     string _name;
@@ -56,17 +55,6 @@ class Channel {
     string _key;
     /* El prefio que va a tener el canal #, &, + o ! */
     char _prefix;
-
-    /**
-     * Si tenemos un mapa de usuarios necesitamos 2 cosas:
-     * 1. Un int que nos indique el tamaño actual del canal
-     * 2. Otro int que nos indique el índice de usuario por el que vamos:
-     *      Si se ha ido el usuario de pos 1, tenemos que encontrar el usuario de pos 2
-     *      (y comprobar que no esta baneado) para darle a el el rol de operador.
-     *      Si se va el 2 ahora necesitaremos darle el rol de operador a index + 1
-     */
-     int actualSize;
-     int userIndex;
 
 };
 

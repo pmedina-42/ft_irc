@@ -56,7 +56,6 @@ class User {
 
     bool registered;
 
-    inline string getNick() { return nick; }
 };
 
 }

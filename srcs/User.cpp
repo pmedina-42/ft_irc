@@ -1,7 +1,5 @@
 #include "../includes/ChannelUser.hpp"
-#include <unistd.h>
 #include <algorithm>
-#include <iostream>
 
 namespace irc {
 

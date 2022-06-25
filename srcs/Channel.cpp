@@ -1,6 +1,5 @@
 #include "Channel.hpp"
 #include "ChannelUser.hpp"
-#include "Server.hpp"
 #include <algorithm>
 
 #include <Types.hpp>
@@ -19,13 +18,13 @@ Channel::Channel(char prefix, string name, ChannelUser& user) : _name(name) {
     _mode = 0;
     _prefix = prefix;
     user.mode = 'o';
-    users.insert(pair<string, ChannelUser>(user.getNick(), user));
+    users.push_back(user);
 }
 
-/* 
+/**
  * Un canal se borra cuando se queda sin usuarios dentro, 
  * por lo que en principio el destructor estaría vacío 
- * */
+ */
 Channel::~Channel() {
 }
 
@@ -42,60 +41,68 @@ Channel::~Channel() {
  */
 void Channel::addUser(ChannelUser &user) {
     if (inviteModeOn() || _mode == 'p') {
-        //if (!isInvited(&user)) {
+        if (!isInvited(user)) {
             /* Mensajito de error por consola no estaria de más */
-            //return ;
-        //}
+            return ;
+        }
     }
-    users.insert(pair<string, ChannelUser>(user.getNick(), user));
+    users.push_back(user);
 }
 
 /**
  * Borrar un usuario del canal:
  * 1. Se busca dicho usuario
- * 2.1 Si el usuario a borrar resulta ser el primero del mapa aka el creador:
- * 2.1.1 Se saca del mapa y se pone el rol de operador al siguiente en el orden del canal
+ * 2.1 Si el usuario a borrar resulta ser el primero de la lista aka el creador:
+ * 2.1.1 Se saca de la lista y se pone el rol de operador al siguiente en la lista
  * 2.1.2 Ese siguiente no debe estar en la lista de baneados
  * 2.2 Si es un usuario normal o cualquier otro operador, se borra sin más
  * 3. Se borra el canal de la lista de canales del usuario
- */
-//void Channel::deleteUser(ChannelUser &user) {
-//    map<string, ChannelUser&>::iterator end = users.end();
-//    for (map<string, ChannelUser&>::iterator u = users.begin(); u != end; u++) {
-//        if (!(*u).second.getNick().compare(user.getNick())) {
-//            if ((*u).second.pos == index) {
-//                users.erase(u);
-//                list<ChannelUser*>::iterator it = users.begin();
-//                while (userInBlackList((*it)->_nickName))
-//                    it++;
-//                (*it)->mode = 'o';
-//            }
-//            else
-//                users.erase(u);
-//            break ;
-//        }
-//    }
-//}
+ * */
+void Channel::deleteUser(ChannelUser &user) {
+    ChannelUserList::iterator end = users.end();
+    for (ChannelUserList::iterator u = users.begin(); u != end; u++) {
+        if (!u->nick.compare(user.nick)) {
+            if (u == users.begin()) {
+                users.pop_front();
+                ChannelUserList::iterator it = users.begin();
+                while (userInBlackList(*it))
+                    it++;
+                it->mode = 'o';
+            }
+            else
+                users.erase(u);
+            break ;
+        }
+    }
+}
 
 /**
  * Banea a un usuario
  */
 void Channel::banUser(ChannelUser &user) {
-    users.find(user.getNick())->second.banned = true;
+    ChannelUserList::iterator end = users.end();
+    ChannelUserList::iterator it = std::find(users.begin(), end, user);
+    if (it != end)
+        it->banned = true;
 }
 
 /**
  * Desbanea a un usuario
  */
 void Channel::unbanUser(ChannelUser &user) {
-    users.find(user.getNick())->second.banned = false;
+    list<ChannelUser>::iterator end = users.end();
+    list<ChannelUser>::iterator it = std::find(users.begin(), end, user);
+    if (it != end)
+        it->banned = false;
 }
 
 /**
  * Comprueba si el usuario está en la lista de baneados
  */
 bool Channel::userInBlackList(ChannelUser &user) {
-    return users.find(user.getNick())->second.banned == true ?  true : false;
+    list<ChannelUser>::iterator end = users.end();
+    list<ChannelUser>::iterator it = std::find(users.begin(), end, user);
+    return it != end ?  true : false;
 }
 
 /**
@@ -111,7 +118,7 @@ bool Channel::inviteModeOn() {
  * Añade un nuevo usuario a la whitelist 
  */
 void Channel::addToWhitelist(ChannelUser &user) {
-    whiteList.insert(pair<string, ChannelUser>(user.getNick(), user));
+    whiteList.insert(pair<string, ChannelUser>(user.nick, user));
 }
 
 /**
@@ -119,7 +126,7 @@ void Channel::addToWhitelist(ChannelUser &user) {
  */
 bool Channel::isInvited(ChannelUser &user) {
     ChannelUserMap::iterator it;
-    it = whiteList.find(user.getNick());
+    it = whiteList.find(user.nick);
     if (it != whiteList.end()) {
         return true;
     }
@@ -130,8 +137,10 @@ bool Channel::isInvited(ChannelUser &user) {
  * Cambia el modo de un usuario dentro del canal
  */
 void Channel::setUserMode(ChannelUser &user, char mode) {
-    if (mode == 'o' || mode == 'v') {
-        users.find(user.getNick())->second.mode = mode;
+    list<ChannelUser>::iterator end = users.end();
+    list<ChannelUser>::iterator it = std::find(users.begin(), end, user);
+    if ((mode == 'o' || mode == 'v') && it != end) {
+        it->mode = mode;
     }
 }
 

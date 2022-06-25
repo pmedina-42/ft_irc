@@ -1,5 +1,4 @@
 #include "../includes/ChannelUser.hpp"
-#include <unistd.h>
 #include <algorithm>
 
 using std::string;
@@ -13,5 +12,9 @@ ChannelUser::ChannelUser(int fd)
 {}
 
 ChannelUser::~ChannelUser() {}
+
+bool ChannelUser::operator==(ChannelUser const &other) const {
+    return ( this->nick == other.nick);
+}
 
 } // namespace
