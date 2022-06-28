@@ -154,7 +154,7 @@ void Server::DataFromUser(int fd_idx) {
                 // send rpl too long.
             }
         }
-        // cmd_string stays as it is.
+    // cmd_string stays as it is.
     } else {
         size_t pos = cmd_string.find_last_of(CRLF);
         // no CRLF found

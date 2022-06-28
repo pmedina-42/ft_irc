@@ -1,4 +1,5 @@
 #include "../includes/ChannelUser.hpp"
+#include "Tools.hpp"
 #include <unistd.h>
 #include <algorithm>
 #include <iostream>
@@ -8,8 +9,8 @@ namespace irc {
 User::User(int fd)
 :
 		fd(fd),
-        buffer_size(0),
-        registered(false)
+        registered(false),
+        buffer_size(0)
 {
     nick = "";
     name = "";
@@ -51,6 +52,25 @@ User& User::operator=(const User& other) {
 
 void User::setPrefixFromHost(std::string &host) {
     prefix = nick + "!" + name + "@" + host;
+}
+
+
+bool User::hasLeftovers(void) const {
+    return !(buffer_size == 0);
+}
+
+void User::resetBuffer(void) {
+   tools::clean_buffer(buffer, buffer_size);
+   buffer_size = 0;
+}
+
+void User::addLeftovers(std::string &leftovers) {
+    memcpy(buffer, leftovers.c_str(), leftovers.size());
+    buffer_size += leftovers.size();
+}
+
+string User::BufferToString(void) const {
+    return string(buffer, buffer_size);
 }
 
 User::~User() {
