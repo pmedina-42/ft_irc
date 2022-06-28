@@ -24,7 +24,7 @@ void error(std::string msg) {
 
 /* n = 1 : port
  * n = 2 : host addr
- * n = 3 : server password (?)
+ * n = 3 : server password (?) // no server password 
  */
 int main(int argc, char **argv) {
     if (argc == 1) {

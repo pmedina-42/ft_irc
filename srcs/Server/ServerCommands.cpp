@@ -64,18 +64,16 @@ void Server::NICK(Command &cmd, int fd) {
         return ;
     }
     FdUserMap::iterator it = fd_user_map.find(fd);
-    User user = it->second;
+    User& user = it->second;
     /* case nickname change (fd is recognised, nickname is not) */
     if (!user.nick.empty()) {
         nick_fd_map.erase(user.nick);
         nick_fd_map.insert(std::make_pair(nick, fd));
         user.nick = nick;
-        it->second = user;
         return ;
     }
     /* case the nickname is the first recieved from this user */
     user.nick = nick;
-    it->second = user;
     nick_fd_map.insert(std::make_pair(nick, fd));
 }
 
@@ -92,7 +90,7 @@ void Server::USER(Command &cmd, int fd) {
         return;
     }
     FdUserMap::iterator it = fd_user_map.find(fd);
-    User user = it->second;
+    User& user = it->second;
     if (user.nick.empty()) {
         return ;
     }
@@ -105,7 +103,6 @@ void Server::USER(Command &cmd, int fd) {
     user.full_name = cmd.args[size - 1];
     user.setPrefixFromHost(hostname);
     user.registered = true;
-    it->second = user; // is this necessary ?
     string welcome_msg(RPL_WELCOME+user.name+RPL_WELCOME_STR_1+user.prefix);
     DataToUser(fd, welcome_msg);
 }

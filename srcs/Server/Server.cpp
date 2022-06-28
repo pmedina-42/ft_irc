@@ -127,10 +127,55 @@ void Server::DataFromUser(int fd_idx) {
         fd_manager.CloseConnection(fd_idx);
         return ;
     }
+
+    /* creo que esto será algo tal que: 
+     * cmd_string = getCommandBuffer();
+     * y getcommandbuffer gestionara toda esta logica para recoger el comando.
+     * El comando más largo que podrá tener en memoria el servidor será de
+     * 512 * 2 bytes, que se corresponde con el caso en que un usuario envía
+     * un primer comando incompleto (sin CRLF), 
+     */
+
+    /*
+    FdUserMap::iterator it = fd_user_map.find(fd);
+    User &user = it->second;
+
     string cmd_string(srv_buff, srv_buff_size);
     tools::clean_buffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
+    
+    
+    if (tools::ends_with(cmd_string, CRLF)) {
+        if (user.hasLeftovers()) {
+            cmd_string.insert(0, user.BufferToString());
+            // whole command is too big
+            if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
+                user.cleanBuffer();
+                // send rpl too long.
+            }
+        }
+        // cmd_string stays as it is.
+    } else {
+        size_t pos = cmd_string.find_last_of(CRLF);
+        // no CRLF found
+        if (pos == std::string::npos) {
+            if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
+                user.cleanBuffer();
+                // DO NOT send rpl too long ? (user is trolling ?)
+                // Aqui molaria eliminar al usuario por perro.
+                return ;
+            }
+            user.addLeftovers(cmd_string);
+            return ;
+        }
+        string leftovers = cmd_string.substr(pos);
+        user.addLeftovers(leftovers);
+        cmd_string = cmd_string.substr(0, pos);
+    }*/
 
+    string cmd_string(srv_buff, srv_buff_size);
+    tools::clean_buffer(srv_buff, srv_buff_size);
+    srv_buff_size = 0;
     
     /*
      * - First, check if it ENDS in CRLF.
