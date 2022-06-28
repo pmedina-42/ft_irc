@@ -9,8 +9,8 @@ namespace irc {
 User::User(int fd)
 :
 		fd(fd),
-        registered(false),
-        buffer_size(0)
+        buffer_size(0),
+        registered(false)
 {
     nick = "";
     name = "";
@@ -72,6 +72,7 @@ void User::addLeftovers(std::string &leftovers) {
 string User::BufferToString(void) const {
     return string(buffer, buffer_size);
 }
+
 
 User::~User() {
 

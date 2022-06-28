@@ -52,7 +52,8 @@ class User {
     string mask; // ¿¿¿ XD
     int fd;
 
-
+    char buffer[SERVER_BUFF_MAX_SIZE];
+    int buffer_size;
     bool registered;
 
     bool hasLeftovers(void) const;
@@ -61,10 +62,6 @@ class User {
     std::string BufferToString(void) const;
 
     inline string getNick() { return nick; }
-
-    private:
-    char buffer[SERVER_BUFF_MAX_SIZE];
-    int buffer_size;
 };
 
 }
