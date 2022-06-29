@@ -8,6 +8,7 @@
 #include "Exceptions.hpp"
 #include "Command.hpp"
 #include "Tools.hpp"
+#include "NumericReplies.hpp"
 
 using std::string;
 
@@ -105,7 +106,7 @@ void Server::RemoveUser(int fd_idx) {
     int fd = fd_manager.fds[fd_idx].fd;
     //std::cout << "User with fd : " << fd << " disconnected " << std::endl;
     FdUserMap::iterator it = fd_user_map.find(fd);
-    User user = it->second;
+    User &user = it->second;
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {
         nick_fd_map.erase(user.nick);
@@ -136,7 +137,6 @@ void Server::DataFromUser(int fd_idx) {
      * un primer comando incompleto (sin CRLF), 
      */
 
-    /*
     FdUserMap::iterator it = fd_user_map.find(fd);
     User &user = it->second;
 
@@ -144,15 +144,18 @@ void Server::DataFromUser(int fd_idx) {
     tools::clean_buffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
     
-    
     if (tools::ends_with(cmd_string, CRLF)) {
+        /* add leftovers at start of buffer recieved */
         if (user.hasLeftovers()) {
             cmd_string.insert(0, user.BufferToString());
-            // whole command is too big
-            if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
-                user.cleanBuffer();
-                // send rpl too long.
-            }
+        }
+        /* total buffer is too big */
+        if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
+            user.resetBuffer();
+            string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
+            DataToUser(fd, reply);
+            return ;
+            // send rpl too long.
         }
     // cmd_string stays as it is.
     } else {
@@ -160,49 +163,25 @@ void Server::DataFromUser(int fd_idx) {
         // no CRLF found
         if (pos == std::string::npos) {
             if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
-                user.cleanBuffer();
-                // DO NOT send rpl too long ? (user is trolling ?)
-                // Aqui molaria eliminar al usuario por perro.
+                user.resetBuffer();
+                // ill-formated long comand
                 return ;
             }
             user.addLeftovers(cmd_string);
             return ;
         }
+        /* if CRLF is somewhere, construct comand until last CRLF
+         * and save leftovers */
         string leftovers = cmd_string.substr(pos);
         user.addLeftovers(leftovers);
         cmd_string = cmd_string.substr(0, pos);
-    }*/
-
-    string cmd_string(srv_buff, srv_buff_size);
-    tools::clean_buffer(srv_buff, srv_buff_size);
-    srv_buff_size = 0;
-    
-    /*
-     * - First, check if it ENDS in CRLF.
-     * - If it does not END in CRLF, but CONTAINS CRLF, theres new remains at end.
-     * 
-     * - IF it contains CRLF, check for remains and insert at beggining. 
-     * - If it does not, save on remains.
-     * 
-     * 
-     */
-    // GESTIONAR BUFFER INTERNO DEL USER 
-
-    /* Get current output + remains, then work with it. If command
-     * + remains give ____ CRLF _____ CRLF ____, then execute first command, and save
-     * second one. It is indeed a fucking mess but what else can I do.
-    */
+    }
 
     /* parse all commands */
     vector<string> cmd_vector;
     tools::split(cmd_vector, cmd_string, CRLF);
-    /* ignore empty commands */
-    if (cmd_vector.empty()) {
-        return ;
-    }
     int cmd_vector_size = cmd_vector.size();
     for (int i = 0; i < cmd_vector_size; i++) {
-        //std::cout << "cmd vector : [" << cmd_vector[i] << "]" << std::endl;
         Command command;
         if (command.Parse(cmd_vector[i]) != command.OK) {
             break;
