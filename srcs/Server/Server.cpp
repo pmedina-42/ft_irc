@@ -115,27 +115,19 @@ void Server::RemoveUser(int fd_idx) {
     fd_user_map.erase(fd);
 }
 
-void Server::DataFromUser(int fd_idx) {
-
-    int fd = fd_manager.fds[fd_idx].fd;
-    srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
-
-    if (srv_buff_size == -1) {
-        throw irc::exc::FatalError("recv -1");
-    }
-    if (srv_buff_size == 0) {
-        RemoveUser(fd_idx);
-        fd_manager.CloseConnection(fd_idx);
-        return ;
-    }
-
-    /* creo que esto será algo tal que: 
-     * cmd_string = getCommandBuffer();
-     * y getcommandbuffer gestionara toda esta logica para recoger el comando.
-     * El comando más largo que podrá tener en memoria el servidor será de
-     * 512 * 2 bytes, que se corresponde con el caso en que un usuario envía
-     * un primer comando incompleto (sin CRLF), 
-     */
+/* 
+ * Gestiona toda la logica para recoger el comando con buffering (guardar
+ * leftovers, agregarlos al comando recibido, eliminarlos si excede la
+ * longitud maxima, etc.)
+ * El comando más largo que podrá tener en memoria el servidor será de
+ * 512 * 2 bytes, que se corresponde con el caso en que un usuario envía
+ * un primer comando incompleto (sin CRLF). En el caso en que un comando
+ * sumado a los leftovers exceda los 512 bytes, se enviará ERR_INPUTTOOLONG 
+ * y el comando será vaciado.
+ * Cuando un comando más sus leftovers superan los 512 bytes y la string total
+ * no contenga CRLF, se vaciará el comando y no se enviará nada.
+ */
+string Server::processCommandBuffer(int fd) {
 
     FdUserMap::iterator it = fd_user_map.find(fd);
     User &user = it->second;
@@ -154,21 +146,21 @@ void Server::DataFromUser(int fd_idx) {
             user.resetBuffer();
             string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
             DataToUser(fd, reply);
-            return ;
-            // send rpl too long.
+            return "";
         }
     // cmd_string stays as it is.
     } else {
         size_t pos = cmd_string.find_last_of(CRLF);
         // no CRLF found
         if (pos == std::string::npos) {
+            // ill-formated long comand
             if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
                 user.resetBuffer();
-                // ill-formated long comand
-                return ;
+                return "";
             }
+            /* buffer has space left : save and return empty command */
             user.addLeftovers(cmd_string);
-            return ;
+            return "";
         }
         /* if CRLF is somewhere, construct comand until last CRLF
          * and save leftovers */
@@ -176,7 +168,30 @@ void Server::DataFromUser(int fd_idx) {
         user.addLeftovers(leftovers);
         cmd_string = cmd_string.substr(0, pos);
     }
+    return cmd_string;
+}
 
+void Server::DataFromUser(int fd_idx) {
+
+    int fd = fd_manager.fds[fd_idx].fd;
+    srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
+
+    if (srv_buff_size == -1) {
+        throw irc::exc::FatalError("recv -1");
+    }
+    if (srv_buff_size == 0) {
+        RemoveUser(fd_idx);
+        fd_manager.CloseConnection(fd_idx);
+        return ;
+    }
+
+    string cmd_string = processCommandBuffer(fd);
+
+    /* cmd_string can be empty here in case there have been buffering 
+     * problems with the user */
+    if (cmd_string.empty()) {
+        return ;
+    }
     /* parse all commands */
     vector<string> cmd_vector;
     tools::split(cmd_vector, cmd_string, CRLF);

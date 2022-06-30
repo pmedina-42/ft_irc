@@ -62,6 +62,7 @@ class Server {
     int mainLoop(void);
     void AddNewUser(int fd);
     void RemoveUser(int fd);
+    string processCommandBuffer(int fd_idx);
 
     char srv_buff[SERVER_BUFF_MAX_SIZE];
     int srv_buff_size;
