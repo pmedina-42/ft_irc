@@ -7,6 +7,9 @@
  * the reply.
  */
 
+/**
+ * NICK & USER numeric replies
+ */
 # define RPL_WELCOME " 001 "
 # define RPL_WELCOME_STR_1 " :Welcome to the Internet Relay Network, "
 
@@ -24,6 +27,15 @@
 
 # define ERR_ALREADYREGISTERED " 462 "
 # define STR_ALREADYREGISTERED " :You may not reregister"
+
+/**
+ * JOIN numeric replies
+ */
+# define ERR_TOOMANYCHANNELS " 405 "
+# define STR_TOOMANYCHANNELS " :You have joined too many channels"
+
+# define ERR_BADCHANNELKEY " 475 "
+# define STR_BADCHANNELKEY " :Cannot join channel (+k)"
 
 # define ERR_INPUTTOOLONG " 417 "
 # define STR_INPUTTOOLONG " :Input line was too long"

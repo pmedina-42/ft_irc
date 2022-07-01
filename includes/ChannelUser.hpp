@@ -18,13 +18,11 @@ class ChannelUser : public User {
     public:
     ChannelUser(int fd);
     ~ChannelUser();
+    bool operator==(ChannelUser const &other) const;
 
     /* ATTRIBUTES */
     char mode;
     bool banned;
-    /* Si vamos a usar un mapa de usuarios, necesitamos conocer el orden
-     * en el que se han unido al canal */
-    int pos;
 
     /**
      * Cuando usuario envia comando para hablar

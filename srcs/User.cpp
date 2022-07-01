@@ -2,7 +2,6 @@
 #include "Tools.hpp"
 #include <unistd.h>
 #include <algorithm>
-#include <iostream>
 
 namespace irc {
 
