@@ -13,6 +13,9 @@
 # define RPL_WELCOME " 001 "
 # define RPL_WELCOME_STR_1 " :Welcome to the Internet Relay Network, "
 
+# define ERR_UNKNOWNCOMMAND " 421 "
+# define STR_UNKNOWNCOMMAND " :Unknown command"
+
 # define ERR_NONICKNAMEGIVEN " 431 "
 # define STR_NONICKNAMEGIVEN " :No nickname given"
 
