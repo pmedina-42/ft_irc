@@ -19,6 +19,8 @@
  * There are only few tricks with exceptions that you have to remember:
  * Destructor of the class is not called if exception is thrown in its
  * constructor.
+ *
+ * NEXT THING : PING PONG LOOP
  */
 
 bool running = true;
