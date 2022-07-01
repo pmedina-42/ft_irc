@@ -197,6 +197,8 @@ void Server::DataFromUser(int fd_idx) {
         }
         /* command does not exist / ill formatted command */
         if (!cmd_map.count(command.Name())) {
+            string msg(ERR_UNKNOWNCOMMAND+command.Name()+STR_UNKNOWNCOMMAND);
+            DataToUser(fd_idx, msg);
             break;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());

@@ -94,7 +94,7 @@ string& trim_repeated_char(string& str, char c) {
 
 bool is_upper_case(const string &str) {
     for (string::const_iterator it = str.begin(); it < str.end(); it++) {
-        if (*it < 'A' && *it > 'Z')
+        if (*it < 'A' || *it > 'Z')
             return false;
     }
     return true;
