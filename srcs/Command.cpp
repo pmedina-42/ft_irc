@@ -57,10 +57,9 @@ int Command::Parse(string &cmd) {
     } else {
         space_split = tools::split(space_split, cmd, " ");
     }
-
-    if (tools::is_upper_case(space_split[0]) == false) {
-        return ERR_NO_COMMAND;
-    }
+    /* from irc-hispano does this */
+    tools::to_upper_case(space_split[0]);
+    
     args = space_split;
     if (colon_split.size() == 2) {
         args.push_back(colon_split[1]);
