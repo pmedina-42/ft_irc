@@ -2,6 +2,7 @@
 #include <utility>
 
 #include <string.h>
+#include <errno.h>
 
 #include "Server.hpp"
 #include "User.hpp"
@@ -72,13 +73,6 @@ int Server::mainLoop(void) {
             if (fd_manager.skipFd(fd_idx)) {
                 continue;
             }
-            /* this next if block seems useless. */
-            /*if (fd_manager.hasHangUp(fd_idx)) {
-                std::cout << "here" << std::endl;
-                RemoveUser(fd_idx);
-                fd_manager.CloseConnection(fd_idx);
-                continue;
-            }*/
             if (!fd_manager.hasDataToRead(fd_idx)) {
                 continue;
             }
@@ -93,13 +87,13 @@ int Server::mainLoop(void) {
     }
 }
 
-void Server::AddNewUser(int fd) {
+void Server::AddNewUser(int new_fd) {
     /* case server is full of users */
-    if (fd == -1) {
+    if (new_fd == -1) {
         return ;
     }
-    User user(fd);
-    fd_user_map.insert(std::make_pair(fd, user));
+    User user(new_fd);
+    fd_user_map.insert(std::make_pair(new_fd, user));
 }
 
 void Server::RemoveUser(int fd_idx) {
@@ -206,18 +200,44 @@ void Server::DataFromUser(int fd_idx) {
             break;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
-        (*this.*it->second)(command, fd);
+        (*this.*it->second)(command, fd_idx);
     }
 }
 
-int Server::DataToUser(int fd, string &msg) {
+/* Why send() function is controlled as follows : 
+ * https://stackoverflow.com/questions/33053507/econnreset-in-send-linux-c
+ * This way b_sent = 0 does not have to be controlled, because ECONNRESET
+ * will be returned by send in case we try to send to a closed connection
+ * twice.
+ */
+void Server::DataToUser(int fd_idx, string &msg) {
+
     msg.insert(0, ":" + hostname);
     msg.insert(msg.size(), CRLF);
-    //std::cout << "sending : [" << msg << "]" << std::endl;
-    if (send(fd, msg.c_str(), msg.size(), 0) == -1) {
-        throw irc::exc::FatalError("send = -1");
-    }
-    return 0;
+
+    int fd = fd_manager.fds[fd_idx].fd;
+    int b_sent = 0;
+    int total_b_sent = 0;
+
+    do {
+        b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
+        if (b_sent == -1) {
+            int error = fd_manager.getSocketError(fd);
+            if (error == ECONNRESET
+                || error == EPIPE)
+            {
+                RemoveUser(fd_idx);
+                fd_manager.CloseConnection(fd_idx);
+                return ;
+            }
+            throw irc::exc::FatalError("send = -1");
+        }
+        /* add bytes sent to total */
+        total_b_sent += b_sent;
+    /* keep looping until full message is sent */
+    } while (total_b_sent != (int)msg.size());
+
+    return ;
 }
 
 } /* namespace irc */
