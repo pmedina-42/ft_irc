@@ -122,7 +122,10 @@ int Server::setListener(void) {
                    &yes, sizeof(yes));
         /* assign port to socket */
         if (bind(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(socketfd);
+            if (close(socketfd) == -1) {
+                freeaddrinfo(fd_manager.servinfo);
+                return -1;
+            }
             socketfd = -1;
             continue;
         }
@@ -132,9 +135,11 @@ int Server::setListener(void) {
     }
     if (socketfd == -1) {
         std::cerr << "could not bind socket to any address" << std::endl;
+        freeaddrinfo(fd_manager.servinfo);
         return -1;
     }
     if (listen(socketfd, LISTENER_BACKLOG) == -1) {
+        freeaddrinfo(fd_manager.servinfo);
         return -1;
     }
     struct sockaddr_in *sockaddrin = (struct sockaddr_in *)

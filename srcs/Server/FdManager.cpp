@@ -16,6 +16,17 @@ FdManager::FdManager(void)
 {}
 
 FdManager::~FdManager(void) {
+    if (servinfo != NULL) {
+        freeaddrinfo(servinfo);
+    }
+    for (int fd_idx = 0; fd_idx < fds_size; fd_idx++) {
+        if (skipFd(fd_idx)) {
+            continue;
+        }
+        if (close(fds[fd_idx].fd) == -1) {
+            throw irc::exc::FatalError("close -1");
+        }
+    }
 }
 
 void FdManager::setUpListener(void) {

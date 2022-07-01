@@ -11,6 +11,14 @@
 
 /**
  * https://modern.ircdocs.horse/ for numeric replies
+ * 
+ * To anyone wondering how exceptions and memory deallocation on destructors
+ * work :
+ * Yes, destructors are guaranteed to be called on stack unwinding,
+ * including unwinding due to exception being thrown.
+ * There are only few tricks with exceptions that you have to remember:
+ * Destructor of the class is not called if exception is thrown in its
+ * constructor.
  */
 
 bool running = true;
