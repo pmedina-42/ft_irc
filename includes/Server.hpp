@@ -21,11 +21,12 @@ class FdManager {
 
     void setUpListener(void);
     bool hasDataToRead(int entry);
-    bool hasHangUp(int entry);
     bool skipFd(int fd_idx);
     int AcceptConnection(void);
     void CloseConnection(int fd_idx);
     void Poll(void);
+
+    int getSocketError(int);
     /* fd from clients manager. This includes
     * the listener, at entry 0.
     */
@@ -56,12 +57,12 @@ class Server {
     /* parses message into commands, calls 
      * commands from user until finished. */
     void DataFromUser(int fd_idx);
-    int DataToUser(int fd_idx, string &data);
+    void DataToUser(int fd_idx, string &data);
 
     /* loop through all poll fd's */
     int mainLoop(void);
-    void AddNewUser(int fd);
-    void RemoveUser(int fd);
+    void AddNewUser(int new_fd);
+    void RemoveUser(int fd_idx);
     string processCommandBuffer(int fd_idx);
 
     char srv_buff[SERVER_BUFF_MAX_SIZE];

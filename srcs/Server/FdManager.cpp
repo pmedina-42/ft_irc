@@ -7,8 +7,24 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <cerrno>
 
 namespace irc {
+
+/* Some socket errors, specially on send() should not terminate
+ * the program. */
+int FdManager::getSocketError(int fd) {
+
+    int err_code;
+    socklen_t len = sizeof(err_code);
+
+    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err_code, &len) != 0) {
+        err_code = errno;
+    } else {
+        errno = err_code;
+    }
+    return err_code;
+}
 
 FdManager::FdManager(void)
 :
@@ -45,10 +61,6 @@ void FdManager::Poll(void) {
 
 bool FdManager::hasDataToRead(int entry) {
     return (fds[entry].revents & POLLIN) ? true : false;
-}
-
-bool FdManager::hasHangUp(int entry) {
-    return (fds[entry].revents & POLLHUP) ? true : false;
 }
 
 bool FdManager::skipFd(int fd_idx) {
@@ -96,7 +108,6 @@ int FdManager::AcceptConnection(void) {
     /* set up fd for poll */
     fds[fd_new_idx].fd = fd_new;
     fds[fd_new_idx].events = POLLIN;
-    fds[fd_new_idx].events += POLLHUP; // useless I think
     fds[fd_new_idx].revents = 0;
 
     /* debug information */
