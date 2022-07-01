@@ -232,7 +232,7 @@ void Server::DataToUser(int fd_idx, string &msg) {
             }
             throw irc::exc::FatalError("send = -1");
         }
-        /* else add bytes sent to total */
+        /* add bytes sent to total */
         total_b_sent += b_sent;
     /* keep looping until full message is sent */
     } while (total_b_sent != (int)msg.size());
