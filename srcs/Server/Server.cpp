@@ -204,6 +204,12 @@ void Server::DataFromUser(int fd_idx) {
     }
 }
 
+/* Why send() function is controlled as follows : 
+ * https://stackoverflow.com/questions/33053507/econnreset-in-send-linux-c
+ * This way b_sent = 0 does not have to be controlled, because ECONNRESET
+ * will be returned by send in case we try to send to a closed connection
+ * twice.
+ */
 void Server::DataToUser(int fd_idx, string &msg) {
 
     msg.insert(0, ":" + hostname);
@@ -217,10 +223,6 @@ void Server::DataToUser(int fd_idx, string &msg) {
         b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
         if (b_sent == -1) {
             int error = fd_manager.getSocketError(fd);
-            /* This could happen when writing to closed ends. It is very
-             * unlikely though. See :
-             * https://stackoverflow.com/questions/33053507/econnreset-in-send-linux-c
-             */
             if (error == ECONNRESET
                 || error == EPIPE)
             {
