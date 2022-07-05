@@ -24,6 +24,7 @@ string& trim_repeated_char(string& str, char c);
 void clean_buffer(char *buff, size_t size);
 void printError(string error_str);
 
+string rng_string(int len);
 
 } // tools
 } // irc

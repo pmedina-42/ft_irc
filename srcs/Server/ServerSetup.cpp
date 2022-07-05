@@ -155,6 +155,8 @@ int Server::setListener(void) {
 void Server::loadCommandMap(void) {
     cmd_map.insert(std::make_pair(string("NICK"), (&Server::NICK)));
     cmd_map.insert(std::make_pair(string("USER"), (&Server::USER)));
+    cmd_map.insert(std::make_pair(string("PING"), (&Server::PING)));
+    cmd_map.insert(std::make_pair(string("PONG"), (&Server::PONG)));
 }
 
 }

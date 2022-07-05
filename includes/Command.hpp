@@ -33,7 +33,7 @@ class Command {
      * Si un comando es válido sólo una string contendrá el valor ':'.
      */
     int Parse(string &cmd);
-    std::string Name();
+    std::string &Name();
 
     /* Esto tendrá que tener en su momento, una especie de mapa s.t.:
      * [USER] -> [function que managea user]

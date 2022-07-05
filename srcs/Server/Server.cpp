@@ -206,7 +206,10 @@ void Server::DataFromUser(int fd_idx) {
     }
 }
 
-/* Why send() function is controlled as follows : 
+/* 
+ * sends [:<hostname> <msg>CRLF] to user with fd asociated.
+ * 
+ * Why send() function is controlled as follows : 
  * https://stackoverflow.com/questions/33053507/econnreset-in-send-linux-c
  * This way b_sent = 0 does not have to be controlled, because ECONNRESET
  * will be returned by send in case we try to send to a closed connection
@@ -240,6 +243,11 @@ void Server::DataToUser(int fd_idx, string &msg) {
     } while (total_b_sent != (int)msg.size());
 
     return ;
+}
+
+User& Server::getUserFromFd(int fd) {
+    FdUserMap::iterator it = fd_user_map.find(fd);
+    return it->second;
 }
 
 } /* namespace irc */

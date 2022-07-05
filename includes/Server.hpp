@@ -80,8 +80,8 @@ class Server {
     CommandMap cmd_map;
 
     /* command implementations */
-
-    void Server::needMoreParamsMsg(string cmd_name, int fd_idx);
+    void sendNeedMoreParamsMsg(string& cmd_name, int fd_idx);
+    void sendWelcomeMsg(string& name, string &prefix, int fd_idx);
     
     void NICK(Command &cmd, int fd_idx);
     void USER(Command &cmd, int fd_idx);
@@ -89,6 +89,9 @@ class Server {
     void PONG(Command &cmd, int fd_idx);
 
     bool nickAlreadyInUse(string &nickname);
+
+    /* utils */
+    User& getUserFromFd(int fd);
 };
 
 /**

@@ -68,11 +68,8 @@ int Command::Parse(string &cmd) {
     return OK;
 }
 
-string Command::Name() {
-    if (args.empty() == false) {
-        return args[0];
-    }
-    return "";
+string &Command::Name() {
+    return args[0];
 }
 
 /* Checks that the buffer recieved, in case it has a colon, 
