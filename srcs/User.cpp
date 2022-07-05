@@ -16,6 +16,7 @@ User::User(int fd)
     name = "";
     full_name = "";
     prefix = "";
+    ping_str = "";
     memset(buffer, '\0', SERVER_BUFF_MAX_SIZE);
 }
 

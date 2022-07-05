@@ -41,6 +41,11 @@ bool Server::nickAlreadyInUse(string &nickname) {
     return false;
 }
 
+void Server::needMoreParamsMsg(string cmd_name, int fd_idx) {
+    string reply(ERR_NEEDMOREPARAMS+cmd_name+STR_NEEDMOREPARAMS);
+    DataToUser(fd_idx, reply);
+}
+
 /**
  * Command: NICK
  * Parameters: <nickname>
@@ -50,8 +55,12 @@ void Server::NICK(Command &cmd, int fd_idx) {
     int fd = fd_manager.fds[fd_idx].fd;
 
     int size = cmd.args.size();
-    /* NICK arguments incorrect */
-    if (size != 2) {
+    /* case too many params */
+    if (size > 2) {
+        return ;
+    }
+    /* case no nickname */
+    if (size < 2) {
         string reply(ERR_NONICKNAMEGIVEN "*" STR_NONICKNAMEGIVEN);
         DataToUser(fd_idx, reply);
         return ;
@@ -95,15 +104,17 @@ void Server::USER(Command &cmd, int fd_idx) {
     int fd = fd_manager.fds[fd_idx].fd;
 
     int size = cmd.args.size();
-    /* case arguments make no sense */
-    if (size != 5) {
-        string reply(ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-        DataToUser(fd_idx, reply);
-        return;
+    /* case many params (from irc-hispano) */
+    if (size > 5) {
+        return ;
+    }
+    /* case arguments unsufficient */
+    if (size < 5) {
+        return needMoreParamsMsg(cmd.Name(), fd_idx);
     }
     FdUserMap::iterator it = fd_user_map.find(fd);
     User& user = it->second;
-    /* if nickname is not definedf, ignore command */
+    /* if nickname is not defined, ignore command */
     if (user.nick.empty()) {
         return ;
     }
@@ -120,6 +131,27 @@ void Server::USER(Command &cmd, int fd_idx) {
     user.registered = true;
     string welcome_msg(RPL_WELCOME+user.name+RPL_WELCOME_STR_1+user.prefix);
     DataToUser(fd_idx, welcome_msg);
+}
+
+/**
+ *  PING :lol lasd as qwe q r  31412413r f13!"32º
+    :stirling.chathispano.com PONG stirling.chathispano.com :lol lasd as qwe q r  31412413r f13!"32º
+    PING :: : : : : :
+    :stirling.chathispano.com PONG stirling.chathispano.com :: : : : : :
+ */
+
+void Server::PING(Command &cmd, int fd_idx) {
+
+    int fd = fd_manager.fds[fd_idx].fd;
+
+    int size = cmd.args.size();
+    if (size < 2) {
+        return needMoreParamsMsg(cmd.Name(), fd_idx);
+    }
+}
+
+void Server::PONG(Command &cmd, int fd_idx) {
+    return ;
 }
 
 } // namespace irc
