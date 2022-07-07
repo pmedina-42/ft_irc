@@ -62,8 +62,8 @@
 /**
  * Sent to a client who recently joined a channel with the topic, if set
  */
-# define RPL_NOTOPIC " 332 "
-# define STR_NOTOPIC ":<topic>"
+# define RPL_TOPIC " 332 "
+# define STR_TOPIC "<nick><setat>"
 
 /**
  * The client doesn't have the appropiate channel privileges
