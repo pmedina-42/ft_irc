@@ -34,7 +34,7 @@ class FatalError : public std::exception {
     virtual ~FatalError() throw() {}
 
     virtual const char* what() const throw ()  {
-            std::cerr << "Fatal internal error : " << std::endl;
+            LOG(ERROR)<< "Fatal internal error : " << m_msg;
             return m_msg.c_str();
     }
 

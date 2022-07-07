@@ -1,5 +1,6 @@
 #include "Tools.hpp"
 #include "Exceptions.hpp"
+#include "Types.hpp"
 
 #include <vector>
 #include <string>
@@ -148,11 +149,32 @@ string rng_string(int len) {
     return tmp_s;
 }
 
+/* returns the index corresponding to the last crlf :
+ * from "Hello CRLF lol", returns the position 5.
+ * This is done to then call substr(0, pos),
+ * which will be the contents of the string before
+ * the last CRLF.
+ */
+size_t find_last_CRLF(string& haystack) {
+    
+    size_t CR_pos = haystack.find_last_of(CR);
+    size_t LF_pos = haystack.find_last_of(LF);
+
+    if (CR_pos != string::npos
+        && LF_pos != string::npos)
+    {
+        if (LF_pos == CR_pos + 1) {
+            return CR_pos - 1;
+        }
+    }
+    return string::npos;
+}
 
 
 void clean_buffer(char *buff, size_t size) {
-    if (size > 0 && buff != NULL)
-    memset(buff, '\0', size);
+    if (size > 0 && buff != NULL) {
+        memset(buff, '\0', size);
+    }
 }
 
 void printError(string error_str) {

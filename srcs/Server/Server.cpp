@@ -10,6 +10,7 @@
 #include "Command.hpp"
 #include "Tools.hpp"
 #include "NumericReplies.hpp"
+#include "Log.hpp"
 
 using std::string;
 
@@ -98,9 +99,10 @@ void Server::AddNewUser(int new_fd) {
 
 void Server::RemoveUser(int fd_idx) {
     int fd = fd_manager.fds[fd_idx].fd;
-    //std::cout << "User with fd : " << fd << " disconnected " << std::endl;
     FdUserMap::iterator it = fd_user_map.find(fd);
     User &user = it->second;
+
+    LOG(INFO) << "User with nick [" << user.nick << "] removed";
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {
         nick_fd_map.erase(user.nick);
@@ -129,27 +131,29 @@ string Server::processCommandBuffer(int fd) {
     string cmd_string(srv_buff, srv_buff_size);
     tools::clean_buffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
-    
+
     if (tools::ends_with(cmd_string, CRLF)) {
         /* add leftovers at start of buffer recieved */
         if (user.hasLeftovers()) {
             cmd_string.insert(0, user.BufferToString());
+            user.resetBuffer();
         }
         /* total buffer is too big */
         if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
-            user.resetBuffer();
             string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
             DataToUser(fd, reply);
+            LOG(WARNING) << "Buffer from User [" << user.nick << "] too long";
             return "";
         }
     // cmd_string stays as it is.
     } else {
-        size_t pos = cmd_string.find_last_of(CRLF);
+        size_t pos = tools::find_last_CRLF(cmd_string);
         // no CRLF found
         if (pos == std::string::npos) {
             // ill-formated long comand
             if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
                 user.resetBuffer();
+                LOG(WARNING) << "Ill formatted buffer from User [" << user.nick << "]";
                 return "";
             }
             /* buffer has space left : save and return empty command */
@@ -181,6 +185,7 @@ void Server::DataFromUser(int fd_idx) {
 
     string cmd_string = processCommandBuffer(fd);
 
+    //std::cout << "cmd string : [" << cmd_string << "]" <<  std::endl;   
     /* cmd_string can be empty here in case there have been buffering 
      * problems with the user */
     if (cmd_string.empty()) {
