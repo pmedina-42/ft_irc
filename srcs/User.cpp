@@ -66,7 +66,6 @@ void User::resetBuffer(void) {
 }
 
 void User::addLeftovers(std::string &leftovers) {
-    std::cout << "addLeftovers : [" << leftovers << "]" << std::endl;
     memcpy(buffer + buffer_size, leftovers.c_str(), leftovers.size());
     buffer_size += leftovers.size();
 }

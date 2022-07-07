@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <iostream>
+#include "Log.hpp"
 
 /* Throw is cost ineficcient when used as a return value.
  * These exceptions are not to be used to guide program

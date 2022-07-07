@@ -182,7 +182,8 @@ void Server::DataFromUser(int fd_idx) {
         fd_manager.CloseConnection(fd_idx);
         return ;
     }
-
+    LOG(INFO) << "DataFromUser with fd " << fd
+              << ", bytes : " << srv_buff_size;
     string cmd_string = processCommandBuffer(fd);
 
     //std::cout << "cmd string : [" << cmd_string << "]" <<  std::endl;   
