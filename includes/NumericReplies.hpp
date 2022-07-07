@@ -13,6 +13,9 @@
 # define RPL_WELCOME " 001 "
 # define RPL_WELCOME_STR_1 " :Welcome to the Internet Relay Network, "
 
+# define ERR_UNKNOWNCOMMAND " 421 "
+# define STR_UNKNOWNCOMMAND " :Unknown command"
+
 # define ERR_NONICKNAMEGIVEN " 431 "
 # define STR_NONICKNAMEGIVEN " :No nickname given"
 
@@ -114,6 +117,10 @@
  */
 # define ERR_USERNOTINCHANNEL " 441 "
 # define STR_USERNOTINCHANNEL ":They aren't on that channel"
+
+
+# define ERR_INPUTTOOLONG " 417 "
+# define STR_INPUTTOOLONG " :Input line was too long"
 
 
 #endif /* IRC42_NUMERICREPLIES_H */

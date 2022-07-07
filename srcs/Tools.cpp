@@ -92,12 +92,17 @@ string& trim_repeated_char(string& str, char c) {
     return str;
 }
 
-bool is_upper_case(const string &str) {
-    for (string::const_iterator it = str.begin(); it < str.end(); it++) {
-        if (*it < 'A' && *it > 'Z')
-            return false;
+/*
+ * Each lowercase letter is 32 + uppercase equivalent. This means simply
+ * flipping the bit at position 5 (counting from least significant bit
+ * at position 0) inverts the case of a letter.
+ */
+void to_upper_case(string &str) {
+    for (string::iterator it = str.begin(); it < str.end(); it++) {
+        if (*it >= 'a' && *it <= 'z') {
+            *it ^= 0x20;
+        }
     }
-    return true;
 }
 
 /* checks if a string is equal to another, ignoring case
@@ -114,6 +119,16 @@ bool is_equal(const string &str1, const string &str2) {
     }
     return true;
 }
+
+/* Check if str ends with suffix */
+bool ends_with(std::string const &str, std::string const &suffix) {
+    if (str.length() < suffix.length()) {
+        return false;
+    }
+    return (str.compare(str.length() - suffix.length(),
+                        suffix.length(), suffix) == 0);
+}
+
 
 void clean_buffer(char *buff, size_t size) {
     if (size > 0 && buff != NULL)

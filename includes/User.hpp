@@ -51,11 +51,17 @@ class User {
     string prefix; // nse si hara falta dis shit
     string mask; // ¿¿¿ XD
     int fd;
+
     char buffer[SERVER_BUFF_MAX_SIZE];
     int buffer_size;
-
     bool registered;
 
+    bool hasLeftovers(void) const;
+    void resetBuffer(void);
+    void addLeftovers(string &leftovers);
+    std::string BufferToString(void) const;
+
+    inline string getNick() { return nick; }
 };
 
 }

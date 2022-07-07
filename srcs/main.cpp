@@ -11,6 +11,16 @@
 
 /**
  * https://modern.ircdocs.horse/ for numeric replies
+ * 
+ * To anyone wondering how exceptions and memory deallocation on destructors
+ * work :
+ * Yes, destructors are guaranteed to be called on stack unwinding,
+ * including unwinding due to exception being thrown.
+ * There are only few tricks with exceptions that you have to remember:
+ * Destructor of the class is not called if exception is thrown in its
+ * constructor.
+ *
+ * NEXT THING : PING PONG LOOP
  */
 
 bool running = true;
@@ -24,7 +34,7 @@ void error(std::string msg) {
 
 /* n = 1 : port
  * n = 2 : host addr
- * n = 3 : server password (?)
+ * n = 3 : server password (?) // no server password 
  */
 int main(int argc, char **argv) {
     if (argc == 1) {

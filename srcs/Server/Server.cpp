@@ -2,12 +2,14 @@
 #include <utility>
 
 #include <string.h>
+#include <errno.h>
 
 #include "Server.hpp"
 #include "User.hpp"
 #include "Exceptions.hpp"
 #include "Command.hpp"
 #include "Tools.hpp"
+#include "NumericReplies.hpp"
 
 using std::string;
 
@@ -71,13 +73,6 @@ int Server::mainLoop(void) {
             if (fd_manager.skipFd(fd_idx)) {
                 continue;
             }
-            /* this next if block seems useless. */
-            /*if (fd_manager.hasHangUp(fd_idx)) {
-                std::cout << "here" << std::endl;
-                RemoveUser(fd_idx);
-                fd_manager.CloseConnection(fd_idx);
-                continue;
-            }*/
             if (!fd_manager.hasDataToRead(fd_idx)) {
                 continue;
             }
@@ -92,26 +87,82 @@ int Server::mainLoop(void) {
     }
 }
 
-void Server::AddNewUser(int fd) {
+void Server::AddNewUser(int new_fd) {
     /* case server is full of users */
-    if (fd == -1) {
+    if (new_fd == -1) {
         return ;
     }
-    User user(fd);
-    fd_user_map.insert(std::make_pair(fd, user));
+    User user(new_fd);
+    fd_user_map.insert(std::make_pair(new_fd, user));
 }
 
 void Server::RemoveUser(int fd_idx) {
     int fd = fd_manager.fds[fd_idx].fd;
     //std::cout << "User with fd : " << fd << " disconnected " << std::endl;
     FdUserMap::iterator it = fd_user_map.find(fd);
-    User user = it->second;
+    User &user = it->second;
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {
         nick_fd_map.erase(user.nick);
     }
     /* erase user from fd map (this entry is created after connection) */
     fd_user_map.erase(fd);
+}
+
+/* 
+ * Gestiona toda la logica para recoger el comando con buffering (guardar
+ * leftovers, agregarlos al comando recibido, eliminarlos si excede la
+ * longitud maxima, etc.)
+ * El comando más largo que podrá tener en memoria el servidor será de
+ * 512 * 2 bytes, que se corresponde con el caso en que un usuario envía
+ * un primer comando incompleto (sin CRLF). En el caso en que un comando
+ * sumado a los leftovers exceda los 512 bytes, se enviará ERR_INPUTTOOLONG 
+ * y el comando será vaciado.
+ * Cuando un comando más sus leftovers superan los 512 bytes y la string total
+ * no contenga CRLF, se vaciará el comando y no se enviará nada.
+ */
+string Server::processCommandBuffer(int fd) {
+
+    FdUserMap::iterator it = fd_user_map.find(fd);
+    User &user = it->second;
+
+    string cmd_string(srv_buff, srv_buff_size);
+    tools::clean_buffer(srv_buff, srv_buff_size);
+    srv_buff_size = 0;
+    
+    if (tools::ends_with(cmd_string, CRLF)) {
+        /* add leftovers at start of buffer recieved */
+        if (user.hasLeftovers()) {
+            cmd_string.insert(0, user.BufferToString());
+        }
+        /* total buffer is too big */
+        if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
+            user.resetBuffer();
+            string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
+            DataToUser(fd, reply);
+            return "";
+        }
+    // cmd_string stays as it is.
+    } else {
+        size_t pos = cmd_string.find_last_of(CRLF);
+        // no CRLF found
+        if (pos == std::string::npos) {
+            // ill-formated long comand
+            if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
+                user.resetBuffer();
+                return "";
+            }
+            /* buffer has space left : save and return empty command */
+            user.addLeftovers(cmd_string);
+            return "";
+        }
+        /* if CRLF is somewhere, construct comand until last CRLF
+         * and save leftovers */
+        string leftovers = cmd_string.substr(pos);
+        user.addLeftovers(leftovers);
+        cmd_string = cmd_string.substr(0, pos);
+    }
+    return cmd_string;
 }
 
 void Server::DataFromUser(int fd_idx) {
@@ -127,52 +178,68 @@ void Server::DataFromUser(int fd_idx) {
         fd_manager.CloseConnection(fd_idx);
         return ;
     }
-    /*
-     * - First, check if it contains a CRLF.
-     * - IF it contains CRLF, check for remains and insert at beggining. 
-     * - If it does not, save on remains.
-     */
-    string cmd_string(srv_buff, srv_buff_size);
-    tools::clean_buffer(srv_buff, srv_buff_size);
-    srv_buff_size = 0;
-    // GESTIONAR BUFFER INTERNO DEL USER 
 
-    /* Get current output + remains, then work with it. If command
-     * + remains give ____ CRLF _____ CRLF ____, then execute first command, and save
-     * second one. It is indeed a fucking mess but what else can I do.
-    */
+    string cmd_string = processCommandBuffer(fd);
 
+    /* cmd_string can be empty here in case there have been buffering 
+     * problems with the user */
+    if (cmd_string.empty()) {
+        return ;
+    }
     /* parse all commands */
     vector<string> cmd_vector;
     tools::split(cmd_vector, cmd_string, CRLF);
-    /* ignore empty commands */
-    if (cmd_vector.empty()) {
-        return ;
-    }
     int cmd_vector_size = cmd_vector.size();
     for (int i = 0; i < cmd_vector_size; i++) {
-        //std::cout << "cmd vector : [" << cmd_vector[i] << "]" << std::endl;
         Command command;
         if (command.Parse(cmd_vector[i]) != command.OK) {
             break;
         }
         /* command does not exist / ill formatted command */
         if (!cmd_map.count(command.Name())) {
+            string msg(ERR_UNKNOWNCOMMAND+command.Name()+STR_UNKNOWNCOMMAND);
+            DataToUser(fd_idx, msg);
             break;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
-        (*this.*it->second)(command, fd);
+        (*this.*it->second)(command, fd_idx);
     }
 }
 
-int Server::DataToUser(int fd, string &msg) {
+/* Why send() function is controlled as follows : 
+ * https://stackoverflow.com/questions/33053507/econnreset-in-send-linux-c
+ * This way b_sent = 0 does not have to be controlled, because ECONNRESET
+ * will be returned by send in case we try to send to a closed connection
+ * twice.
+ */
+void Server::DataToUser(int fd_idx, string &msg) {
+
     msg.insert(0, ":" + hostname);
     msg.insert(msg.size(), CRLF);
-    //std::cout << "sending : [" << msg << "]" << std::endl;
-    if (send(fd, msg.c_str(), msg.size(), 0) == -1) {
-        throw irc::exc::FatalError("send = -1");
-    }
-    return 0;
+
+    int fd = fd_manager.fds[fd_idx].fd;
+    int b_sent = 0;
+    int total_b_sent = 0;
+
+    do {
+        b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
+        if (b_sent == -1) {
+            int error = fd_manager.getSocketError(fd);
+            if (error == ECONNRESET
+                || error == EPIPE)
+            {
+                RemoveUser(fd_idx);
+                fd_manager.CloseConnection(fd_idx);
+                return ;
+            }
+            throw irc::exc::FatalError("send = -1");
+        }
+        /* add bytes sent to total */
+        total_b_sent += b_sent;
+    /* keep looping until full message is sent */
+    } while (total_b_sent != (int)msg.size());
+
+    return ;
 }
 
 } /* namespace irc */
