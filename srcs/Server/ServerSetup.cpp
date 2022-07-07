@@ -118,8 +118,12 @@ int Server::setListener(void) {
             continue;
         }
         int yes = 1;
-	    setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                   &yes, sizeof(yes));
+	    if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+                   &yes, sizeof(yes)) == -1)
+        {
+            freeaddrinfo(fd_manager.servinfo);
+            return -1;
+        }
         /* assign port to socket */
         if (bind(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
             if (close(socketfd) == -1) {
@@ -134,7 +138,7 @@ int Server::setListener(void) {
         break;
     }
     if (socketfd == -1) {
-        std::cerr << "could not bind socket to any address" << std::endl;
+        LOG(ERROR) << "could not bind socket to any address";
         freeaddrinfo(fd_manager.servinfo);
         return -1;
     }
