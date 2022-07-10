@@ -122,6 +122,7 @@ int Server::setListener(void) {
                    &yes, sizeof(yes)) == -1)
         {
             freeaddrinfo(fd_manager.servinfo);
+            LOG(ERROR) << "setsockopt raised -1";
             return -1;
         }
         /* assign port to socket */
