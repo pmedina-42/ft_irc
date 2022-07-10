@@ -114,14 +114,15 @@ int Server::setListener(void) {
                                p->ai_socktype,
                                p->ai_protocol)) == -1)
         {
-            socketfd  = -1;
+            socketfd = -1;
             continue;
         }
         int yes = 1;
-	    if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+	    if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR,
                    &yes, sizeof(yes)) == -1)
         {
             freeaddrinfo(fd_manager.servinfo);
+            LOG(ERROR) << "setsockopt raised -1";
             return -1;
         }
         /* assign port to socket */
@@ -143,6 +144,7 @@ int Server::setListener(void) {
         return -1;
     }
     if (listen(socketfd, LISTENER_BACKLOG) == -1) {
+        LOG(ERROR) << "listen raised -1";
         freeaddrinfo(fd_manager.servinfo);
         return -1;
     }
