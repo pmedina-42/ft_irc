@@ -34,6 +34,7 @@ class Channel {
     bool isInvited(ChannelUser&);
     void setUserMode(ChannelUser&, char);
     void addToWhitelist(ChannelUser&);
+    ChannelUser userInChannel(Channel&, int fd);
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */

@@ -18,6 +18,7 @@ vector<string>& split(vector<string> &to_fill, string &str, string del);
 void to_upper_case(string &str);
 bool is_equal(const string &str1, const string &str2);
 bool ends_with(std::string const &str, std::string const &suffix);
+bool starts_with_mask(string const);
 
 string& trim_repeated_char(string& str, char c);
 

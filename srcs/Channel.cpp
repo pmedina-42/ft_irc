@@ -144,4 +144,14 @@ void Channel::setUserMode(ChannelUser &user, char mode) {
     }
 }
 
+ChannelUser Channel::userInChannel(Channel &channel, int userFd) {
+    ChannelUserList::iterator end = channel.users.end();
+    for (ChannelUserList::iterator it = channel.users.begin(); it != end; it++) {
+        if (it->fd == userFd) {
+            return *it;
+        }
+    }
+    return NULL;
+}
+
 } // namespace

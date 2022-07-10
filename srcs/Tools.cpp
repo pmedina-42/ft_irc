@@ -129,6 +129,10 @@ bool ends_with(std::string const &str, std::string const &suffix) {
                         suffix.length(), suffix) == 0);
 }
 
+/* Check if str starts with suffix */
+bool starts_with_mask(string const str) {
+    return (str[0] == '!' || str[0] == '#' || str[0] == '+' || str[0] == '&');
+}
 
 void clean_buffer(char *buff, size_t size) {
     if (size > 0 && buff != NULL)

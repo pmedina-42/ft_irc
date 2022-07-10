@@ -5,6 +5,7 @@
 #include "Types.hpp"
 #include "User.hpp"
 #include "NumericReplies.hpp"
+#include "ChannelUser.hpp"
 
 #include <map>
 #include <iostream>
@@ -121,5 +122,57 @@ void Server::USER(Command &cmd, int fd_idx) {
     string welcome_msg(RPL_WELCOME+user.name+RPL_WELCOME_STR_1+user.prefix);
     DataToUser(fd_idx, welcome_msg);
 }
+
+/**
+ * Command: JOIN
+ * Parameters: <channel> [<channel>] [<key>]
+ */
+void Server::JOIN(Command &cmd, int fd_idx) {
+    int size = cmd.args.size();
+
+}
+
+/**
+ * Command: PART
+ * Parameters: <channel> [, <channel>] [<partMessage>]
+ * 1. If command PART has no arguments, error message is returned
+ * 2. Iterate every channel in the channel_map (check by it's mask)
+ * 3. In each channel, check if it exists and if user belongs to channel
+ *  If not, error message is returned
+ */
+void Server::PART(Command &cmd, int fd_idx) {
+        int size = cmd.args.size();
+        if (size < 2) {
+            string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
+            DataToUser(fd_idx, reply);
+            return ;
+        }
+        vector<string>::iterator end = cmd.args.end();
+        vector<string>::iterator it;
+        for (it = cmd.args.begin() + 1; it < end; it++) {
+            if (tools::starts_with_mask(it[0])) {
+                if (!channel_map.count(*it)) {
+                    string reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
+                    DataToUser(fd_idx, reply);
+                    return ;
+                }
+                Channel channel = channel_map.find(*it)->second;
+                ChannelUser user = channel.userInChannel(channel, fd_idx);
+                if (user == NULL) {
+                    string reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
+                    DataToUser(fd_idx, reply);
+                    return ;
+                }
+                channel.deleteUser(user);
+            } else {
+                break ;
+            }
+        }
+        if (it != end) {
+            // TODO: mandar mensaje en los canales
+        } else {
+
+        }
+    }
 
 } // namespace irc

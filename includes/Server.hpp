@@ -82,6 +82,9 @@ class Server {
     /* command implementations */
     void NICK(Command &cmd, int fd);
     void USER(Command &cmd, int fd);
+    void JOIN(Command &cmd, int fd);
+    void KICK(Command &cmd, int fd);
+    void PART(Command &cmd, int fd);
 
     bool nickAlreadyInUse(string &nickname);
 };
