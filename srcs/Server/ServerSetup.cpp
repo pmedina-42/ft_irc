@@ -118,8 +118,9 @@ int Server::setListener(void) {
             continue;
         }
         int yes = 1;
+        socklen_t size = sizeof(yes);
 	    if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                   &yes, sizeof(yes)) == -1)
+                   &yes, size) == -1)
         {
             freeaddrinfo(fd_manager.servinfo);
             LOG(ERROR) << "setsockopt raised -1";
