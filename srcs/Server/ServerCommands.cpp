@@ -46,6 +46,11 @@ void Server::sendNeedMoreParamsMsg(string& cmd_name, int fd_idx) {
     DataToUser(fd_idx, reply);
 }
 
+void Server::sendNotRegisteredMsg(string &cmd_name, int fd_idx) {
+    string reply(ERR_NOTREGISTERED+cmd_name+STR_NOTREGISTERED);
+    DataToUser(fd_idx, reply);
+}
+
 void Server::sendWelcomeMsg(string& name, string &prefix, int fd_idx) {
     string welcome_msg(RPL_WELCOME+name+RPL_WELCOME_STR_1+prefix);
     DataToUser(fd_idx, welcome_msg);
@@ -67,22 +72,19 @@ void Server::NICK(Command &cmd, int fd_idx) {
     /* case no nickname */
     if (size < 2) {
         string reply(ERR_NONICKNAMEGIVEN "*" STR_NONICKNAMEGIVEN);
-        DataToUser(fd_idx, reply);
-        return ;
+        return DataToUser(fd_idx, reply);
     }
     string nick = cmd.args[1];
     /* case forbidden characters are found / incorrect length */
     if (nickFormatOk(nick) == false) {
         string reply(ERR_ERRONEUSNICKNAME+nick+STR_ERRONEUSNICKNAME);
-        DataToUser(fd_idx, reply);
-        return ;
+        return DataToUser(fd_idx, reply);
     }
     /* case nickname is equal to some other in the server
      * (ignoring upper/lower case) */
     if (nickAlreadyInUse(nick)) {
         string reply(ERR_NICKNAMEINUSE+nick+STR_NICKNAMEINUSE);
-        DataToUser(fd_idx, reply);
-        return ;
+        return DataToUser(fd_idx, reply);
     }
     User& user = getUserFromFd(fd);
     /* case nickname change */
@@ -126,8 +128,7 @@ void Server::USER(Command &cmd, int fd_idx) {
     /* case user already sent a valid USER comand */
     if (user.registered == true) {
         string reply(ERR_ALREADYREGISTERED "" STR_ALREADYREGISTERED);
-        DataToUser(fd_idx, reply);
-        return ;
+        return DataToUser(fd_idx, reply);
     }
     /* wether nick exists or not, name and full name should be saved */
     user.name = cmd.args[1];
@@ -156,8 +157,14 @@ void Server::USER(Command &cmd, int fd_idx) {
 void Server::PING(Command &cmd, int fd_idx) {
 
     int size = cmd.args.size();
+    int fd = fd_manager.fds[fd_idx].fd;
+    User& user = getUserFromFd(fd);
+
     if (size < 2) {
         return sendNeedMoreParamsMsg(cmd.Name(), fd_idx);
+    }
+    if (!user.registered) {
+        return sendNotRegisteredMsg(cmd.Name(), fd_idx);
     }
     string pong_reply(" PONG " + cmd.args[1]);
     DataToUser(fd_idx, pong_reply);

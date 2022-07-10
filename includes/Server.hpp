@@ -81,6 +81,7 @@ class Server {
 
     /* command implementations */
     void sendNeedMoreParamsMsg(string& cmd_name, int fd_idx);
+    void sendNotRegisteredMsg(string &cmd_name, int fd_idx);
     void sendWelcomeMsg(string& name, string &prefix, int fd_idx);
     
     void NICK(Command &cmd, int fd_idx);

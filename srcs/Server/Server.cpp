@@ -141,8 +141,8 @@ string Server::processCommandBuffer(int fd) {
         /* total buffer is too big */
         if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
             string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
-            DataToUser(fd, reply);
             LOG(WARNING) << "Buffer from User [" << user.nick << "] too long";
+            DataToUser(fd, reply);
             return "";
         }
     // cmd_string stays as it is.
@@ -199,13 +199,13 @@ void Server::DataFromUser(int fd_idx) {
     for (int i = 0; i < cmd_vector_size; i++) {
         Command command;
         if (command.Parse(cmd_vector[i]) != command.OK) {
-            break;
+            continue ;
         }
         /* command does not exist / ill formatted command */
         if (!cmd_map.count(command.Name())) {
             string msg(ERR_UNKNOWNCOMMAND+command.Name()+STR_UNKNOWNCOMMAND);
             DataToUser(fd_idx, msg);
-            break;
+            continue ;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
         (*this.*it->second)(command, fd_idx);
