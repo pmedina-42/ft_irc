@@ -18,7 +18,7 @@ class ChannelUser;
 
 class Channel {
     public:
-    Channel(char prefix, string name, ChannelUser&);
+    Channel(string name, ChannelUser&);
     ~Channel();
 
     /* Class functions */
@@ -35,6 +35,7 @@ class Channel {
     void setUserMode(ChannelUser&, char);
     void addToWhitelist(ChannelUser&);
     ChannelUser userInChannel(Channel&, int fd);
+    static bool isUserOperator(ChannelUser&);
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */
@@ -49,13 +50,15 @@ class Channel {
     /* Tema del canal */
     string _topic;
     /* Modo del canal */
-    char _mode;
+    char mode;
     /* Maximo de usuarios en el canal */
     unsigned int _max_users;
     /* Clave, si es que la tiene y el modo es k */
     string _key;
-    /* El prefio que va a tener el canal #, &, + o ! */
-    char _prefix;
+    /**
+     * Channel topic
+     */
+    string topic;
 
 };
 

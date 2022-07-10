@@ -14,9 +14,8 @@ namespace irc {
  * Al crearse el canal se setea al usuario creador el rol 'o' 
  * el canal al principio no tiene ningún modo. Se setea después 
  */
-Channel::Channel(char prefix, string name, ChannelUser& user) : _name(name) {
-    _mode = 0;
-    _prefix = prefix;
+Channel::Channel(string name, ChannelUser& user) : _name(name) {
+    mode = 0;
     user.mode = 'o';
     users.push_back(user);
 }
@@ -40,7 +39,7 @@ Channel::~Channel() {
  * 3. Se añade el canal dentro del usuario
  */
 void Channel::addUser(ChannelUser &user) {
-    if (inviteModeOn() || _mode == 'p') {
+    if (inviteModeOn() || mode == 'p') {
         if (!isInvited(user)) {
             /* Mensajito de error por consola no estaria de más */
             return ;
@@ -109,7 +108,16 @@ bool Channel::userInBlackList(ChannelUser &user) {
  * Comprueba si el canal está en modo invitación
  */
 bool Channel::inviteModeOn() {
-    if (_mode == 'i')
+    if (mode == 'i')
+        return true;
+    return false;
+}
+
+/**
+ * Check if user has operator mode
+ */
+bool Channel::isUserOperator(ChannelUser &user) {
+    if (user.mode == 'o')
         return true;
     return false;
 }

@@ -198,10 +198,10 @@ void Server::PONG(Command &cmd, int fd_idx) {
  * Command: JOIN
  * Parameters: <channel> [<channel>] [<key>]
  */
-void Server::JOIN(Command &cmd, int fd_idx) {
-    int size = cmd.args.size();
-
-}
+//void Server::JOIN(Command &cmd, int fd_idx) {
+//    int size = cmd.args.size();
+//
+//}
 
 /**
  * Command: PART
@@ -221,7 +221,7 @@ void Server::PART(Command &cmd, int fd_idx) {
         vector<string>::iterator end = cmd.args.end();
         vector<string>::iterator it;
         for (it = cmd.args.begin() + 1; it < end; it++) {
-            if (tools::starts_with_mask(it[0])) {
+            if (tools::starts_with_mask(*it)) {
                 if (!channel_map.count(*it)) {
                     string reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
                     DataToUser(fd_idx, reply);
@@ -239,11 +239,80 @@ void Server::PART(Command &cmd, int fd_idx) {
                 break ;
             }
         }
-        if (it != end) {
-            // TODO: mandar mensaje en los canales
+        if (it != end - 1) {
+            // TODO: mandar mensaje en los canales a los usuarios
         } else {
 
         }
     }
+
+/**
+ * Command: TOPIC
+ * Parameters: <channel> [<topic>]
+ * 1. If command TOPIC has no arguments, error message is returned
+ * 2. If command TOPIC has one argument, channel topic is returned if exists (channel, user in channel & topic)
+ * 3. If command TOPIC has two arguments, channel topic is set (if user has the requested permissions)
+ * 4. If command TOPIC has two arguments, and topic is and empty string, the channel topic is removed
+ *  If not, error message is returned
+ */
+void Server::TOPIC(Command &cmd, int fd_idx) {
+    int size = cmd.args.size();
+    string reply;
+    if (size < 2) {
+        string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
+        DataToUser(fd_idx, reply);
+        return ;
+    }
+    if (size >= 2) {
+        if (tools::starts_with_mask(cmd.args[1])) {
+            if (!channel_map.count(cmd.args[1])) {
+                reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
+                DataToUser(fd_idx, reply);
+                return ;
+            }
+            Channel channel = channel_map.find(cmd.args[1])->second;
+            ChannelUser user = channel.userInChannel(channel, fd_idx);
+            if (user == NULL) {
+                reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
+                DataToUser(fd_idx, reply);
+                return ;
+            }
+            if (channel.mode != 't') {
+                reply = (ERR_NOCHANMODES+cmd.Name()+STR_NOCHANMODES);
+                DataToUser(fd_idx, reply);
+                return ;
+            }
+            if (size == 2) {
+                if (channel.topic.empty()) {
+                    reply = (RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
+                    DataToUser(fd_idx, reply);
+                    return ;
+                }
+                reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+                DataToUser(fd_idx, reply);
+                return ;
+            }
+            if (size == 3) {
+                if (Channel::isUserOperator(user)) {
+                    reply = (ERR_CHANOPRIVSNEEDED+cmd.Name()+STR_CHANOPRIVSNEEDED);
+                    DataToUser(fd_idx, reply);
+                    return ;
+                }
+                if (cmd.args[2].length() == 1) {
+                    channel.topic = "";
+                    return ;
+                }
+                channel.topic = cmd.args[2].substr(1);
+                reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+                DataToUser(fd_idx, reply);
+                return ;
+            }
+        } else {
+            reply = (ERR_BADCHANMASK+cmd.Name()+ERR_BADCHANMASK);
+            DataToUser(fd_idx, reply);
+            return ;
+        }
+    }
+}
 
 } // namespace irc

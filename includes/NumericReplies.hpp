@@ -18,7 +18,6 @@
  */
 # define RPL_NOTOPIC " 331 "
 # define STR_NOTOPIC ":No topic is set"
-# define STR_BADCHANNELKEY " :Cannot join channel (+k)"
 
 /**
  * Sent to a client who recently joined a channel with the topic, if set
@@ -110,12 +109,19 @@
  * a key and the key was either incorrect or not supplied
  */
 # define ERR_BADCHANNELKEY " 475 "
+# define STR_BADCHANNELKEY " :Cannot join channel (+k)"
 
 /**
  * Similar to, but stronger than, ERR_NOSUCHCHANNEL (403)
  */
 # define ERR_BADCHANMASK " 476 "
 # define STR_BADCHANMASK ":Bad Channel Mask"
+
+/**
+ * Returned when a channel doesn't support modes
+ */
+# define ERR_NOCHANMODES " 477 "
+# define STR_NOCHANMODES ":Channel doesn't support modes"
 
 /**
  * The client doesn't have the appropiate channel privileges
