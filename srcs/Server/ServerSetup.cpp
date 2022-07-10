@@ -162,6 +162,7 @@ void Server::loadCommandMap(void) {
     cmd_map.insert(std::make_pair(string("USER"), (&Server::USER)));
     cmd_map.insert(std::make_pair(string("PING"), (&Server::PING)));
     cmd_map.insert(std::make_pair(string("PONG"), (&Server::PONG)));
+    cmd_map.insert(std::make_pair(string("JOIN"), (&Server::JOIN)));
     cmd_map.insert(std::make_pair(string("PART"), (&Server::PART)));
     cmd_map.insert(std::make_pair(string("TOPIC"), (&Server::TOPIC)));
 }

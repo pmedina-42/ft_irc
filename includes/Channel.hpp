@@ -29,13 +29,14 @@ class Channel {
     bool userInBlackList(ChannelUser&);
     /* Esta función devuelve true si el canal está en modo invitación */
     bool inviteModeOn();
+    bool keyModeOn();
     /* Esta función devuelve true si un usuario está invitado al canal
         * si devuelve true, el usuario puede unirse al canal, si no no */
     bool isInvited(ChannelUser&);
     void setUserMode(ChannelUser&, char);
     void addToWhitelist(ChannelUser&);
     ChannelUser userInChannel(Channel&, int fd);
-    static bool isUserOperator(ChannelUser&);
+    bool isUserOperator(ChannelUser&);
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */
@@ -46,15 +47,15 @@ class Channel {
     ChannelUserMap whiteList; // list maybe  ?
 
     /* Nombre del canal */
-    string _name;
+    string name;
     /* Tema del canal */
     string _topic;
     /* Modo del canal */
-    char mode;
+    string mode;
     /* Maximo de usuarios en el canal */
     unsigned int _max_users;
     /* Clave, si es que la tiene y el modo es k */
-    string _key;
+    string key;
     /**
      * Channel topic
      */

@@ -196,50 +196,100 @@ void Server::PONG(Command &cmd, int fd_idx) {
 
 /**
  * Command: JOIN
- * Parameters: <channel> [<channel>] [<key>]
+ * Parameters: <channel> [<key>]
+ * 1. If command JOIN has no arguments, error message is returned
+ * 2. If channel mask is missing, bad mask error is returned
+ * 3. If channel doesn't exist, create new channel and new channelUser with operator mode and add it to the channel_map
+ * 4. If channel exists, check mode
+ * 4.1. If channel is in mode 'i', check if user is invited to join it. If not, error message is returned
+ * 4.2. If channel is in mode 'K', check if user is providing the correct pw. If not, error message is returned
+ * 5. Add user to channel
+ * 6. Send replies
  */
-//void Server::JOIN(Command &cmd, int fd_idx) {
-//    int size = cmd.args.size();
-//
-//}
+void Server::JOIN(Command &cmd, int fd_idx) {
+    int size = cmd.args.size();
+        string reply;
+    if (size < 2) {
+        reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
+        DataToUser(fd_idx, reply);
+        return ;
+    }
+    string channelName = cmd.args[1];
+    ChannelUser user(fd_idx);
+    if (tools::starts_with_mask(channelName)) {
+        if (!channel_map.count(cmd.args[1])) {
+            Channel channel(channelName, user);
+            channel.setUserMode(user, 'o');
+            channel_map.insert(std::make_pair(channelName, channel));
+            if (!cmd.args[2].empty()) {
+                channel.key = cmd.args[2];
+            }
+        } else {
+            Channel channel = channel_map.find(channelName)->second;
+            if (channel.inviteModeOn()) {
+                if (!channel.isInvited(user)) {
+                    reply = (ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
+                    DataToUser(fd_idx, reply);
+                    return ;
+                }
+            } else if (channel.keyModeOn()) {
+                if (cmd.args[2].empty() || channel.key.compare(cmd.args[2])) {
+                    reply = (ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
+                    DataToUser(fd_idx, reply);
+                    return ;
+                }
+            }
+            channel.addUser(user);
+            // TODO: send rpl messages
+        }
+    } else {
+        reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
+        DataToUser(fd_idx, reply);
+        return ;
+    }
+}
 
 /**
  * Command: PART
- * Parameters: <channel> [, <channel>] [<partMessage>]
+ * Parameters: <channel> [<partMessage>]
  * 1. If command PART has no arguments, error message is returned
- * 2. Iterate every channel in the channel_map (check by it's mask)
+ * 2. If channel mask is missing, bad mask error is returned
  * 3. In each channel, check if it exists and if user belongs to channel
- *  If not, error message is returned
+ * 4. Delete user in channel
+ * 5. If channel has no users left, destroy channel
+ * 6. Send part or default message to channel
  */
 void Server::PART(Command &cmd, int fd_idx) {
         int size = cmd.args.size();
+        string reply;
         if (size < 2) {
-            string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
+            reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
             DataToUser(fd_idx, reply);
             return ;
         }
-        vector<string>::iterator end = cmd.args.end();
-        vector<string>::iterator it;
-        for (it = cmd.args.begin() + 1; it < end; it++) {
-            if (tools::starts_with_mask(*it)) {
-                if (!channel_map.count(*it)) {
-                    string reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
-                    DataToUser(fd_idx, reply);
-                    return ;
-                }
-                Channel channel = channel_map.find(*it)->second;
-                ChannelUser user = channel.userInChannel(channel, fd_idx);
-                if (user == NULL) {
-                    string reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
-                    DataToUser(fd_idx, reply);
-                    return ;
-                }
-                channel.deleteUser(user);
-            } else {
-                break ;
+        if (tools::starts_with_mask(cmd.args[1])) {
+            if (!channel_map.count(cmd.args[1])) {
+                reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
+                DataToUser(fd_idx, reply);
+                return ;
             }
+            Channel channel = channel_map.find(cmd.args[1])->second;
+            ChannelUser user = channel.userInChannel(channel, fd_idx);
+            if (user == NULL) {
+                reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
+                DataToUser(fd_idx, reply);
+                return ;
+            }
+            channel.deleteUser(user);
+            if (channel.users.size() == 0) {
+                channel_map.erase(channel_map.find(channel.name));
+            }
+        } else {
+            reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
+            DataToUser(fd_idx, reply);
+            return ;
         }
-        if (it != end - 1) {
+        if (size == 3) {
             // TODO: mandar mensaje en los canales a los usuarios
         } else {
 
@@ -250,9 +300,11 @@ void Server::PART(Command &cmd, int fd_idx) {
  * Command: TOPIC
  * Parameters: <channel> [<topic>]
  * 1. If command TOPIC has no arguments, error message is returned
- * 2. If command TOPIC has one argument, channel topic is returned if exists (channel, user in channel & topic)
- * 3. If command TOPIC has two arguments, channel topic is set (if user has the requested permissions)
- * 4. If command TOPIC has two arguments, and topic is and empty string, the channel topic is removed
+ * 2. If channel doesn't start with mask, bad mask error is returned
+ * 3. If command TOPIC has one argument, channel topic is returned if exists (channel, user in channel & topic)
+ * 4. If command TOPIC has two arguments, channel topic is set (if user has the requested permissions)
+ * 5. If command TOPIC has two arguments, and topic is and empty string, the channel topic is removed
+ * 6. Return RLP_TOPIC to client
  *  If not, error message is returned
  */
 void Server::TOPIC(Command &cmd, int fd_idx) {
@@ -277,7 +329,7 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
                 DataToUser(fd_idx, reply);
                 return ;
             }
-            if (channel.mode != 't') {
+            if (channel.mode.find("t")) {
                 reply = (ERR_NOCHANMODES+cmd.Name()+STR_NOCHANMODES);
                 DataToUser(fd_idx, reply);
                 return ;
@@ -293,7 +345,7 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
                 return ;
             }
             if (size == 3) {
-                if (Channel::isUserOperator(user)) {
+                if (channel.isUserOperator(user)) {
                     reply = (ERR_CHANOPRIVSNEEDED+cmd.Name()+STR_CHANOPRIVSNEEDED);
                     DataToUser(fd_idx, reply);
                     return ;
@@ -308,11 +360,30 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
                 return ;
             }
         } else {
-            reply = (ERR_BADCHANMASK+cmd.Name()+ERR_BADCHANMASK);
+            reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
             DataToUser(fd_idx, reply);
             return ;
         }
     }
 }
+
+/**
+ * Command: KICK
+ * Parameters: <channel> <user> [<comment>]
+ * 1. Check if user has the correct permissions to do kick another user
+ * 2. Find the user to kick in the channel
+ * 3. Reuse the PART method passing the comment as the part message
+ */
+//void Server::KICK(Command &cmd, int fd_idx) {
+//    Channel channel = channel_map.find(cmd.args[1])->second;
+//    ChannelUser user = channel.userInChannel(channel, fd_idx);
+//    string reply;
+//    if (!channel.isUserOperator(user)) {
+//        reply = (ERR_CHANOPRIVSNEEDED+cmd.Name()+STR_CHANOPRIVSNEEDED);
+//        DataToUser(fd_idx, reply);
+//        return ;
+//    }
+//    this->PART(cmd, )
+//}
 
 } // namespace irc

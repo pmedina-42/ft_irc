@@ -105,6 +105,13 @@
 # define STR_ALREADYREGISTERED " :You may not reregister"
 
 /**
+ * Returned to indicate that a JOIN command failed because the channel is set to
+ * invite mode and the client has not been invited
+ */
+# define ERR_INVITEONLYCHAN " 473 "
+# define STR_INVITEONLYCHAN " :Cannot join channel (+i)"
+
+/**
  * Returned to indicate that a JOIN command failed because the channel requires
  * a key and the key was either incorrect or not supplied
  */
