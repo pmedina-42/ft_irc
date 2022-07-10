@@ -21,6 +21,9 @@
  * constructor.
  *
  * NEXT THING : PING PONG LOOP
+ * 
+ * Para conectarse a irc hispano :
+ * nc irc.irc-hispano.org 6667
  */
 
 bool running = true;

@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Exceptions.hpp"
+#include "Log.hpp"
 
 #include <poll.h>
 #include <arpa/inet.h>
@@ -67,6 +68,10 @@ bool FdManager::skipFd(int fd_idx) {
     return (fds[fd_idx].fd == -1);
 }
 
+int FdManager::getFdFromIndex(int fd_idx) {
+    return fds[fd_idx].fd;
+}
+
 /* calls accept, and prepares the fd returned to be polled correctly. 
  * Throws in case of fatal error.
  */
@@ -115,12 +120,12 @@ int FdManager::AcceptConnection(void) {
         char str[14];
         struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
         inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
-        std::cout << "connected to " << str << std::endl;
+        LOG(INFO) << "connected to " << str;
     } else {
         char str[20];
         struct sockaddr_in6 *ptr = (struct sockaddr_in6 *)&client;
         inet_ntop(AF_INET6, &(ptr->sin6_addr), str, sizeof(str));
-        std::cout << "connected to " << str << std::endl;
+        LOG(INFO) << "connected to " << str;
     }
     return fd_new;
 }

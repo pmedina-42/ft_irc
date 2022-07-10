@@ -21,12 +21,12 @@ static int get_addrinfo_from_params(const char* hostname, const char *port,
 
     if ((ret = getaddrinfo(hostname, port, hints, servinfo)) != 0) {
         string error("getaddrinfo error :");
-        std::cerr << error.append(gai_strerror(ret)) << std::endl;
+        LOG(ERROR) << error.append(gai_strerror(ret));
         return -1;
     }
     /* Filter out IPv6 cases (makes me dizzy) */
     if ((*servinfo)->ai_family == AF_INET6) {
-        std::cerr << "unsupported IP address length" << std::endl;
+        LOG(ERROR) << "unsupported IP address length";
         return -1;
     }
     return 0;
@@ -54,7 +54,7 @@ int Server::setServerInfo(void) {
     hints.ai_socktype = SOCK_STREAM; // TCP
 
     if (gethostname(&hostname[0], hostname_len) != 0) {
-        std::cerr << "gethostname error" << std::endl;
+        LOG(ERROR) << "gethostname error";
         return -1;
     }
     if (get_addrinfo_from_params(hostname, port, &hints, &servinfo) == -1) {
@@ -118,8 +118,12 @@ int Server::setListener(void) {
             continue;
         }
         int yes = 1;
-	    setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
-                   &yes, sizeof(yes));
+	    if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,
+                   &yes, sizeof(yes)) == -1)
+        {
+            freeaddrinfo(fd_manager.servinfo);
+            return -1;
+        }
         /* assign port to socket */
         if (bind(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
             if (close(socketfd) == -1) {
@@ -134,7 +138,7 @@ int Server::setListener(void) {
         break;
     }
     if (socketfd == -1) {
-        std::cerr << "could not bind socket to any address" << std::endl;
+        LOG(ERROR) << "could not bind socket to any address";
         freeaddrinfo(fd_manager.servinfo);
         return -1;
     }
@@ -146,8 +150,7 @@ int Server::setListener(void) {
                                       (fd_manager.servinfo->ai_addr);
     hostname = inet_ntoa(sockaddrin->sin_addr);
     /* debug, might not need it in the end */
-    std::cout << "Server mounted succesfully on " << hostname
-              << ":6667" << std::endl;
+    LOG(INFO) << "Server mounted succesfully on " << hostname << ":6667";
     fd_manager.listener = socketfd;
     return socketfd;
 }
@@ -155,6 +158,8 @@ int Server::setListener(void) {
 void Server::loadCommandMap(void) {
     cmd_map.insert(std::make_pair(string("NICK"), (&Server::NICK)));
     cmd_map.insert(std::make_pair(string("USER"), (&Server::USER)));
+    cmd_map.insert(std::make_pair(string("PING"), (&Server::PING)));
+    cmd_map.insert(std::make_pair(string("PONG"), (&Server::PONG)));
 }
 
 }

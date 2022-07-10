@@ -22,6 +22,7 @@ class FdManager {
     void setUpListener(void);
     bool hasDataToRead(int entry);
     bool skipFd(int fd_idx);
+    int getFdFromIndex(int fd_idx);
     int AcceptConnection(void);
     void CloseConnection(int fd_idx);
     void Poll(void);
@@ -76,17 +77,26 @@ class Server {
     /* Socket related stuff */
     FdManager    fd_manager;
 
-    /* Map with all command responses */
-    CommandMap cmd_map;
+    /* time stuff */
+    time_t start;
+    void pongLoop(void);
 
-    /* command implementations */
-    void NICK(Command &cmd, int fd);
-    void USER(Command &cmd, int fd);
+    CommandMap cmd_map;
+    /* Map with all command responses */
+    void NICK(Command &cmd, int fd_idx);
+    void USER(Command &cmd, int fd_idx);
+    void PING(Command &cmd, int fd_idx);
+    void PONG(Command &cmd, int fd_idx);
     void JOIN(Command &cmd, int fd);
     void KICK(Command &cmd, int fd);
     void PART(Command &cmd, int fd);
+    /* command implementations */
+    void sendNeedMoreParamsMsg(string& cmd_name, int fd_idx);
+    void sendNotRegisteredMsg(string &cmd_name, int fd_idx);
+    void sendWelcomeMsg(string& name, string &prefix, int fd_idx);
 
-    bool nickAlreadyInUse(string &nickname);
+    /* utils */
+    User& getUserFromFd(int fd);
 };
 
 /**

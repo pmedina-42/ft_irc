@@ -50,6 +50,7 @@ class User {
     string full_name;
     string prefix; // nse si hara falta dis shit
     string mask; // ¿¿¿ XD
+    string ping_str;
     int fd;
 
     char buffer[SERVER_BUFF_MAX_SIZE];

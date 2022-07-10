@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include "Server.hpp"
 #include "User.hpp"
@@ -10,6 +11,7 @@
 #include "Command.hpp"
 #include "Tools.hpp"
 #include "NumericReplies.hpp"
+#include "Log.hpp"
 
 using std::string;
 
@@ -41,6 +43,7 @@ Server::Server(void)
     {
         throw irc::exc::ServerSetUpError();
     }
+    start = time(NULL);
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
@@ -54,6 +57,7 @@ Server::Server(string &hostname, string &port) {
     {
         throw irc::exc::ServerSetUpError();
     }
+    start = time(NULL);
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
@@ -87,6 +91,18 @@ int Server::mainLoop(void) {
     }
 }
 
+void Server::pongLoop(void) {
+    for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
+        if (fd_manager.skipFd(fd_idx)) {
+            continue;
+        }
+        int fd = fd_manager.getFdFromIndex(fd_idx);
+        User &user = getUserFromFd(fd);
+        (void)user;
+    }
+
+}
+
 void Server::AddNewUser(int new_fd) {
     /* case server is full of users */
     if (new_fd == -1) {
@@ -97,10 +113,11 @@ void Server::AddNewUser(int new_fd) {
 }
 
 void Server::RemoveUser(int fd_idx) {
-    int fd = fd_manager.fds[fd_idx].fd;
-    //std::cout << "User with fd : " << fd << " disconnected " << std::endl;
+    int fd = fd_manager.getFdFromIndex(fd_idx);
     FdUserMap::iterator it = fd_user_map.find(fd);
     User &user = it->second;
+
+    LOG(INFO) << "User with nick [" << user.nick << "] removed";
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {
         nick_fd_map.erase(user.nick);
@@ -129,27 +146,29 @@ string Server::processCommandBuffer(int fd) {
     string cmd_string(srv_buff, srv_buff_size);
     tools::clean_buffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
-    
+
     if (tools::ends_with(cmd_string, CRLF)) {
         /* add leftovers at start of buffer recieved */
         if (user.hasLeftovers()) {
             cmd_string.insert(0, user.BufferToString());
+            user.resetBuffer();
         }
         /* total buffer is too big */
         if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
-            user.resetBuffer();
             string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
+            LOG(WARNING) << "Buffer from User [" << user.nick << "] too long";
             DataToUser(fd, reply);
             return "";
         }
     // cmd_string stays as it is.
     } else {
-        size_t pos = cmd_string.find_last_of(CRLF);
+        size_t pos = tools::find_last_CRLF(cmd_string);
         // no CRLF found
         if (pos == std::string::npos) {
             // ill-formated long comand
             if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
                 user.resetBuffer();
+                LOG(WARNING) << "Ill formatted buffer from User [" << user.nick << "]";
                 return "";
             }
             /* buffer has space left : save and return empty command */
@@ -167,7 +186,7 @@ string Server::processCommandBuffer(int fd) {
 
 void Server::DataFromUser(int fd_idx) {
 
-    int fd = fd_manager.fds[fd_idx].fd;
+    int fd = fd_manager.getFdFromIndex(fd_idx);
     srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
 
     if (srv_buff_size == -1) {
@@ -178,9 +197,11 @@ void Server::DataFromUser(int fd_idx) {
         fd_manager.CloseConnection(fd_idx);
         return ;
     }
-
+    LOG(INFO) << "DataFromUser with fd " << fd
+              << ", bytes : " << srv_buff_size;
     string cmd_string = processCommandBuffer(fd);
 
+    //std::cout << "cmd string : [" << cmd_string << "]" <<  std::endl;   
     /* cmd_string can be empty here in case there have been buffering 
      * problems with the user */
     if (cmd_string.empty()) {
@@ -193,20 +214,23 @@ void Server::DataFromUser(int fd_idx) {
     for (int i = 0; i < cmd_vector_size; i++) {
         Command command;
         if (command.Parse(cmd_vector[i]) != command.OK) {
-            break;
+            continue ;
         }
         /* command does not exist / ill formatted command */
         if (!cmd_map.count(command.Name())) {
             string msg(ERR_UNKNOWNCOMMAND+command.Name()+STR_UNKNOWNCOMMAND);
             DataToUser(fd_idx, msg);
-            break;
+            continue ;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
         (*this.*it->second)(command, fd_idx);
     }
 }
 
-/* Why send() function is controlled as follows : 
+/* 
+ * sends [:<hostname> <msg>CRLF] to user with fd asociated.
+ * 
+ * Why send() function is controlled as follows : 
  * https://stackoverflow.com/questions/33053507/econnreset-in-send-linux-c
  * This way b_sent = 0 does not have to be controlled, because ECONNRESET
  * will be returned by send in case we try to send to a closed connection
@@ -217,7 +241,7 @@ void Server::DataToUser(int fd_idx, string &msg) {
     msg.insert(0, ":" + hostname);
     msg.insert(msg.size(), CRLF);
 
-    int fd = fd_manager.fds[fd_idx].fd;
+    int fd = fd_manager.getFdFromIndex(fd_idx);
     int b_sent = 0;
     int total_b_sent = 0;
 
@@ -240,6 +264,11 @@ void Server::DataToUser(int fd_idx, string &msg) {
     } while (total_b_sent != (int)msg.size());
 
     return ;
+}
+
+User& Server::getUserFromFd(int fd) {
+    FdUserMap::iterator it = fd_user_map.find(fd);
+    return it->second;
 }
 
 } /* namespace irc */

@@ -8,6 +8,8 @@
 #include <string>
 
 #define CRLF "\r\n"
+#define CR "\r"
+#define LF "\n"
 
 #define LISTENER_BACKLOG 20
 #define NAME_MAX_SZ 10
