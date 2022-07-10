@@ -93,6 +93,9 @@
 /**
  * Not enough parameters were supplied
  */
+# define ERR_NOTREGISTERED " 451 "
+# define STR_NOTREGISTERED " :You have not registered" 
+
 # define ERR_NEEDMOREPARAMS " 461 "
 # define STR_NEEDMOREPARAMS " :Not enough parameters"
 

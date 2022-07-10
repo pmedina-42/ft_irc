@@ -15,6 +15,7 @@ User::User(int fd)
     name = "";
     full_name = "";
     prefix = "";
+    ping_str = "";
     memset(buffer, '\0', SERVER_BUFF_MAX_SIZE);
 }
 
@@ -64,7 +65,7 @@ void User::resetBuffer(void) {
 }
 
 void User::addLeftovers(std::string &leftovers) {
-    memcpy(buffer, leftovers.c_str(), leftovers.size());
+    memcpy(buffer + buffer_size, leftovers.c_str(), leftovers.size());
     buffer_size += leftovers.size();
 }
 

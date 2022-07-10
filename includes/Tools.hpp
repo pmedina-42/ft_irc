@@ -20,10 +20,12 @@ bool is_equal(const string &str1, const string &str2);
 bool ends_with(std::string const &str, std::string const &suffix);
 
 string& trim_repeated_char(string& str, char c);
+size_t find_last_CRLF(std::string& haystack);
 
 void clean_buffer(char *buff, size_t size);
 void printError(string error_str);
 
+string rng_string(int len);
 
 } // tools
 } // irc
