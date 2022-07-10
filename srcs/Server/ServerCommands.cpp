@@ -62,12 +62,11 @@ void Server::sendPingToUser(int fd_idx) {
     User& user = getUserFromFd(fd);
 
     /* send ping message */
-    string random = tools::rng_string(10);
-    string ping_msg("PING :" + random);
+    string random = ":" + tools::rng_string(10);
+    string ping_msg(" PING " + random);
     DataToUser(fd_idx, ping_msg);
 
-    /* update related to ping */
-    user.ping_str = random;
+    user.updatePingStatus(random);
 }
 
 /**
@@ -89,6 +88,9 @@ void Server::NICK(Command &cmd, int fd_idx) {
         return DataToUser(fd_idx, reply);
     }
     string nick = cmd.args[1];
+    if (nick[0] == ':') {
+        nick = nick.substr(1); // ignore : start.
+    }
     /* case forbidden characters are found / incorrect length */
     if (nickFormatOk(nick) == false) {
         string reply(ERR_ERRONEUSNICKNAME+nick+STR_ERRONEUSNICKNAME);
@@ -146,7 +148,10 @@ void Server::USER(Command &cmd, int fd_idx) {
     }
     /* wether nick exists or not, name and full name should be saved */
     user.name = cmd.args[1];
-    user.full_name = cmd.args[size - 1];
+    string full_name = cmd.args[size - 1];
+    if (full_name[0] == ':') {
+        full_name = full_name.substr(1);
+    }
     /* rare case USER cmd is recieved before nick (irc hispano allows this) */
     if (user.nick.empty()) {
         return ;
@@ -203,7 +208,7 @@ void Server::PONG(Command &cmd, int fd_idx) {
     }
     if (user.ping_str.compare(cmd.args[1]) == 0) {
         user.resetPingStatus();
-        // update user Keep Alive state, everything ok.
+        user.last_received = time(NULL);
     }
     return ;
 }

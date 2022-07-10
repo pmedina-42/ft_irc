@@ -79,7 +79,7 @@ class Server {
 
     /* time stuff */
     time_t start;
-    void pongLoop(void);
+    void pingLoop(void);
     void sendPingToUser(int fd_idx);
 
     CommandMap cmd_map;

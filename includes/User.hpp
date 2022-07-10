@@ -2,6 +2,7 @@
 # define IRC42_USER_H
 
 #include "Types.hpp"
+#include <iostream>
 
 using std::string;
 
@@ -56,15 +57,6 @@ class User {
     int buffer_size;
     bool registered;
 
-    /* If this is set to true, ignore any message from
-     * user until it is false !
-     */
-    bool on_pong_hold;
-    time_t GetLastMsgTime(void);
-    time_t last_received;
-    string ping_str;
-    void resetPingStatus(void);
-
     bool hasLeftovers(void) const;
     void resetBuffer(void);
     void addLeftovers(string &leftovers);
@@ -72,9 +64,23 @@ class User {
 
     inline string getNick() { return nick; }
 
+    /* PING PONG things
+     */
+    time_t getLastMsgTime(void);
+    time_t getPingTime(void);
+    bool isOnPongHold(void);
+    void resetPingStatus(void);
+    void updatePingStatus(std::string &random);
+
+    bool on_pong_hold;
+    time_t last_received;
+    time_t ping_send_time;
+    string ping_str;
 
 };
 
 }
+
+std::ostream& operator<<(std::ostream &o, irc::User const &rhs);
 
 #endif

@@ -136,15 +136,16 @@ bool ends_with(std::string const &str, std::string const &suffix) {
  */
 string rng_string(int len) {
     srand((unsigned)time(NULL) * getpid());
-    static const char alphanum[] =
+    static const unsigned char alphanum[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
-        "ª!\"·$%&/()=?¿^*_;\\|@#~[]{}º,.-'ç+`'¡";
+        "!$%&/()=?^*_;:\\|@#~[]{},-'+";
     std::string tmp_s;
     tmp_s.reserve(len);
     for (int i = 0; i < len; ++i) {
-        tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+        unsigned char c = alphanum[rand() % (sizeof(alphanum))];
+        tmp_s.push_back(c);
     }
     return tmp_s;
 }

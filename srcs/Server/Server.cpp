@@ -88,26 +88,42 @@ int Server::mainLoop(void) {
             }
             DataFromUser(fd_idx);
         }
+        pingLoop();
     }
 }
 
-/* See
- * https://stackoverflow.com/questions/14315497/
+/* 
+ * When a user is more than SERVER_PONG_TIME_SEC without sending anything,
+ * the server sends a PING <random_10_byte_string> that the user has to
+ * reply within SERVER_PONG_TIME_SEC with PONG <random_10_byte_string>.
+ * If the user does not send the PONG message in time, the user is 
+ * removed.
+ * 
+ * See
+ * https://stackoverflow.com/questions/14315497/ 
+ * 
  */
-void Server::pongLoop(void) {
+void Server::pingLoop(void) {
     for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
         if (fd_manager.skipFd(fd_idx)) {
             continue;
         }
         int fd = fd_manager.getFdFromIndex(fd_idx);
         User &user = getUserFromFd(fd);
-        time_t last_msg = user.GetLastMsgTime();
-        time_t since_last_msg = time(NULL) - since_last_msg;
+        if (user.isOnPongHold()) {
+            time_t since_ping = time(NULL) - user.getPingTime();
+            if (since_ping >= SERVER_PONG_TIME_SEC) {
+                // Maybe send a message ? 
+                RemoveUser(fd_idx);
+                fd_manager.CloseConnection(fd_idx);
+            }
+            continue ;
+        }
+        time_t since_last_msg = time(NULL) - user.getLastMsgTime();
         if (since_last_msg >= SERVER_PONG_TIME_SEC) {
             sendPingToUser(fd_idx);
         }
     }
-
 }
 
 void Server::AddNewUser(int new_fd) {
@@ -124,7 +140,7 @@ void Server::RemoveUser(int fd_idx) {
     FdUserMap::iterator it = fd_user_map.find(fd);
     User &user = it->second;
 
-    LOG(INFO) << "User with nick [" << user.nick << "] removed";
+    LOG(INFO) << "User " << user << " removed";
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {
         nick_fd_map.erase(user.nick);
@@ -175,7 +191,7 @@ string Server::processCommandBuffer(int fd) {
             // ill-formated long comand
             if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
                 user.resetBuffer();
-                LOG(WARNING) << "Ill formatted buffer from User [" << user.nick << "]";
+                LOG(WARNING) << "Ill formatted buffer from user " << user;
                 return "";
             }
             /* buffer has space left : save and return empty command */
@@ -204,7 +220,13 @@ void Server::DataFromUser(int fd_idx) {
         fd_manager.CloseConnection(fd_idx);
         return ;
     }
-    LOG(INFO) << "DataFromUser with fd " << fd
+    /* Update when a user sends a command ! */
+    User& user = getUserFromFd(fd);
+    if (!user.isOnPongHold()) {
+        user.last_received = time(NULL);
+    }
+
+    LOG(INFO) << "DataFromUser user " << user
               << ", bytes : " << srv_buff_size;
     string cmd_string = processCommandBuffer(fd);
 
@@ -227,6 +249,9 @@ void Server::DataFromUser(int fd_idx) {
         if (!cmd_map.count(command.Name())) {
             string msg(ERR_UNKNOWNCOMMAND+command.Name()+STR_UNKNOWNCOMMAND);
             DataToUser(fd_idx, msg);
+            continue ;
+        }
+        if (user.isOnPongHold() && command.Name().compare("PONG")) {
             continue ;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
