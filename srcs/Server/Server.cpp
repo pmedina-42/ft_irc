@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include "Server.hpp"
 #include "User.hpp"
@@ -42,6 +43,7 @@ Server::Server(void)
     {
         throw irc::exc::ServerSetUpError();
     }
+    start = time(NULL);
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
@@ -55,6 +57,7 @@ Server::Server(string &hostname, string &port) {
     {
         throw irc::exc::ServerSetUpError();
     }
+    start = time(NULL);
     memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
@@ -88,6 +91,18 @@ int Server::mainLoop(void) {
     }
 }
 
+void Server::pongLoop(void) {
+    for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
+        if (fd_manager.skipFd(fd_idx)) {
+            continue;
+        }
+        int fd = fd_manager.getFdFromIndex(fd_idx);
+        User &user = getUserFromFd(fd);
+        (void)user;
+    }
+
+}
+
 void Server::AddNewUser(int new_fd) {
     /* case server is full of users */
     if (new_fd == -1) {
@@ -98,7 +113,7 @@ void Server::AddNewUser(int new_fd) {
 }
 
 void Server::RemoveUser(int fd_idx) {
-    int fd = fd_manager.fds[fd_idx].fd;
+    int fd = fd_manager.getFdFromIndex(fd_idx);
     FdUserMap::iterator it = fd_user_map.find(fd);
     User &user = it->second;
 
@@ -171,7 +186,7 @@ string Server::processCommandBuffer(int fd) {
 
 void Server::DataFromUser(int fd_idx) {
 
-    int fd = fd_manager.fds[fd_idx].fd;
+    int fd = fd_manager.getFdFromIndex(fd_idx);
     srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
 
     if (srv_buff_size == -1) {
@@ -226,7 +241,7 @@ void Server::DataToUser(int fd_idx, string &msg) {
     msg.insert(0, ":" + hostname);
     msg.insert(msg.size(), CRLF);
 
-    int fd = fd_manager.fds[fd_idx].fd;
+    int fd = fd_manager.getFdFromIndex(fd_idx);
     int b_sent = 0;
     int total_b_sent = 0;
 

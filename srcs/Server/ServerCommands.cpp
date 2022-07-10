@@ -30,9 +30,9 @@ static bool nickFormatOk(string &nickname) {
     return true;
 }
 
-bool Server::nickAlreadyInUse(string &nickname) {
-    for (FdUserMap::iterator it = fd_user_map.begin();
-                        it != fd_user_map.end(); it++)
+bool nickExists(string &nickname, FdUserMap& map) {
+    for (FdUserMap::iterator it = map.begin();
+                        it != map.end(); it++)
     {
         if (tools::is_equal(nickname, it->second.nick)) {
             return true;
@@ -82,7 +82,7 @@ void Server::NICK(Command &cmd, int fd_idx) {
     }
     /* case nickname is equal to some other in the server
      * (ignoring upper/lower case) */
-    if (nickAlreadyInUse(nick)) {
+    if (nickExists(nick, fd_user_map)) {
         string reply(ERR_NICKNAMEINUSE+nick+STR_NICKNAMEINUSE);
         return DataToUser(fd_idx, reply);
     }
