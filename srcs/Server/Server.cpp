@@ -98,6 +98,10 @@ void Server::pongLoop(void) {
         }
         int fd = fd_manager.getFdFromIndex(fd_idx);
         User &user = getUserFromFd(fd);
+        
+        time_t last_msg = user.GetLastMsgTime();
+        
+        if (user.LastMsg())
         (void)user;
     }
 
