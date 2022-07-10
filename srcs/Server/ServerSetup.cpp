@@ -144,6 +144,7 @@ int Server::setListener(void) {
         return -1;
     }
     if (listen(socketfd, LISTENER_BACKLOG) == -1) {
+        LOG(ERROR) << "listen raised -1";
         freeaddrinfo(fd_manager.servinfo);
         return -1;
     }
