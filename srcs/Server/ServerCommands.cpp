@@ -56,6 +56,20 @@ void Server::sendWelcomeMsg(string& name, string &prefix, int fd_idx) {
     DataToUser(fd_idx, welcome_msg);
 }
 
+void Server::sendPingToUser(int fd_idx) {
+
+    int fd = fd_manager.getFdFromIndex(fd_idx);
+    User& user = getUserFromFd(fd);
+
+    /* send ping message */
+    string random = tools::rng_string(10);
+    string ping_msg("PING :" + random);
+    DataToUser(fd_idx, ping_msg);
+
+    /* update related to ping */
+    user.ping_str = random;
+}
+
 /**
  * Command: NICK
  * Parameters: <nickname>
@@ -188,6 +202,7 @@ void Server::PONG(Command &cmd, int fd_idx) {
         return ;
     }
     if (user.ping_str.compare(cmd.args[1]) == 0) {
+        user.resetPingStatus();
         // update user Keep Alive state, everything ok.
     }
     return ;

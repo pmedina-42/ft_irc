@@ -16,6 +16,7 @@
 #define MAX_FDS 255
 
 #define SERVER_BUFF_MAX_SIZE 512
+#define SERVER_PONG_TIME_SEC 120
 
 namespace irc {
 

@@ -91,6 +91,9 @@ int Server::mainLoop(void) {
     }
 }
 
+/* See
+ * https://stackoverflow.com/questions/14315497/
+ */
 void Server::pongLoop(void) {
     for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
         if (fd_manager.skipFd(fd_idx)) {
@@ -98,11 +101,11 @@ void Server::pongLoop(void) {
         }
         int fd = fd_manager.getFdFromIndex(fd_idx);
         User &user = getUserFromFd(fd);
-        
         time_t last_msg = user.GetLastMsgTime();
-        
-        if (user.LastMsg())
-        (void)user;
+        time_t since_last_msg = time(NULL) - since_last_msg;
+        if (since_last_msg >= SERVER_PONG_TIME_SEC) {
+            sendPingToUser(fd_idx);
+        }
     }
 
 }

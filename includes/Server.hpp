@@ -80,6 +80,7 @@ class Server {
     /* time stuff */
     time_t start;
     void pongLoop(void);
+    void sendPingToUser(int fd_idx);
 
     CommandMap cmd_map;
     /* Map with all command responses */

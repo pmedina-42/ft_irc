@@ -50,12 +50,20 @@ class User {
     string full_name;
     string prefix; // nse si hara falta dis shit
     string mask; // ¿¿¿ XD
-    string ping_str;
     int fd;
 
     char buffer[SERVER_BUFF_MAX_SIZE];
     int buffer_size;
     bool registered;
+
+    /* If this is set to true, ignore any message from
+     * user until it is false !
+     */
+    bool on_pong_hold;
+    time_t GetLastMsgTime(void);
+    time_t last_received;
+    string ping_str;
+    void resetPingStatus(void);
 
     bool hasLeftovers(void) const;
     void resetBuffer(void);
@@ -63,6 +71,8 @@ class User {
     std::string BufferToString(void) const;
 
     inline string getNick() { return nick; }
+
+
 };
 
 }
