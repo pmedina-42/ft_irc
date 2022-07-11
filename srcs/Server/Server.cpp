@@ -137,8 +137,7 @@ void Server::AddNewUser(int new_fd) {
 
 void Server::RemoveUser(int fd_idx) {
     int fd = fd_manager.getFdFromIndex(fd_idx);
-    FdUserMap::iterator it = fd_user_map.find(fd);
-    User &user = it->second;
+    User &user = getUserFromFd(fd);
 
     LOG(INFO) << "User " << user << " removed";
     /* If the user had a nick registered, erase it */
@@ -163,8 +162,7 @@ void Server::RemoveUser(int fd_idx) {
  */
 string Server::processCommandBuffer(int fd) {
 
-    FdUserMap::iterator it = fd_user_map.find(fd);
-    User &user = it->second;
+    User& user = getUserFromFd(fd);
 
     string cmd_string(srv_buff, srv_buff_size);
     tools::clean_buffer(srv_buff, srv_buff_size);
@@ -180,7 +178,7 @@ string Server::processCommandBuffer(int fd) {
         if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
             string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
             LOG(WARNING) << "Buffer from User [" << user.nick << "] too long";
-            DataToUser(fd, reply);
+            DataToUser(fd, reply, NUMERIC_REPLY);
             return "";
         }
     // cmd_string stays as it is.
@@ -227,7 +225,8 @@ void Server::DataFromUser(int fd_idx) {
     }
 
     LOG(INFO) << "DataFromUser user " << user
-              << ", bytes : " << srv_buff_size;
+              << ", bytes " << srv_buff_size
+              << " content [" << srv_buff << "]";
     string cmd_string = processCommandBuffer(fd);
 
     //std::cout << "cmd string : [" << cmd_string << "]" <<  std::endl;   
@@ -248,7 +247,7 @@ void Server::DataFromUser(int fd_idx) {
         /* command does not exist / ill formatted command */
         if (!cmd_map.count(command.Name())) {
             string msg(ERR_UNKNOWNCOMMAND+command.Name()+STR_UNKNOWNCOMMAND);
-            DataToUser(fd_idx, msg);
+            DataToUser(fd_idx, msg, NUMERIC_REPLY);
             continue ;
         }
         if (user.isOnPongHold() && command.Name().compare("PONG")) {
@@ -268,12 +267,19 @@ void Server::DataFromUser(int fd_idx) {
  * will be returned by send in case we try to send to a closed connection
  * twice.
  */
-void Server::DataToUser(int fd_idx, string &msg) {
+void Server::DataToUser(int fd_idx, string &msg, int type) {
 
-    msg.insert(0, ":" + hostname);
+    if (type == NUMERIC_REPLY) {
+        msg.insert(0, ":" + hostname);
+    }
     msg.insert(msg.size(), CRLF);
-
+    
     int fd = fd_manager.getFdFromIndex(fd_idx);
+    User& user = getUserFromFd(fd);
+    LOG(INFO) << "sending user " << user
+              << " buffer with size " << msg.size()
+              << ", content [" << msg << "]"; 
+
     int b_sent = 0;
     int total_b_sent = 0;
 
@@ -302,6 +308,12 @@ User& Server::getUserFromFd(int fd) {
     FdUserMap::iterator it = fd_user_map.find(fd);
     return it->second;
 }
+
+User& Server::getUserFromFdIndex(int fd_idx) {
+    int fd = fd_manager.getFdFromIndex(fd_idx);
+    return getUserFromFd(fd);
+}
+
 
 } /* namespace irc */
 
