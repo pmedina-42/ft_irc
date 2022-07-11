@@ -230,7 +230,7 @@ void Server::JOIN(Command &cmd, int fd_idx) {
     if (size < 2) {
         reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
         LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply);
+        DataToUser(fd_idx, reply, NUMERIC_REPLY);
         return ;
     }
     string channelName = cmd.args[1];
@@ -250,14 +250,14 @@ void Server::JOIN(Command &cmd, int fd_idx) {
                 if (!channel.isInvited(user)) {
                     reply = (ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
                     LOG(DEBUG) << reply;
-                    DataToUser(fd_idx, reply);
+                    DataToUser(fd_idx, reply, NUMERIC_REPLY);
                     return ;
                 }
             } else if (channel.keyModeOn()) {
                 if (cmd.args[2].empty() || channel.key.compare(cmd.args[2])) {
                     reply = (ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
                     LOG(DEBUG) << reply;
-                    DataToUser(fd_idx, reply);
+                    DataToUser(fd_idx, reply, NUMERIC_REPLY);
                     return ;
                 }
             }
@@ -267,7 +267,7 @@ void Server::JOIN(Command &cmd, int fd_idx) {
     } else {
         reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
         LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply);
+        DataToUser(fd_idx, reply, NUMERIC_REPLY);
         return ;
     }
 }
@@ -287,20 +287,20 @@ void Server::PART(Command &cmd, int fd_idx) {
         string reply;
         if (size < 2) {
             reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-            DataToUser(fd_idx, reply);
+            DataToUser(fd_idx, reply, NUMERIC_REPLY);
             return ;
         }
         if (tools::starts_with_mask(cmd.args[1])) {
             if (!channel_map.count(cmd.args[1])) {
                 reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
-                DataToUser(fd_idx, reply);
+                DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
             Channel channel = channel_map.find(cmd.args[1])->second;
             ChannelUser user = channel.userInChannel(channel, fd_idx);
             if (user == NULL) {
                 reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
-                DataToUser(fd_idx, reply);
+                DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
             channel.deleteUser(user);
@@ -309,7 +309,7 @@ void Server::PART(Command &cmd, int fd_idx) {
             }
         } else {
             reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
-            DataToUser(fd_idx, reply);
+            DataToUser(fd_idx, reply, NUMERIC_REPLY);
             return ;
         }
         if (size == 3) {
@@ -335,42 +335,42 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
     string reply;
     if (size < 2) {
         string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-        DataToUser(fd_idx, reply);
+        DataToUser(fd_idx, reply, NUMERIC_REPLY);
         return ;
     }
     if (size >= 2) {
         if (tools::starts_with_mask(cmd.args[1])) {
             if (!channel_map.count(cmd.args[1])) {
                 reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
-                DataToUser(fd_idx, reply);
+                DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
             Channel channel = channel_map.find(cmd.args[1])->second;
             ChannelUser user = channel.userInChannel(channel, fd_idx);
             if (user == NULL) {
                 reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
-                DataToUser(fd_idx, reply);
+                DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
             if (channel.mode.find("t")) {
                 reply = (ERR_NOCHANMODES+cmd.Name()+STR_NOCHANMODES);
-                DataToUser(fd_idx, reply);
+                DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
             if (size == 2) {
                 if (channel.topic.empty()) {
                     reply = (RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
-                    DataToUser(fd_idx, reply);
+                    DataToUser(fd_idx, reply, NUMERIC_REPLY);
                     return ;
                 }
                 reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
-                DataToUser(fd_idx, reply);
+                DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
             if (size == 3) {
                 if (channel.isUserOperator(user)) {
                     reply = (ERR_CHANOPRIVSNEEDED+cmd.Name()+STR_CHANOPRIVSNEEDED);
-                    DataToUser(fd_idx, reply);
+                    DataToUser(fd_idx, reply, NUMERIC_REPLY);
                     return ;
                 }
                 if (cmd.args[2].length() == 1) {
@@ -379,12 +379,12 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
                 }
                 channel.topic = cmd.args[2].substr(1);
                 reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
-                DataToUser(fd_idx, reply);
+                DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
         } else {
             reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
-            DataToUser(fd_idx, reply);
+            DataToUser(fd_idx, reply, NUMERIC_REPLY);
             return ;
         }
     }
@@ -404,14 +404,14 @@ void Server::KICK(Command &cmd, int fd_idx) {
     if (size < 3) {
         string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
         LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply);
+        DataToUser(fd_idx, reply, NUMERIC_REPLY);
         return ;
     }
     if (tools::starts_with_mask(cmd.args[1])) {
         if (!channel_map.count(cmd.args[1])) {
             reply = (ERR_NOSUCHCHANNEL + cmd.Name() + STR_NOSUCHCHANNEL);
             LOG(DEBUG) << reply;
-            DataToUser(fd_idx, reply);
+            DataToUser(fd_idx, reply, NUMERIC_REPLY);
             return;
         }
         Channel channel = channel_map.find(cmd.args[1])->second;
@@ -419,20 +419,20 @@ void Server::KICK(Command &cmd, int fd_idx) {
         if (user == NULL) {
             reply = (ERR_NOTONCHANNEL + cmd.Name() + STR_NOTONCHANNEL);
             LOG(DEBUG) << reply;
-            DataToUser(fd_idx, reply);
+            DataToUser(fd_idx, reply, NUMERIC_REPLY);
             return;
         }
         if (!channel.isUserOperator(user)) {
             reply = (ERR_CHANOPRIVSNEEDED + cmd.Name() + STR_CHANOPRIVSNEEDED);
             LOG(DEBUG) << reply;
-            DataToUser(fd_idx, reply);
+            DataToUser(fd_idx, reply, NUMERIC_REPLY);
             return;
         }
         ChannelUser userToKick = channel.findUserByName(cmd.args[2]);
         if (userToKick == NULL) {
             reply = (ERR_NOTONCHANNEL + cmd.Name() + STR_NOTONCHANNEL);
             LOG(DEBUG) << reply;
-            DataToUser(fd_idx, reply);
+            DataToUser(fd_idx, reply, NUMERIC_REPLY);
             return;
         }
         channel.banUser(userToKick); // Ban this user??
@@ -440,7 +440,7 @@ void Server::KICK(Command &cmd, int fd_idx) {
     } else {
         reply = (ERR_BADCHANMASK + cmd.Name() + STR_BADCHANMASK);
         LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply);
+        DataToUser(fd_idx, reply, NUMERIC_REPLY);
         return;
     }
     if (size == 3) {
