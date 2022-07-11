@@ -6,6 +6,7 @@
 #include <sys/utsname.h>
 
 #include "Server.hpp"
+#include "Log.hpp"
 
 #define NAME_MAX_SZ 10
 
@@ -40,16 +41,20 @@ void error(std::string msg) {
  * n = 3 : server password (?) // no server password 
  */
 int main(int argc, char **argv) {
-    if (argc == 1) {
-        Server server;
-        return 42;
-    } else if (argc == 3) {
-        std::string hostname(argv[1]);
-        std::string port(argv[2]);
-        Server(hostname, port);
-        // connect to server using params
-        return 1;
-    } else {
-        return 42;
+    try {
+        if (argc == 1) {
+            Server server;
+            return 42;
+        } else if (argc == 3) {
+            std::string hostname(argv[1]);
+            std::string port(argv[2]);
+            Server(hostname, port);
+            // connect to server using params
+            return 1;
+        } else {
+            return 42;
+        }
+    } catch (...) {
+        LOG(ERROR) << "Error setting up server";
     }
 }
