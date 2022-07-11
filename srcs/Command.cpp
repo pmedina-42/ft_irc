@@ -52,6 +52,8 @@ int Command::Parse(string &cmd) {
     colon_split = tools::split(colon_split, cmd, ":");
     /* If there was a colon split, only split in spaces first arg. */
     if (colon_split.size() == 2) {
+        /* Never loose the semicolon ! */
+        colon_split[1].insert(0, ":");
         space_split = tools::split(space_split, colon_split[0], " ");
     /* else just split in spaces original command */
     } else {

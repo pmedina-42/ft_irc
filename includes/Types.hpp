@@ -14,8 +14,13 @@
 #define LISTENER_BACKLOG 20
 #define NAME_MAX_SZ 10
 #define MAX_FDS 255
+#define POLL_TIMEOUT_MS 1000
 
 #define SERVER_BUFF_MAX_SIZE 512
+#define SERVER_PONG_TIME_SEC 10
+
+#define NO_NUMERIC_REPLY 0
+#define NUMERIC_REPLY 1
 
 namespace irc {
 

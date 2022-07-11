@@ -45,17 +45,29 @@ bool nickExists(string &nickname, FdUserMap& map) {
 
 void Server::sendNeedMoreParamsMsg(string& cmd_name, int fd_idx) {
     string reply(ERR_NEEDMOREPARAMS+cmd_name+STR_NEEDMOREPARAMS);
-    DataToUser(fd_idx, reply);
+    DataToUser(fd_idx, reply, NUMERIC_REPLY);
 }
 
 void Server::sendNotRegisteredMsg(string &cmd_name, int fd_idx) {
     string reply(ERR_NOTREGISTERED+cmd_name+STR_NOTREGISTERED);
-    DataToUser(fd_idx, reply);
+    DataToUser(fd_idx, reply, NUMERIC_REPLY);
 }
 
 void Server::sendWelcomeMsg(string& name, string &prefix, int fd_idx) {
     string welcome_msg(RPL_WELCOME+name+RPL_WELCOME_STR_1+prefix);
-    DataToUser(fd_idx, welcome_msg);
+    DataToUser(fd_idx, welcome_msg, NUMERIC_REPLY);
+}
+
+void Server::sendPingToUser(int fd_idx) {
+
+    User &user = getUserFromFdIndex(fd_idx);
+
+    /* send ping message */
+    string random = ":" + tools::rng_string(10);
+    string ping_msg("PING " + random);
+    DataToUser(fd_idx, ping_msg, NO_NUMERIC_REPLY);
+
+    user.updatePingStatus(random);
 }
 
 /**
@@ -64,7 +76,7 @@ void Server::sendWelcomeMsg(string& name, string &prefix, int fd_idx) {
  */
 void Server::NICK(Command &cmd, int fd_idx) {
 
-    int fd = fd_manager.fds[fd_idx].fd;
+    int fd = fd_manager.getFdFromIndex(fd_idx);
 
     int size = cmd.args.size();
     /* case too many params */
@@ -74,19 +86,22 @@ void Server::NICK(Command &cmd, int fd_idx) {
     /* case no nickname */
     if (size < 2) {
         string reply(ERR_NONICKNAMEGIVEN "*" STR_NONICKNAMEGIVEN);
-        return DataToUser(fd_idx, reply);
+        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
     string nick = cmd.args[1];
+    if (nick[0] == ':') {
+        nick = nick.substr(1); // ignore : start.
+    }
     /* case forbidden characters are found / incorrect length */
     if (nickFormatOk(nick) == false) {
         string reply(ERR_ERRONEUSNICKNAME+nick+STR_ERRONEUSNICKNAME);
-        return DataToUser(fd_idx, reply);
+        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
     /* case nickname is equal to some other in the server
      * (ignoring upper/lower case) */
     if (nickExists(nick, fd_user_map)) {
         string reply(ERR_NICKNAMEINUSE+nick+STR_NICKNAMEINUSE);
-        return DataToUser(fd_idx, reply);
+        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
     User& user = getUserFromFd(fd);
     /* case nickname change */
@@ -115,8 +130,6 @@ void Server::NICK(Command &cmd, int fd_idx) {
  */
 void Server::USER(Command &cmd, int fd_idx) {
 
-    int fd = fd_manager.fds[fd_idx].fd;
-
     int size = cmd.args.size();
     /* case many params (from irc-hispano) */
     if (size > 5) {
@@ -126,15 +139,19 @@ void Server::USER(Command &cmd, int fd_idx) {
     if (size < 5) {
         return sendNeedMoreParamsMsg(cmd.Name(), fd_idx);
     }
-    User& user = getUserFromFd(fd);
+
+    User& user = getUserFromFdIndex(fd_idx);
     /* case user already sent a valid USER comand */
     if (user.registered == true) {
         string reply(ERR_ALREADYREGISTERED "" STR_ALREADYREGISTERED);
-        return DataToUser(fd_idx, reply);
+        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
     /* wether nick exists or not, name and full name should be saved */
     user.name = cmd.args[1];
-    user.full_name = cmd.args[size - 1];
+    string full_name = cmd.args[size - 1];
+    if (full_name[0] == ':') {
+        full_name = full_name.substr(1);
+    }
     /* rare case USER cmd is recieved before nick (irc hispano allows this) */
     if (user.nick.empty()) {
         return ;
@@ -157,19 +174,18 @@ void Server::USER(Command &cmd, int fd_idx) {
  */
 
 void Server::PING(Command &cmd, int fd_idx) {
-
+    
     int size = cmd.args.size();
-    int fd = fd_manager.fds[fd_idx].fd;
-    User& user = getUserFromFd(fd);
-
     if (size < 2) {
         return sendNeedMoreParamsMsg(cmd.Name(), fd_idx);
     }
+
+    User& user = getUserFromFdIndex(fd_idx);
     if (!user.registered) {
         return sendNotRegisteredMsg(cmd.Name(), fd_idx);
     }
     string pong_reply(" PONG " + cmd.args[1]);
-    DataToUser(fd_idx, pong_reply);
+    DataToUser(fd_idx, pong_reply, NO_NUMERIC_REPLY);
 }
 
 /*
@@ -178,10 +194,9 @@ void Server::PING(Command &cmd, int fd_idx) {
  */
 void Server::PONG(Command &cmd, int fd_idx) {
 
-    int fd = fd_manager.fds[fd_idx].fd;
+    User& user = getUserFromFdIndex(fd_idx);
 
     int size = cmd.args.size();
-    User& user = getUserFromFd(fd);
     /* PONG has no replies */
     if (size < 2
         /* case pong is recieved wihtout previous PING */
@@ -190,7 +205,8 @@ void Server::PONG(Command &cmd, int fd_idx) {
         return ;
     }
     if (user.ping_str.compare(cmd.args[1]) == 0) {
-        // update user Keep Alive state, everything ok.
+        user.resetPingStatus();
+        user.last_received = time(NULL);
     }
     return ;
 }

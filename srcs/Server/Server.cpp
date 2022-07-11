@@ -88,19 +88,42 @@ int Server::mainLoop(void) {
             }
             DataFromUser(fd_idx);
         }
+        pingLoop();
     }
 }
 
-void Server::pongLoop(void) {
+/* 
+ * When a user is more than SERVER_PONG_TIME_SEC without sending anything,
+ * the server sends a PING <random_10_byte_string> that the user has to
+ * reply within SERVER_PONG_TIME_SEC with PONG <random_10_byte_string>.
+ * If the user does not send the PONG message in time, the user is 
+ * removed.
+ * 
+ * See
+ * https://stackoverflow.com/questions/14315497/ 
+ * 
+ */
+void Server::pingLoop(void) {
     for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
         if (fd_manager.skipFd(fd_idx)) {
             continue;
         }
         int fd = fd_manager.getFdFromIndex(fd_idx);
         User &user = getUserFromFd(fd);
-        (void)user;
+        if (user.isOnPongHold()) {
+            time_t since_ping = time(NULL) - user.getPingTime();
+            if (since_ping >= SERVER_PONG_TIME_SEC) {
+                // Maybe send a message ? 
+                RemoveUser(fd_idx);
+                fd_manager.CloseConnection(fd_idx);
+            }
+            continue ;
+        }
+        time_t since_last_msg = time(NULL) - user.getLastMsgTime();
+        if (since_last_msg >= SERVER_PONG_TIME_SEC) {
+            sendPingToUser(fd_idx);
+        }
     }
-
 }
 
 void Server::AddNewUser(int new_fd) {
@@ -114,10 +137,9 @@ void Server::AddNewUser(int new_fd) {
 
 void Server::RemoveUser(int fd_idx) {
     int fd = fd_manager.getFdFromIndex(fd_idx);
-    FdUserMap::iterator it = fd_user_map.find(fd);
-    User &user = it->second;
+    User &user = getUserFromFd(fd);
 
-    LOG(INFO) << "User with nick [" << user.nick << "] removed";
+    LOG(INFO) << "User " << user << " removed";
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {
         nick_fd_map.erase(user.nick);
@@ -140,8 +162,7 @@ void Server::RemoveUser(int fd_idx) {
  */
 string Server::processCommandBuffer(int fd) {
 
-    FdUserMap::iterator it = fd_user_map.find(fd);
-    User &user = it->second;
+    User& user = getUserFromFd(fd);
 
     string cmd_string(srv_buff, srv_buff_size);
     tools::clean_buffer(srv_buff, srv_buff_size);
@@ -157,7 +178,7 @@ string Server::processCommandBuffer(int fd) {
         if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
             string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
             LOG(WARNING) << "Buffer from User [" << user.nick << "] too long";
-            DataToUser(fd, reply);
+            DataToUser(fd, reply, NUMERIC_REPLY);
             return "";
         }
     // cmd_string stays as it is.
@@ -168,7 +189,7 @@ string Server::processCommandBuffer(int fd) {
             // ill-formated long comand
             if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
                 user.resetBuffer();
-                LOG(WARNING) << "Ill formatted buffer from User [" << user.nick << "]";
+                LOG(WARNING) << "Ill formatted buffer from user " << user;
                 return "";
             }
             /* buffer has space left : save and return empty command */
@@ -197,8 +218,15 @@ void Server::DataFromUser(int fd_idx) {
         fd_manager.CloseConnection(fd_idx);
         return ;
     }
-    LOG(INFO) << "DataFromUser with fd " << fd
-              << ", bytes : " << srv_buff_size;
+    /* Update when a user sends a command ! */
+    User& user = getUserFromFd(fd);
+    if (!user.isOnPongHold()) {
+        user.last_received = time(NULL);
+    }
+
+    LOG(INFO) << "DataFromUser user " << user
+              << ", bytes " << srv_buff_size
+              << " content [" << srv_buff << "]";
     string cmd_string = processCommandBuffer(fd);
 
     //std::cout << "cmd string : [" << cmd_string << "]" <<  std::endl;   
@@ -219,7 +247,10 @@ void Server::DataFromUser(int fd_idx) {
         /* command does not exist / ill formatted command */
         if (!cmd_map.count(command.Name())) {
             string msg(ERR_UNKNOWNCOMMAND+command.Name()+STR_UNKNOWNCOMMAND);
-            DataToUser(fd_idx, msg);
+            DataToUser(fd_idx, msg, NUMERIC_REPLY);
+            continue ;
+        }
+        if (user.isOnPongHold() && command.Name().compare("PONG")) {
             continue ;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
@@ -236,12 +267,19 @@ void Server::DataFromUser(int fd_idx) {
  * will be returned by send in case we try to send to a closed connection
  * twice.
  */
-void Server::DataToUser(int fd_idx, string &msg) {
+void Server::DataToUser(int fd_idx, string &msg, int type) {
 
-    msg.insert(0, ":" + hostname);
+    if (type == NUMERIC_REPLY) {
+        msg.insert(0, ":" + hostname);
+    }
     msg.insert(msg.size(), CRLF);
-
+    
     int fd = fd_manager.getFdFromIndex(fd_idx);
+    User& user = getUserFromFd(fd);
+    LOG(INFO) << "sending user " << user
+              << " buffer with size " << msg.size()
+              << ", content [" << msg << "]"; 
+
     int b_sent = 0;
     int total_b_sent = 0;
 
@@ -270,6 +308,12 @@ User& Server::getUserFromFd(int fd) {
     FdUserMap::iterator it = fd_user_map.find(fd);
     return it->second;
 }
+
+User& Server::getUserFromFdIndex(int fd_idx) {
+    int fd = fd_manager.getFdFromIndex(fd_idx);
+    return getUserFromFd(fd);
+}
+
 
 } /* namespace irc */
 

@@ -55,7 +55,7 @@ void FdManager::setUpListener(void) {
 
 void FdManager::Poll(void) {
     /* -1 = wait until some event happens */
-    if (poll(fds, fds_size, -1) == -1) {
+    if (poll(fds, fds_size, POLL_TIMEOUT_MS) == -1) {
         throw irc::exc::FatalError("poll -1");
     }
 }

@@ -58,7 +58,7 @@ class Server {
     /* parses message into commands, calls 
      * commands from user until finished. */
     void DataFromUser(int fd_idx);
-    void DataToUser(int fd_idx, string &data);
+    void DataToUser(int fd_idx, string &data, int type);
 
     /* loop through all poll fd's */
     int mainLoop(void);
@@ -79,7 +79,8 @@ class Server {
 
     /* time stuff */
     time_t start;
-    void pongLoop(void);
+    void pingLoop(void);
+    void sendPingToUser(int fd_idx);
 
     CommandMap cmd_map;
     /* Map with all command responses */
@@ -98,6 +99,7 @@ class Server {
 
     /* utils */
     User& getUserFromFd(int fd);
+    User& getUserFromFdIndex(int fd_idx);
 };
 
 /**

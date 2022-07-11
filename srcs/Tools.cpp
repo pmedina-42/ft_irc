@@ -135,32 +135,35 @@ bool ends_with(std::string const &str, std::string const &suffix) {
 bool starts_with_mask(string const str) {
     return (str[0] == '!' || str[0] == '#' || str[0] == '+' || str[0] == '&');
 }
-/* from
- * https://stackoverflow.com/questions/440133
+
+/*
+ * from https://stackoverflow.com/questions/440133
+ * See https://cplusplus.com/reference/cstdlib/rand/
  */
 string rng_string(int len) {
     srand((unsigned)time(NULL) * getpid());
-    static const char alphanum[] =
+    static const unsigned char alphanum[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
-        "ª!\"·$%&/()=?¿^*_;\\|@#~[]{}º,.-'ç+`'¡";
+        "!$%&/()=?^*_;:\\|@#~[]{},-'+";
     std::string tmp_s;
     tmp_s.reserve(len);
     for (int i = 0; i < len; ++i) {
-        tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+        unsigned char c = alphanum[rand() % (sizeof(alphanum))];
+        tmp_s.push_back(c);
     }
     return tmp_s;
 }
 
-/* returns the index corresponding to the last crlf :
+/*
+ * returns the index corresponding to the last crlf, e.g. :
  * from "Hello CRLF lol", returns the position 5.
  * This is done to then call substr(0, pos),
  * which will be the contents of the string before
  * the last CRLF.
  */
 size_t find_last_CRLF(string& haystack) {
-
     size_t CR_pos = haystack.find_last_of(CR);
     size_t LF_pos = haystack.find_last_of(LF);
 
