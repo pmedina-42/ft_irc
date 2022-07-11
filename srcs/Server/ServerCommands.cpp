@@ -6,6 +6,7 @@
 #include "User.hpp"
 #include "NumericReplies.hpp"
 #include "ChannelUser.hpp"
+#include "Log.hpp"
 
 #include <map>
 #include <iostream>
@@ -208,9 +209,11 @@ void Server::PONG(Command &cmd, int fd_idx) {
  */
 void Server::JOIN(Command &cmd, int fd_idx) {
     int size = cmd.args.size();
-        string reply;
+    string reply;
+    LOG(DEBUG) << "join: started";
     if (size < 2) {
         reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
+        LOG(DEBUG) << reply;
         DataToUser(fd_idx, reply);
         return ;
     }
@@ -218,6 +221,7 @@ void Server::JOIN(Command &cmd, int fd_idx) {
     ChannelUser user(fd_idx);
     if (tools::starts_with_mask(channelName)) {
         if (!channel_map.count(cmd.args[1])) {
+            LOG(DEBUG) << "join: channel exists";
             Channel channel(channelName, user);
             channel.setUserMode(user, 'o');
             channel_map.insert(std::make_pair(channelName, channel));
@@ -229,12 +233,14 @@ void Server::JOIN(Command &cmd, int fd_idx) {
             if (channel.inviteModeOn()) {
                 if (!channel.isInvited(user)) {
                     reply = (ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
+                    LOG(DEBUG) << reply;
                     DataToUser(fd_idx, reply);
                     return ;
                 }
             } else if (channel.keyModeOn()) {
                 if (cmd.args[2].empty() || channel.key.compare(cmd.args[2])) {
                     reply = (ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
+                    LOG(DEBUG) << reply;
                     DataToUser(fd_idx, reply);
                     return ;
                 }
@@ -244,6 +250,7 @@ void Server::JOIN(Command &cmd, int fd_idx) {
         }
     } else {
         reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
+        LOG(DEBUG) << reply;
         DataToUser(fd_idx, reply);
         return ;
     }
@@ -370,20 +377,62 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
 /**
  * Command: KICK
  * Parameters: <channel> <user> [<comment>]
+ * 1. Check correct parameter size & if user and channel exist
  * 1. Check if user has the correct permissions to do kick another user
- * 2. Find the user to kick in the channel
+ * 2. Find the user to kick in the channel, if it exists
  * 3. Reuse the PART method passing the comment as the part message
  */
-//void Server::KICK(Command &cmd, int fd_idx) {
-//    Channel channel = channel_map.find(cmd.args[1])->second;
-//    ChannelUser user = channel.userInChannel(channel, fd_idx);
-//    string reply;
-//    if (!channel.isUserOperator(user)) {
-//        reply = (ERR_CHANOPRIVSNEEDED+cmd.Name()+STR_CHANOPRIVSNEEDED);
-//        DataToUser(fd_idx, reply);
-//        return ;
-//    }
-//    this->PART(cmd, )
-//}
+void Server::KICK(Command &cmd, int fd_idx) {
+    int size = cmd.args.size();
+    string reply;
+    if (size < 3) {
+        string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
+        LOG(DEBUG) << reply;
+        DataToUser(fd_idx, reply);
+        return ;
+    }
+    if (tools::starts_with_mask(cmd.args[1])) {
+        if (!channel_map.count(cmd.args[1])) {
+            reply = (ERR_NOSUCHCHANNEL + cmd.Name() + STR_NOSUCHCHANNEL);
+            LOG(DEBUG) << reply;
+            DataToUser(fd_idx, reply);
+            return;
+        }
+        Channel channel = channel_map.find(cmd.args[1])->second;
+        ChannelUser user = channel.userInChannel(channel, fd_idx);
+        if (user == NULL) {
+            reply = (ERR_NOTONCHANNEL + cmd.Name() + STR_NOTONCHANNEL);
+            LOG(DEBUG) << reply;
+            DataToUser(fd_idx, reply);
+            return;
+        }
+        if (!channel.isUserOperator(user)) {
+            reply = (ERR_CHANOPRIVSNEEDED + cmd.Name() + STR_CHANOPRIVSNEEDED);
+            LOG(DEBUG) << reply;
+            DataToUser(fd_idx, reply);
+            return;
+        }
+        ChannelUser userToKick = channel.findUserByName(cmd.args[2]);
+        if (userToKick == NULL) {
+            reply = (ERR_NOTONCHANNEL + cmd.Name() + STR_NOTONCHANNEL);
+            LOG(DEBUG) << reply;
+            DataToUser(fd_idx, reply);
+            return;
+        }
+        channel.banUser(userToKick); // Ban this user??
+        channel.deleteUser(userToKick);
+    } else {
+        reply = (ERR_BADCHANMASK + cmd.Name() + STR_BADCHANMASK);
+        LOG(DEBUG) << reply;
+        DataToUser(fd_idx, reply);
+        return;
+    }
+    if (size == 3) {
+        // TODO: mandar mensajes por defecto y por parametro a los channelUsers
+    } else {
+
+    }
+
+}
 
 } // namespace irc
