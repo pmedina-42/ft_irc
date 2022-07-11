@@ -5,6 +5,7 @@
 #include "Types.hpp"
 #include "User.hpp"
 #include "NumericReplies.hpp"
+#include "Log.hpp"
 
 #include <map>
 #include <iostream>
@@ -59,7 +60,6 @@ void Server::sendWelcomeMsg(string& name, string &prefix, int fd_idx) {
 void Server::sendPingToUser(int fd_idx) {
 
     User &user = getUserFromFdIndex(fd_idx);
-
     /* send ping message */
     string random = ":" + tools::rng_string(10);
     string ping_msg("PING " + random);
@@ -70,7 +70,7 @@ void Server::sendPingToUser(int fd_idx) {
 
 /**
  * Command: NICK
- * Parameters: <nickname>
+ * Parameters: <nickname>   
  */
 void Server::NICK(Command &cmd, int fd_idx) {
 
@@ -182,7 +182,7 @@ void Server::PING(Command &cmd, int fd_idx) {
     if (!user.registered) {
         return sendNotRegisteredMsg(cmd.Name(), fd_idx);
     }
-    string pong_reply(" PONG " + cmd.args[1]);
+    string pong_reply("PONG " + cmd.args[1]);
     DataToUser(fd_idx, pong_reply, NO_NUMERIC_REPLY);
 }
 
@@ -204,7 +204,9 @@ void Server::PONG(Command &cmd, int fd_idx) {
     }
     if (user.ping_str.compare(cmd.args[1]) == 0) {
         user.resetPingStatus();
-        user.last_received = time(NULL);
+    } else {
+        LOG(DEBUG) << "PING from user " << user << " incorrect, sent "
+                   << user.ping_str << " recieved " << cmd.args[1];
     }
     return ;
 }

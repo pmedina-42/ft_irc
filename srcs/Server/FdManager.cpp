@@ -19,10 +19,10 @@ int FdManager::getSocketError(int fd) {
     int err_code;
     socklen_t len = sizeof(err_code);
 
-    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err_code, &len) != 0) {
+    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err_code, &len) == 0) {
         err_code = errno;
     } else {
-        errno = err_code;
+        errno = err_code; // problem getting error code
     }
     return err_code;
 }
@@ -138,5 +138,11 @@ void FdManager::CloseConnection(int fd_idx) {
     }
     fds[fd_idx].fd = -1;
 }
+
+bool FdManager::socketErrorIsNotFatal(int fd) {
+    int error = getSocketError(fd);
+    return (error == ECONNRESET || error == EPIPE);
+}
+
 
 } //namespace

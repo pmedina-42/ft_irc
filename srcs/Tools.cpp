@@ -137,15 +137,15 @@ bool ends_with(std::string const &str, std::string const &suffix) {
  */
 string rng_string(int len) {
     srand((unsigned)time(NULL) * getpid());
-    static const unsigned char alphanum[] =
+    static const unsigned char printables[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
-        "!$%&/()=?^*_;:\\|@#~[]{},-'+";
+        "!$/%()=?^_;\\|@#~[]{},-'+";
     std::string tmp_s;
     tmp_s.reserve(len);
     for (int i = 0; i < len; ++i) {
-        unsigned char c = alphanum[rand() % (sizeof(alphanum))];
+        unsigned char c = printables[rand() % (sizeof(printables) - 1)];
         tmp_s.push_back(c);
     }
     return tmp_s;

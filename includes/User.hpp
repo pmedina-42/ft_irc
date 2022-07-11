@@ -46,12 +46,12 @@ class User {
 
     void setPrefixFromHost(string &host);
     /* ATTRIBUTES */
+    int fd;
     string nick;
     string name;
     string full_name;
     string prefix; // nse si hara falta dis shit
     string mask; // ¿¿¿ XD
-    int fd;
 
     char buffer[SERVER_BUFF_MAX_SIZE];
     int buffer_size;
@@ -81,6 +81,6 @@ class User {
 
 }
 
-std::ostream& operator<<(std::ostream &o, irc::User const &rhs);
+std::ostream& operator<<(std::ostream &o, const irc::User &rhs);
 
 #endif

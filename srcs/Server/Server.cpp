@@ -105,7 +105,7 @@ int Server::mainLoop(void) {
  */
 void Server::pingLoop(void) {
     for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
-        if (fd_manager.skipFd(fd_idx)) {
+        if (fd_idx == 0 || fd_manager.skipFd(fd_idx)) {
             continue;
         }
         int fd = fd_manager.getFdFromIndex(fd_idx);
@@ -138,7 +138,6 @@ void Server::AddNewUser(int new_fd) {
 void Server::RemoveUser(int fd_idx) {
     int fd = fd_manager.getFdFromIndex(fd_idx);
     User &user = getUserFromFd(fd);
-
     LOG(INFO) << "User " << user << " removed";
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {
@@ -205,12 +204,21 @@ string Server::processCommandBuffer(int fd) {
     return cmd_string;
 }
 
+#include <stdio.h>
+
 void Server::DataFromUser(int fd_idx) {
 
     int fd = fd_manager.getFdFromIndex(fd_idx);
     srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
 
     if (srv_buff_size == -1) {
+        if (fd_manager.socketErrorIsNotFatal(fd)) {
+            LOG(WARNING) << "DataToUser closing fd" << fd
+                         << " from user " << getUserFromFd(fd)
+                         << "non fatal error";
+            RemoveUser(fd_idx);
+            return fd_manager.CloseConnection(fd_idx);
+        }
         throw irc::exc::FatalError("recv -1");
     }
     if (srv_buff_size == 0) {
@@ -224,12 +232,12 @@ void Server::DataFromUser(int fd_idx) {
         user.last_received = time(NULL);
     }
 
-    LOG(INFO) << "DataFromUser user " << user
+    LOG(DEBUG) << "DataFromUser user " << user
               << ", bytes " << srv_buff_size
               << " content [" << srv_buff << "]";
+
     string cmd_string = processCommandBuffer(fd);
 
-    //std::cout << "cmd string : [" << cmd_string << "]" <<  std::endl;   
     /* cmd_string can be empty here in case there have been buffering 
      * problems with the user */
     if (cmd_string.empty()) {
@@ -276,8 +284,9 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
     
     int fd = fd_manager.getFdFromIndex(fd_idx);
     User& user = getUserFromFd(fd);
-    LOG(INFO) << "sending user " << user
-              << " buffer with size " << msg.size()
+
+    LOG(DEBUG) << "DataToUser user " << user
+              << ", bytes " << msg.size()
               << ", content [" << msg << "]"; 
 
     int b_sent = 0;
@@ -286,13 +295,12 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
     do {
         b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
         if (b_sent == -1) {
-            int error = fd_manager.getSocketError(fd);
-            if (error == ECONNRESET
-                || error == EPIPE)
-            {
+            if (fd_manager.socketErrorIsNotFatal(fd)) {
+                LOG(WARNING) << "DataToUser closing fd" << fd
+                             << " from user " << user
+                             << "non fatal error";
                 RemoveUser(fd_idx);
-                fd_manager.CloseConnection(fd_idx);
-                return ;
+                return fd_manager.CloseConnection(fd_idx);
             }
             throw irc::exc::FatalError("send = -1");
         }
@@ -300,8 +308,6 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
         total_b_sent += b_sent;
     /* keep looping until full message is sent */
     } while (total_b_sent != (int)msg.size());
-
-    return ;
 }
 
 User& Server::getUserFromFd(int fd) {
@@ -311,7 +317,8 @@ User& Server::getUserFromFd(int fd) {
 
 User& Server::getUserFromFdIndex(int fd_idx) {
     int fd = fd_manager.getFdFromIndex(fd_idx);
-    return getUserFromFd(fd);
+    FdUserMap::iterator it = fd_user_map.find(fd);
+    return it->second;
 }
 
 

@@ -27,6 +27,8 @@ class FdManager {
     void CloseConnection(int fd_idx);
     void Poll(void);
 
+    bool socketErrorIsNotFatal(int fd);
+
     int getSocketError(int);
     /* fd from clients manager. This includes
     * the listener, at entry 0.
