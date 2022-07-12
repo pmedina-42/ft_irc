@@ -64,6 +64,23 @@ Server::Server(string &hostname, string &port) {
     mainLoop();
 }
 
+Server::Server(const Server& other)
+:
+    srv_buff_size(other.srv_buff_size),
+    hostname(other.hostname),
+    channel_map(other.channel_map),
+    nick_fd_map(other.nick_fd_map),
+    fd_user_map(other.fd_user_map),
+    fd_manager(other.fd_manager),
+    start(other.start),
+    cmd_map(other.cmd_map)
+{
+    memset(srv_buff, '\0', BUFF_MAX_SIZE);
+    if (other.srv_buff_size > 0) {
+        memcpy(srv_buff, other.srv_buff, other.srv_buff_size);
+    }
+}
+
 Server::~Server(void) {
 }
 

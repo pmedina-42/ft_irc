@@ -7,6 +7,7 @@
 
 #include <poll.h>
 #include "Channel.hpp" // without this, it doesnt compile
+#include "ChannelUser.hpp"
 #include "Types.hpp"
 
 using std::string;
@@ -16,7 +17,7 @@ namespace irc {
 class FdManager {
     public:
     FdManager(void);
-    FdManager(FdManager &rhs);
+    FdManager(const FdManager &other);
     ~FdManager(void);
 
     void setUpListener(void);
@@ -35,9 +36,6 @@ class FdManager {
     */
     struct pollfd fds[MAX_FDS];
     int fds_size;
-    /* addresses corresponding to each client */
-    struct sockaddr *addr[MAX_FDS];
-
     struct addrinfo *servinfo;
     int listener;
 };
@@ -47,7 +45,7 @@ class Server {
     public:
     Server(void);
     Server(string &ip, string &port);
-    Server(Server &rhs);
+    Server(const Server &other);
     ~Server();
     
     private:

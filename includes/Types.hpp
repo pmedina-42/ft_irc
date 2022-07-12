@@ -16,7 +16,6 @@
  * https://stackoverflow.com/questions/3134757/
  */
 
-
 namespace irc {
 
 typedef enum {

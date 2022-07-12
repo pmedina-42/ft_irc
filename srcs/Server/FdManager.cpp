@@ -32,6 +32,19 @@ FdManager::FdManager(void)
     fds_size(0)
 {}
 
+FdManager::FdManager(const FdManager& other)
+:
+    fds_size(other.fds_size),
+    servinfo(other.servinfo),
+    listener(other.listener)
+{
+    for (int fd_idx=0; fd_idx < fds_size; fd_idx++) {
+        fds[fd_idx].events = other.fds[fd_idx].events;
+        fds[fd_idx].revents = other.fds[fd_idx].revents;
+        fds[fd_idx].fd = other.fds[fd_idx].fd;
+    }
+}
+
 FdManager::~FdManager(void) {
     if (servinfo != NULL) {
         freeaddrinfo(servinfo);
