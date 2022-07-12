@@ -204,8 +204,6 @@ string Server::processCommandBuffer(int fd) {
     return cmd_string;
 }
 
-#include <stdio.h>
-
 void Server::DataFromUser(int fd_idx) {
 
     int fd = fd_manager.getFdFromIndex(fd_idx);
@@ -213,9 +211,9 @@ void Server::DataFromUser(int fd_idx) {
 
     if (srv_buff_size == -1) {
         if (fd_manager.socketErrorIsNotFatal(fd)) {
-            LOG(WARNING) << "DataToUser closing fd" << fd
+            LOG(WARNING) << "DataFromUser closing fd " << fd
                          << " from user " << getUserFromFd(fd)
-                         << "non fatal error";
+                         << " non fatal error";
             RemoveUser(fd_idx);
             return fd_manager.CloseConnection(fd_idx);
         }
@@ -296,9 +294,9 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
         b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
         if (b_sent == -1) {
             if (fd_manager.socketErrorIsNotFatal(fd)) {
-                LOG(WARNING) << "DataToUser closing fd" << fd
+                LOG(WARNING) << "DataToUser closing fd " << fd
                              << " from user " << user
-                             << "non fatal error";
+                             << " non fatal error";
                 RemoveUser(fd_idx);
                 return fd_manager.CloseConnection(fd_idx);
             }
