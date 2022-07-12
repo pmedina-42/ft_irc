@@ -336,6 +336,7 @@ void Server::loadCommandMap(void) {
     cmd_map.insert(std::make_pair(string("PART"), (&Server::PART)));
     cmd_map.insert(std::make_pair(string("KICK"), (&Server::KICK)));
     cmd_map.insert(std::make_pair(string("TOPIC"), (&Server::TOPIC)));
+    cmd_map.insert(std::make_pair(string("INVITE"), (&Server::INVITE)));
 }
 
 

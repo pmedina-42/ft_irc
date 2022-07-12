@@ -1,6 +1,7 @@
 #include "Channel.hpp"
 #include "ChannelUser.hpp"
 #include <algorithm>
+#include "Log.hpp"
 
 #include <Types.hpp>
 
@@ -54,14 +55,14 @@ void Channel::deleteUser(ChannelUser &user) {
     for (ChannelUserList::iterator u = users.begin(); u != end; u++) {
         if (!u->nick.compare(user.nick)) {
             if (u == users.begin()) {
-                users.pop_front();
                 ChannelUserList::iterator it = users.begin();
                 while (userInBlackList(*it))
                     it++;
                 it->mode = 'o';
-            }
-            else
                 users.erase(u);
+            } else {
+                users.erase(u);
+            }
             break ;
         }
     }

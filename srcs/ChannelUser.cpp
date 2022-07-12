@@ -9,7 +9,9 @@ namespace irc {
 ChannelUser::ChannelUser(int fd)
 :
 	User(fd)
-{}
+{
+    mode = ' ';
+}
 
 ChannelUser::~ChannelUser() {}
 

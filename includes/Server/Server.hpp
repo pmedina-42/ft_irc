@@ -56,6 +56,7 @@ class Server
     void KICK(Command &cmd, int fd);
     void PART(Command &cmd, int fd);
     void TOPIC(Command &cmd, int fd);
+    void INVITE(Command &cmd, int fd);
     /* command implementations */
     void sendNeedMoreParamsMsg(string& cmd_name, int fd_idx);
     void sendNotRegisteredMsg(string &cmd_name, int fd_idx);
