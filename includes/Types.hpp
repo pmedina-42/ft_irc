@@ -11,18 +11,26 @@
 #define CR "\r"
 #define LF "\n"
 
-#define LISTENER_BACKLOG 20
-#define NAME_MAX_SZ 10
-#define MAX_FDS 255
-#define POLL_TIMEOUT_MS 1000
-
-#define SERVER_BUFF_MAX_SIZE 512
-#define SERVER_PONG_TIME_SEC 10
-
-#define NO_NUMERIC_REPLY 0
-#define NUMERIC_REPLY 1
+/*
+ * On why enums are chosen over macros for integers :
+ * https://stackoverflow.com/questions/3134757/
+ */
 
 namespace irc {
+
+typedef enum {
+    LISTENER_BACKLOG = 20,
+    NAME_MAX_SIZE = 10,
+    MAX_FDS = 255,
+    POLL_TIMEOUT_MS = 1000,
+    BUFF_MAX_SIZE = 512,
+    PING_TIMEOUT_S = 120 
+} SERVER_CONFIG;
+
+typedef enum {
+    NO_NUMERIC_REPLY = 0,
+    NUMERIC_REPLY
+} FLAG_NUMERIC;
 
 class Channel;
 class User;
@@ -37,7 +45,7 @@ typedef std::list<irc::ChannelUser> ChannelUserList;
 typedef std::map<int, irc::User> FdUserMap;
 typedef std::map<std::string, int> NickFdMap;
 
-typedef void (irc::Server::*CommandFnx)(Command &cmd, int fd); //este es pa enmarcarlo xdd
+typedef void (irc::Server::*CommandFnx)(Command &cmd, int fd);
 typedef std::map<std::string, CommandFnx> CommandMap;
 
 }

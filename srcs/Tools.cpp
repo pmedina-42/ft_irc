@@ -76,7 +76,7 @@ vector<string>& split(vector<string> &to_fill, string &str, string del) {
     return to_fill;
 }
 
-string& trim_repeated_char(string& str, char c) {
+string& trimRepeatedChar(string& str, char c) {
     string clean_str;
     size_t src_size = str.size();
     clean_str.reserve(src_size); // max possible
@@ -95,11 +95,23 @@ string& trim_repeated_char(string& str, char c) {
 }
 
 /*
+ * Replaces all <from> occurrences in string str for <to>.
+ * From https://stackoverflow.com/questions/2896600/
+ */
+void ReplaceAll(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    }
+}
+
+/*
  * Each lowercase letter is 32 + uppercase equivalent. This means simply
  * flipping the bit at position 5 (counting from least significant bit
  * at position 0) inverts the case of a letter.
  */
-void to_upper_case(string &str) {
+void ToUpperCase(string &str) {
     for (string::iterator it = str.begin(); it < str.end(); it++) {
         if (*it >= 'a' && *it <= 'z') {
             *it ^= 0x20;
@@ -109,7 +121,7 @@ void to_upper_case(string &str) {
 
 /* checks if a string is equal to another, ignoring case
  * differences (HellO = hELlo) */
-bool is_equal(const string &str1, const string &str2) {
+bool isEqual(const string &str1, const string &str2) {
     if (str1.length() != str2.length()) {
         return false;
     }
@@ -123,7 +135,7 @@ bool is_equal(const string &str1, const string &str2) {
 }
 
 /* Check if str ends with suffix */
-bool ends_with(std::string const &str, std::string const &suffix) {
+bool endsWith(std::string const &str, std::string const &suffix) {
     if (str.length() < suffix.length()) {
         return false;
     }
@@ -140,17 +152,17 @@ bool starts_with_mask(string const str) {
  * from https://stackoverflow.com/questions/440133
  * See https://cplusplus.com/reference/cstdlib/rand/
  */
-string rng_string(int len) {
+string rngString(int len) {
     srand((unsigned)time(NULL) * getpid());
-    static const unsigned char alphanum[] =
+    static const unsigned char printables[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
-        "!$%&/()=?^*_;:\\|@#~[]{},-'+";
+        "!$/%()=?^_;\\|@#~[]{},-'+";
     std::string tmp_s;
     tmp_s.reserve(len);
     for (int i = 0; i < len; ++i) {
-        unsigned char c = alphanum[rand() % (sizeof(alphanum))];
+        unsigned char c = printables[rand() % (sizeof(printables) - 1)];
         tmp_s.push_back(c);
     }
     return tmp_s;
@@ -163,7 +175,7 @@ string rng_string(int len) {
  * which will be the contents of the string before
  * the last CRLF.
  */
-size_t find_last_CRLF(string& haystack) {
+size_t findLastCRLF(string& haystack) {
     size_t CR_pos = haystack.find_last_of(CR);
     size_t LF_pos = haystack.find_last_of(LF);
 
@@ -178,7 +190,7 @@ size_t find_last_CRLF(string& haystack) {
 }
 
 
-void clean_buffer(char *buff, size_t size) {
+void cleanBuffer(char *buff, size_t size) {
     if (size > 0 && buff != NULL) {
         memset(buff, '\0', size);
     }

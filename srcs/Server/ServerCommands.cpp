@@ -17,7 +17,7 @@ namespace irc {
  * https://forums.mirc.com/ubbthreads.php/topics/186181/nickname-valid-characters */
 static bool nickFormatOk(string &nickname) {
 
-    if (nickname.empty() || nickname.length() > 9) { // not sure this can happen.
+    if (nickname.empty() || nickname.length() > NAME_MAX_SIZE) { // not sure this can happen.
         return false;
     }
     for (string::iterator it = nickname.begin(); it != nickname.end(); it++) {
@@ -36,7 +36,7 @@ bool nickExists(string &nickname, FdUserMap& map) {
     for (FdUserMap::iterator it = map.begin();
                         it != map.end(); it++)
     {
-        if (tools::is_equal(nickname, it->second.nick)) {
+        if (tools::isEqual(nickname, it->second.nick)) {
             return true;
         }
     }
@@ -61,9 +61,8 @@ void Server::sendWelcomeMsg(string& name, string &prefix, int fd_idx) {
 void Server::sendPingToUser(int fd_idx) {
 
     User &user = getUserFromFdIndex(fd_idx);
-
     /* send ping message */
-    string random = ":" + tools::rng_string(10);
+    string random = ":" + tools::rngString(10);
     string ping_msg("PING " + random);
     DataToUser(fd_idx, ping_msg, NO_NUMERIC_REPLY);
 
@@ -76,7 +75,7 @@ void Server::sendPingToUser(int fd_idx) {
  */
 void Server::NICK(Command &cmd, int fd_idx) {
 
-    int fd = fd_manager.getFdFromIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
 
     int size = cmd.args.size();
     /* case too many params */
@@ -184,7 +183,7 @@ void Server::PING(Command &cmd, int fd_idx) {
     if (!user.registered) {
         return sendNotRegisteredMsg(cmd.Name(), fd_idx);
     }
-    string pong_reply(" PONG " + cmd.args[1]);
+    string pong_reply("PONG " + cmd.args[1]);
     DataToUser(fd_idx, pong_reply, NO_NUMERIC_REPLY);
 }
 
@@ -206,7 +205,9 @@ void Server::PONG(Command &cmd, int fd_idx) {
     }
     if (user.ping_str.compare(cmd.args[1]) == 0) {
         user.resetPingStatus();
-        user.last_received = time(NULL);
+    } else {
+        LOG(DEBUG) << "PING from user " << user << " incorrect, sent "
+                   << user.ping_str << " recieved " << cmd.args[1];
     }
     return ;
 }

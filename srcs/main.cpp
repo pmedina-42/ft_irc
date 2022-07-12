@@ -5,10 +5,9 @@
 #include <netdb.h>
 #include <sys/utsname.h>
 
-#include "Server.hpp"
+#include "Server/Server.hpp"
 #include "Log.hpp"
 
-#define NAME_MAX_SZ 10
 
 /**
  * https://modern.ircdocs.horse/ for numeric replies

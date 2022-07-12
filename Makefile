@@ -17,7 +17,6 @@ SRCS		=	srcs/main.cpp\
 				srcs/Server/Server.cpp \
 				srcs/Server/ServerCommands.cpp \
 				srcs/Server/FdManager.cpp \
-				srcs/Server/ServerSetup.cpp \
 				srcs/User.cpp \
 				srcs/Channel.cpp \
 				srcs/ChannelUser.cpp \
