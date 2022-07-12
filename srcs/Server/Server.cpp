@@ -164,10 +164,10 @@ string Server::processCommandBuffer(int fd) {
     User& user = getUserFromFd(fd);
 
     string cmd_string(srv_buff, srv_buff_size);
-    tools::clean_buffer(srv_buff, srv_buff_size);
+    tools::cleanBuffer(srv_buff, srv_buff_size);
     srv_buff_size = 0;
 
-    if (tools::ends_with(cmd_string, CRLF)) {
+    if (tools::endsWith(cmd_string, CRLF)) {
         /* add leftovers at start of buffer recieved */
         if (user.hasLeftovers()) {
             cmd_string.insert(0, user.BufferToString());
@@ -182,7 +182,7 @@ string Server::processCommandBuffer(int fd) {
         }
     // cmd_string stays as it is.
     } else {
-        size_t pos = tools::find_last_CRLF(cmd_string);
+        size_t pos = tools::findLastCRLF(cmd_string);
         // no CRLF found
         if (pos == std::string::npos) {
             // ill-formated long comand

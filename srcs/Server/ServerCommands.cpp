@@ -35,7 +35,7 @@ bool nickExists(string &nickname, FdUserMap& map) {
     for (FdUserMap::iterator it = map.begin();
                         it != map.end(); it++)
     {
-        if (tools::is_equal(nickname, it->second.nick)) {
+        if (tools::isEqual(nickname, it->second.nick)) {
             return true;
         }
     }
@@ -61,7 +61,7 @@ void Server::sendPingToUser(int fd_idx) {
 
     User &user = getUserFromFdIndex(fd_idx);
     /* send ping message */
-    string random = ":" + tools::rng_string(10);
+    string random = ":" + tools::rngString(10);
     string ping_msg("PING " + random);
     DataToUser(fd_idx, ping_msg, NO_NUMERIC_REPLY);
 

@@ -37,7 +37,7 @@ int Command::Parse(string &cmd) {
         return ERR_COLONS;
     }
 
-    cmd = tools::trim_repeated_char(cmd, ' ');
+    cmd = tools::trimRepeatedChar(cmd, ' ');
     if (cmd[0] == ':') {
         int prefix_end = cmd.find(" ");
         // eliminate prefix in case specified
@@ -60,7 +60,7 @@ int Command::Parse(string &cmd) {
         space_split = tools::split(space_split, cmd, " ");
     }
     /* from irc-hispano does this */
-    tools::to_upper_case(space_split[0]);
+    tools::ToUpperCase(space_split[0]);
     
     args = space_split;
     if (colon_split.size() == 2) {

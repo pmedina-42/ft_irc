@@ -74,7 +74,7 @@ bool User::hasLeftovers(void) const {
 }
 
 void User::resetBuffer(void) {
-   tools::clean_buffer(buffer, buffer_size);
+   tools::cleanBuffer(buffer, buffer_size);
    buffer_size = 0;
 }
 
@@ -82,7 +82,6 @@ void User::addLeftovers(std::string &leftovers) {
     memcpy(buffer + buffer_size, leftovers.c_str(), leftovers.size());
     buffer_size += leftovers.size();
 }
-
 
 string User::BufferToString(void) const {
     return string(buffer, buffer_size);
