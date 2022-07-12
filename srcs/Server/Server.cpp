@@ -44,7 +44,7 @@ Server::Server(void)
         throw irc::exc::ServerSetUpError();
     }
     start = time(NULL);
-    memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
+    memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
     mainLoop();
@@ -58,7 +58,7 @@ Server::Server(string &hostname, string &port) {
         throw irc::exc::ServerSetUpError();
     }
     start = time(NULL);
-    memset(srv_buff, '\0', SERVER_BUFF_MAX_SIZE);
+    memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
     mainLoop();
@@ -112,7 +112,7 @@ void Server::pingLoop(void) {
         User &user = getUserFromFd(fd);
         if (user.isOnPongHold()) {
             time_t since_ping = time(NULL) - user.getPingTime();
-            if (since_ping >= SERVER_PONG_TIME_SEC) {
+            if (since_ping >= PING_TIMEOUT_S) {
                 // Maybe send a message ? 
                 RemoveUser(fd_idx);
                 fd_manager.CloseConnection(fd_idx);
@@ -120,7 +120,7 @@ void Server::pingLoop(void) {
             continue ;
         }
         time_t since_last_msg = time(NULL) - user.getLastMsgTime();
-        if (since_last_msg >= SERVER_PONG_TIME_SEC) {
+        if (since_last_msg >= PING_TIMEOUT_S) {
             sendPingToUser(fd_idx);
         }
     }
@@ -174,7 +174,7 @@ string Server::processCommandBuffer(int fd) {
             user.resetBuffer();
         }
         /* total buffer is too big */
-        if (cmd_string.length() > SERVER_BUFF_MAX_SIZE) {
+        if (cmd_string.length() > BUFF_MAX_SIZE) {
             string reply(ERR_INPUTTOOLONG+user.nick+STR_INPUTTOOLONG);
             LOG(WARNING) << "Buffer from User [" << user.nick << "] too long";
             DataToUser(fd, reply, NUMERIC_REPLY);
@@ -186,7 +186,7 @@ string Server::processCommandBuffer(int fd) {
         // no CRLF found
         if (pos == std::string::npos) {
             // ill-formated long comand
-            if (cmd_string.length() + user.buffer_size > SERVER_BUFF_MAX_SIZE) {
+            if (cmd_string.length() + user.buffer_size > BUFF_MAX_SIZE) {
                 user.resetBuffer();
                 LOG(WARNING) << "Ill formatted buffer from user " << user;
                 return "";

@@ -53,7 +53,7 @@ class User {
     string prefix; // nse si hara falta dis shit
     string mask; // ¿¿¿ XD
 
-    char buffer[SERVER_BUFF_MAX_SIZE];
+    char buffer[BUFF_MAX_SIZE];
     int buffer_size;
     bool registered;
 

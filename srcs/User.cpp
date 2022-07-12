@@ -20,7 +20,7 @@ User::User(int fd)
     mask = "";
     on_pong_hold = false;
     ping_str = "";
-    memset(buffer, '\0', SERVER_BUFF_MAX_SIZE);
+    memset(buffer, '\0', BUFF_MAX_SIZE);
 }
 
 User::User(const User &other)
@@ -37,7 +37,7 @@ User::User(const User &other)
     ping_send_time(other.ping_send_time),
     ping_str(other.ping_str)
 {
-    memset(buffer, '\0', SERVER_BUFF_MAX_SIZE);
+    memset(buffer, '\0', BUFF_MAX_SIZE);
     if (other.buffer_size > 0) {
         memcpy(buffer, other.buffer, other.buffer_size);
     }
@@ -50,7 +50,7 @@ User& User::operator=(const User& other) {
         name = other.name;
         full_name = other.full_name;
         prefix = other.prefix;
-        memset(buffer, '\0', SERVER_BUFF_MAX_SIZE);
+        memset(buffer, '\0', BUFF_MAX_SIZE);
         if (other.buffer_size > 0) {
             memcpy(buffer, other.buffer, other.buffer_size);
         }

@@ -7,8 +7,6 @@
 
 #include "Server.hpp"
 
-#define NAME_MAX_SZ 10
-
 /**
  * https://modern.ircdocs.horse/ for numeric replies
  * 

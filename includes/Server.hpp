@@ -68,7 +68,7 @@ class Server {
     void RemoveUser(int fd_idx);
     string processCommandBuffer(int fd_idx);
 
-    char srv_buff[SERVER_BUFF_MAX_SIZE];
+    char srv_buff[BUFF_MAX_SIZE];
     int srv_buff_size;
     string hostname;
     
