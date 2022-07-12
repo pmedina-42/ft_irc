@@ -16,7 +16,7 @@ namespace irc {
  * https://forums.mirc.com/ubbthreads.php/topics/186181/nickname-valid-characters */
 static bool nickFormatOk(string &nickname) {
 
-    if (nickname.empty() || nickname.length() > 9) { // not sure this can happen.
+    if (nickname.empty() || nickname.length() > NAME_MAX_SIZE) { // not sure this can happen.
         return false;
     }
     for (string::iterator it = nickname.begin(); it != nickname.end(); it++) {
