@@ -35,7 +35,7 @@ class Channel {
     bool isInvited(ChannelUser&);
     void setUserMode(ChannelUser&, char);
     void addToWhitelist(ChannelUser&);
-    ChannelUser userInChannel(Channel&, int fd);
+    ChannelUser& userInChannel(Channel&, int fd);
     bool isUserOperator(ChannelUser&);
     ChannelUser findUserByName(string);
 

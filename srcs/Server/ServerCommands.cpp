@@ -238,7 +238,8 @@ void Server::JOIN(Command &cmd, int fd_idx) {
     ChannelUser user(fd_idx);
     if (tools::starts_with_mask(channelName)) {
         if (!channel_map.count(cmd.args[1])) {
-            LOG(DEBUG) << "join: channel exists";
+            LOG(DEBUG) << "join: channel doesn't exist";
+            LOG(DEBUG) << "join: creating channel with name " << channelName;
             Channel channel(channelName, user);
             channel.setUserMode(user, 'o');
             channel_map.insert(std::make_pair(channelName, channel));
@@ -246,8 +247,10 @@ void Server::JOIN(Command &cmd, int fd_idx) {
                 channel.key = cmd.args[2];
             }
         } else {
+            LOG(DEBUG) << "join: channel exists";
             Channel channel = channel_map.find(channelName)->second;
             if (channel.inviteModeOn()) {
+                LOG(DEBUG) << channel.mode;
                 if (!channel.isInvited(user)) {
                     reply = (ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
                     LOG(DEBUG) << reply;
@@ -262,6 +265,8 @@ void Server::JOIN(Command &cmd, int fd_idx) {
                     return ;
                 }
             }
+            LOG(DEBUG) << "join: adding user to existing channel";
+            // TODO: if user is already in channel?
             channel.addUser(user);
             // TODO: send rpl messages
         }
@@ -299,13 +304,15 @@ void Server::PART(Command &cmd, int fd_idx) {
             }
             Channel channel = channel_map.find(cmd.args[1])->second;
             ChannelUser user = channel.userInChannel(channel, fd_idx);
-            if (user == NULL) {
+            if (user.fd == 0) {
                 reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
                 DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
+            LOG(DEBUG) << "part: deleting user " << user.name << " in channel " << channel.name;
             channel.deleteUser(user);
             if (channel.users.size() == 0) {
+                LOG(DEBUG) << "part: deleting empty channel";
                 channel_map.erase(channel_map.find(channel.name));
             }
         } else {
@@ -348,12 +355,12 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
             }
             Channel channel = channel_map.find(cmd.args[1])->second;
             ChannelUser user = channel.userInChannel(channel, fd_idx);
-            if (user == NULL) {
+            if (user.fd == 0) {
                 reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
                 DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
             }
-            if (channel.mode.find("t")) {
+            if (channel.mode.find("t") != string::npos) {
                 reply = (ERR_NOCHANMODES+cmd.Name()+STR_NOCHANMODES);
                 DataToUser(fd_idx, reply, NUMERIC_REPLY);
                 return ;
@@ -417,7 +424,7 @@ void Server::KICK(Command &cmd, int fd_idx) {
         }
         Channel channel = channel_map.find(cmd.args[1])->second;
         ChannelUser user = channel.userInChannel(channel, fd_idx);
-        if (user == NULL) {
+        if (user.fd == 0) {
             reply = (ERR_NOTONCHANNEL + cmd.Name() + STR_NOTONCHANNEL);
             LOG(DEBUG) << reply;
             DataToUser(fd_idx, reply, NUMERIC_REPLY);

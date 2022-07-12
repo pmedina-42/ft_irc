@@ -100,7 +100,7 @@ bool Channel::userInBlackList(ChannelUser &user) {
  * Comprueba si el canal está en modo invitación
  */
 bool Channel::inviteModeOn() {
-    if (mode.find("i"))
+    if (mode.find("i") != string::npos)
         return true;
     return false;
 }
@@ -109,7 +109,7 @@ bool Channel::inviteModeOn() {
  * Comprueba si el canal está en modo contraseña
  */
     bool Channel::keyModeOn() {
-        if (mode.find("k"))
+        if (mode.find("k") != string::npos)
             return true;
         return false;
     }
@@ -153,14 +153,14 @@ void Channel::setUserMode(ChannelUser &user, char mode) {
     }
 }
 
-ChannelUser Channel::userInChannel(Channel &channel, int userFd) {
+ChannelUser& Channel::userInChannel(Channel &channel, int userFd) {
     ChannelUserList::iterator end = channel.users.end();
     for (ChannelUserList::iterator it = channel.users.begin(); it != end; it++) {
         if (it->fd == userFd) {
             return *it;
         }
     }
-    return NULL;
+    return *end;
 }
 
 /**
