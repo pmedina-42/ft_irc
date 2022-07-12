@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "Server/Server.hpp"
 #include "libft.h"
 #include "Tools.hpp"
 #include "Command.hpp"
@@ -74,7 +74,7 @@ void Server::sendPingToUser(int fd_idx) {
  */
 void Server::NICK(Command &cmd, int fd_idx) {
 
-    int fd = fd_manager.getFdFromIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
 
     int size = cmd.args.size();
     /* case too many params */

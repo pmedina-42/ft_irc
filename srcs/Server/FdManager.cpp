@@ -1,36 +1,44 @@
-#include "Server.hpp"
+#include "Server/FdManager.hpp"
 #include "Exceptions.hpp"
 #include "Log.hpp"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <poll.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+
 #include <unistd.h>
+#include <string.h>
 
 #include <iostream>
 #include <cerrno>
 
 namespace irc {
 
-/* Some socket errors, specially on send() should not terminate
- * the program. */
-int FdManager::getSocketError(int fd) {
-
-    int err_code;
-    socklen_t len = sizeof(err_code);
-
-    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err_code, &len) == 0) {
-        err_code = errno;
-    } else {
-        errno = err_code; // problem getting error code
-    }
-    return err_code;
-}
-
 FdManager::FdManager(void)
 :
     fds_size(0)
-{}
+{
+    if (setUpAddress() == -1
+        || setUpListener() == -1)
+    {
+        throw irc::exc::ServerSetUpError();
+    }
+}
+
+FdManager::FdManager(string &hostname, string &port)
+:
+    fds_size(0)
+{
+    if (setUpAddress(hostname, port) == -1
+        || setUpListener() == -1)
+    {
+        throw irc::exc::ServerSetUpError();
+    }
+}
 
 FdManager::FdManager(const FdManager& other)
 :
@@ -59,7 +67,166 @@ FdManager::~FdManager(void) {
     }
 }
 
-void FdManager::setUpListener(void) {
+static int get_addrinfo_from_params(const char* hostname, const char *port,
+                                    struct addrinfo *hints,
+                                    struct addrinfo **servinfo)
+{
+    int ret = -1;
+
+    if ((ret = getaddrinfo(hostname, port, hints, servinfo)) != 0) {
+        string error("getaddrinfo error :");
+        LOG(ERROR) << error.append(gai_strerror(ret));
+        return -1;
+    }
+    /* Filter out IPv6 cases (makes me dizzy) */
+    if ((*servinfo)->ai_family == AF_INET6) {
+        LOG(ERROR) << "unsupported IP address length";
+        return -1;
+    }
+    return 0;
+}
+
+/*
+ * sets all entries in internal struct addrinfo. This includes
+ * hostname, the list of addresses to be used, the IRC port,
+ * the transport protocol and the IP protocol.
+ * Since this function is
+ * essential to the server functionality, shuts down the 
+ * program in case of failure.
+ * 
+ * returns 0 on success, 1 otherwise. 
+ */
+int FdManager::setUpAddress(void) {
+    struct addrinfo hints;
+    struct addrinfo *servinfo = NULL;
+    char hostname[96];
+    size_t hostname_len = 96;
+    const char* port = "6667";
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET; // Ipv4
+    hints.ai_socktype = SOCK_STREAM; // TCP
+
+    if (gethostname(&hostname[0], hostname_len) != 0) {
+        LOG(ERROR) << "gethostname error";
+        return -1;
+    }
+    if (get_addrinfo_from_params(hostname, port, &hints, &servinfo) == -1) {
+        if (servinfo != NULL) {
+            freeaddrinfo(servinfo);
+            return -1;
+        }
+    }
+    if (servinfo == NULL)
+        return -1;
+    /* This struct addrinfo may not be the one that binds, but
+     * thats one more step from here. */
+    this->servinfo = servinfo;
+    return 0;
+}
+
+/*
+ * Here ip works as the hostname. It is already null terminated
+ * when calling string c_str method.
+ */
+int FdManager::setUpAddress(string &hostname, string &port) {
+    struct addrinfo hints;
+    struct addrinfo *servinfo = NULL;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET; // Ipv4
+    hints.ai_socktype = SOCK_STREAM; // TCP
+    if (get_addrinfo_from_params(hostname.c_str(), port.c_str(), &hints,
+                                 &servinfo) == -1)
+    {
+        if (servinfo != NULL) {
+            freeaddrinfo(servinfo);
+            return -1;
+        }
+    }
+    if (servinfo == NULL)
+        return -1;
+    /* This struct addrinfo may not be the one that binds, but
+     * thats one more step from here. */
+    this->servinfo = servinfo;
+    return 0;
+}
+
+/*
+ * tries to bind a socket to one of the provided addresses in
+ * the struct addrinfo list provided by servinfo and then, it 
+ * starts listen()ing to it.
+ * return 0 on success, -1 otherwise.
+ */
+int FdManager::setUpListener(void) {
+
+    int socketfd = -1;
+    /* loop through addresses until bind works */
+    for (struct addrinfo *p = servinfo; p != NULL; p = p->ai_next) {
+        /* open a socket given servinfo */
+        if ((socketfd = socket(p->ai_family,
+                               p->ai_socktype,
+                               p->ai_protocol)) == -1)
+        {
+            socketfd = -1;
+            continue;
+        }
+        int yes = 1;
+	    if (setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR,
+                   &yes, sizeof(yes)) == -1)
+        {
+            freeaddrinfo(servinfo);
+            LOG(ERROR) << "setsockopt raised -1";
+            return -1;
+        }
+        /* assign port to socket */
+        if (bind(socketfd, p->ai_addr, p->ai_addrlen) == -1) {
+            if (close(socketfd) == -1) {
+                freeaddrinfo(servinfo);
+                return -1;
+            }
+            socketfd = -1;
+            continue;
+        }
+        /* if it gets to this point everything should be fine */
+        servinfo = p;
+        break;
+    }
+    if (socketfd == -1) {
+        LOG(ERROR) << "could not bind socket to any address";
+        freeaddrinfo(servinfo);
+        return -1;
+    }
+    if (listen(socketfd, LISTENER_BACKLOG) == -1) {
+        LOG(ERROR) << "listen raised -1";
+        freeaddrinfo(servinfo);
+        return -1;
+    }
+    struct sockaddr_in *sockaddrin = (struct sockaddr_in *)
+                                      (servinfo->ai_addr);
+    hostname = inet_ntoa(sockaddrin->sin_addr);
+    /* debug, might not need it in the end */
+    LOG(INFO) << "Server mounted succesfully on " << hostname << ":6667";
+    listener = socketfd;
+    return socketfd;
+}
+
+/* Some socket errors, specially on send() should not terminate
+ * the program. */
+int FdManager::getSocketError(int fd) {
+
+    int err_code;
+    socklen_t len = sizeof(err_code);
+
+    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err_code, &len) == 0) {
+        err_code = errno;
+    } else {
+        errno = err_code; // problem getting error code
+    }
+    return err_code;
+}
+
+void FdManager::setUpPoll(void) {
     fds[0].fd = listener;
     fds[0].events = POLLIN;
     fds[0].revents = 0;

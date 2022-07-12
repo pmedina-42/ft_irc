@@ -1,47 +1,21 @@
 #ifndef IRC42_SERVER_H
 # define IRC42_SERVER_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
-#include <poll.h>
 #include "Channel.hpp" // without this, it doesnt compile
 #include "ChannelUser.hpp"
 #include "Types.hpp"
+
+#include "Server/FdManager.hpp"
 
 using std::string;
 
 namespace irc {
 
-class FdManager {
-    public:
-    FdManager(void);
-    FdManager(const FdManager &other);
-    ~FdManager(void);
 
-    void setUpListener(void);
-    bool hasDataToRead(int entry);
-    bool skipFd(int fd_idx);
-    int getFdFromIndex(int fd_idx);
-    int AcceptConnection(void);
-    void CloseConnection(int fd_idx);
-    void Poll(void);
-
-    bool socketErrorIsNotFatal(int fd);
-
-    int getSocketError(int);
-    /* fd from clients manager. This includes
-    * the listener, at entry 0.
-    */
-    struct pollfd fds[MAX_FDS];
-    int fds_size;
-    struct addrinfo *servinfo;
-    int listener;
-};
-
-class Server {
-
+class Server
+:
+    public FdManager
+{
     public:
     Server(void);
     Server(string &ip, string &port);
@@ -49,40 +23,30 @@ class Server {
     ~Server();
     
     private:
-    /* Setup */
-    int setServerInfo(void);
-    int setServerInfo(string &hostname, string &port);
-    int setListener(void);
-    void loadCommandMap(void);
-
-    /* parses message into commands, calls 
-     * commands from user until finished. */
-    void DataFromUser(int fd_idx);
-    void DataToUser(int fd_idx, string &data, int type);
 
     /* loop through all poll fd's */
     int mainLoop(void);
+    void DataFromUser(int fd_idx);
+    void DataToUser(int fd_idx, string &data, int type);
+
     void AddNewUser(int new_fd);
     void RemoveUser(int fd_idx);
     string processCommandBuffer(int fd_idx);
 
     char srv_buff[BUFF_MAX_SIZE];
     int srv_buff_size;
-    string hostname;
-    
+
     ChannelMap channel_map; /* Find channels by name */
     NickFdMap nick_fd_map;  /* Find users by nickname */
     FdUserMap fd_user_map; /* Find nickname by fd_idx (entry of fds[]) */
-
-    /* Socket related stuff */
-    FdManager    fd_manager;
 
     /* time stuff */
     time_t start;
     void pingLoop(void);
     void sendPingToUser(int fd_idx);
-
+    
     CommandMap cmd_map;
+    void loadCommandMap(void);
     /* Map with all command responses */
     void NICK(Command &cmd, int fd_idx);
     void USER(Command &cmd, int fd_idx);

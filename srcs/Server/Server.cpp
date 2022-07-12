@@ -5,7 +5,7 @@
 #include <errno.h>
 #include <time.h>
 
-#include "Server.hpp"
+#include "Server/Server.hpp"
 #include "User.hpp"
 #include "Exceptions.hpp"
 #include "Command.hpp"
@@ -36,13 +36,8 @@ namespace irc {
 
 Server::Server(void)
 :
-    fd_manager()
+    FdManager()
 {
-    if (setServerInfo() == -1
-        || setListener() == -1)
-    {
-        throw irc::exc::ServerSetUpError();
-    }
     start = time(NULL);
     memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
@@ -50,13 +45,10 @@ Server::Server(void)
     mainLoop();
 }
 
-Server::Server(string &hostname, string &port) {
-
-    if (setServerInfo(hostname, port) != 0
-        || setListener() == -1)
-    {
-        throw irc::exc::ServerSetUpError();
-    }
+Server::Server(string &hostname, string &port)
+:
+    FdManager(hostname, port)
+{
     start = time(NULL);
     memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
@@ -66,12 +58,11 @@ Server::Server(string &hostname, string &port) {
 
 Server::Server(const Server& other)
 :
+    FdManager(other),
     srv_buff_size(other.srv_buff_size),
-    hostname(other.hostname),
     channel_map(other.channel_map),
     nick_fd_map(other.nick_fd_map),
     fd_user_map(other.fd_user_map),
-    fd_manager(other.fd_manager),
     start(other.start),
     cmd_map(other.cmd_map)
 {
@@ -87,19 +78,19 @@ Server::~Server(void) {
 // this might have to manage signals at some point ?? 
 int Server::mainLoop(void) {
 
-    fd_manager.setUpListener();
+    setUpPoll();
     while (42) {
-        fd_manager.Poll();
-        for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
-            if (fd_manager.skipFd(fd_idx)) {
+        Poll();
+        for (int fd_idx = 0; fd_idx < fds_size; fd_idx++) {
+            if (skipFd(fd_idx)) {
                 continue;
             }
-            if (!fd_manager.hasDataToRead(fd_idx)) {
+            if (!hasDataToRead(fd_idx)) {
                 continue;
             }
             /* listener is always at first entry */
             if (fd_idx == 0) {
-                int new_fd = fd_manager.AcceptConnection();
+                int new_fd = AcceptConnection();
                 AddNewUser(new_fd);
                 continue;
             }
@@ -121,18 +112,18 @@ int Server::mainLoop(void) {
  * 
  */
 void Server::pingLoop(void) {
-    for (int fd_idx = 0; fd_idx < fd_manager.fds_size; fd_idx++) {
-        if (fd_idx == 0 || fd_manager.skipFd(fd_idx)) {
+    for (int fd_idx = 0; fd_idx < fds_size; fd_idx++) {
+        if (fd_idx == 0 || skipFd(fd_idx)) {
             continue;
         }
-        int fd = fd_manager.getFdFromIndex(fd_idx);
+        int fd = getFdFromIndex(fd_idx);
         User &user = getUserFromFd(fd);
         if (user.isOnPongHold()) {
             time_t since_ping = time(NULL) - user.getPingTime();
             if (since_ping >= PING_TIMEOUT_S) {
                 // Maybe send a message ? 
                 RemoveUser(fd_idx);
-                fd_manager.CloseConnection(fd_idx);
+                CloseConnection(fd_idx);
             }
             continue ;
         }
@@ -153,7 +144,7 @@ void Server::AddNewUser(int new_fd) {
 }
 
 void Server::RemoveUser(int fd_idx) {
-    int fd = fd_manager.getFdFromIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
     User &user = getUserFromFd(fd);
     LOG(INFO) << "User " << user << " removed";
     /* If the user had a nick registered, erase it */
@@ -223,22 +214,22 @@ string Server::processCommandBuffer(int fd) {
 
 void Server::DataFromUser(int fd_idx) {
 
-    int fd = fd_manager.getFdFromIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
     srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
 
     if (srv_buff_size == -1) {
-        if (fd_manager.socketErrorIsNotFatal(fd)) {
+        if (socketErrorIsNotFatal(fd)) {
             LOG(WARNING) << "DataFromUser closing fd " << fd
                          << " from user " << getUserFromFd(fd)
                          << " non fatal error";
             RemoveUser(fd_idx);
-            return fd_manager.CloseConnection(fd_idx);
+            return CloseConnection(fd_idx);
         }
         throw irc::exc::FatalError("recv -1");
     }
     if (srv_buff_size == 0) {
         RemoveUser(fd_idx);
-        fd_manager.CloseConnection(fd_idx);
+        CloseConnection(fd_idx);
         return ;
     }
     /* Update when a user sends a command ! */
@@ -297,7 +288,7 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
     }
     msg.insert(msg.size(), CRLF);
     
-    int fd = fd_manager.getFdFromIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
     User& user = getUserFromFd(fd);
 
     LOG(DEBUG) << "DataToUser user " << user
@@ -310,12 +301,12 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
     do {
         b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
         if (b_sent == -1) {
-            if (fd_manager.socketErrorIsNotFatal(fd)) {
+            if (socketErrorIsNotFatal(fd)) {
                 LOG(WARNING) << "DataToUser closing fd " << fd
                              << " from user " << user
                              << " non fatal error";
                 RemoveUser(fd_idx);
-                return fd_manager.CloseConnection(fd_idx);
+                return CloseConnection(fd_idx);
             }
             throw irc::exc::FatalError("send = -1");
         }
@@ -331,9 +322,16 @@ User& Server::getUserFromFd(int fd) {
 }
 
 User& Server::getUserFromFdIndex(int fd_idx) {
-    int fd = fd_manager.getFdFromIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
     FdUserMap::iterator it = fd_user_map.find(fd);
     return it->second;
+}
+
+void Server::loadCommandMap(void) {
+    cmd_map.insert(std::make_pair(string("NICK"), (&Server::NICK)));
+    cmd_map.insert(std::make_pair(string("USER"), (&Server::USER)));
+    cmd_map.insert(std::make_pair(string("PING"), (&Server::PING)));
+    cmd_map.insert(std::make_pair(string("PONG"), (&Server::PONG)));
 }
 
 

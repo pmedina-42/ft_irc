@@ -5,7 +5,7 @@
 #include <netdb.h>
 #include <sys/utsname.h>
 
-#include "Server.hpp"
+#include "Server/Server.hpp"
 
 /**
  * https://modern.ircdocs.horse/ for numeric replies
