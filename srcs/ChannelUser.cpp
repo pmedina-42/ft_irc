@@ -8,23 +8,23 @@ namespace irc {
 /* Creo que es mejor quereciba un User */
 ChannelUser::ChannelUser(int fd)
 :
-	User(fd),
-    mode(' '),
-    banned(false)
+        User(fd),
+        channelMode(' '),
+        banned(false)
 {}
 
 ChannelUser::ChannelUser(const ChannelUser& other)
 :
-    User(other),
-    mode(other.mode),
-    banned(other.banned)
+        User(other),
+        channelMode(other.channelMode),
+        banned(other.banned)
 {}
 
 ChannelUser::ChannelUser(const User &other)
 :
-    User(other),
-    mode(' '),
-    banned(false)
+        User(other),
+        channelMode(' '),
+        banned(false)
 {}
 
 ChannelUser::~ChannelUser() {}
@@ -32,7 +32,7 @@ ChannelUser::~ChannelUser() {}
 ChannelUser& ChannelUser::operator=(const ChannelUser &other) {
     if (this != &other) {
         User::operator=(other);
-        mode = other.mode;
+        channelMode = other.channelMode;
         banned = other.banned;
     }
     return *this;

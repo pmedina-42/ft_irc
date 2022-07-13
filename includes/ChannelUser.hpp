@@ -25,7 +25,7 @@ class ChannelUser : public User {
     bool operator==(ChannelUser const &other) const;
 
     /* ATTRIBUTES */
-    char mode;
+    char channelMode;
     bool banned;
 
     /**

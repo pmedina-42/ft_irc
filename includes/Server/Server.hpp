@@ -57,6 +57,10 @@ class Server
     void PART(Command &cmd, int fd);
     void TOPIC(Command &cmd, int fd);
     void INVITE(Command &cmd, int fd);
+    void MODE(Command &cmd, int fd);
+    void PASS(Command &cmd, int fd);
+    void AWAY(Command &cmd, int fd);
+    void QUIT(Command &cmd, int fd);
     /* command implementations */
     void sendWelcome(string& name, string &prefix, int fd_idx);
     void sendNeedMoreParams(string& cmd_name, int fd_idx);
@@ -66,6 +70,7 @@ class Server
     void sendBadChannelMask(string &cmd_name, int fd_idx);
     void sendNoCannelModes(string &cmd_name, int fd_idx);
     void sendChannelOperatorNeeded(string &cmd_name, int fd_idx);
+    void sendAlreadyRegistered(int fd_idx);
 
     /* utils */
     User& getUserFromFd(int fd);

@@ -44,5 +44,10 @@ void Server::sendWelcome(string& name, string &prefix, int fd_idx) {
     DataToUser(fd_idx, welcome_msg, NUMERIC_REPLY);
 }
 
+void Server::sendAlreadyRegistered(int fd_idx) {
+    string reply = (ERR_ALREADYREGISTERED "" STR_ALREADYREGISTERED);
+    DataToUser(fd_idx, reply, NUMERIC_REPLY);
+}
+
 
 } /* namespace irc */

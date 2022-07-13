@@ -17,7 +17,7 @@ namespace irc {
  */
 Channel::Channel(string name, ChannelUser& user) : name(name) {
     mode = "";
-    user.mode = 'o';
+    user.channelMode = 'o';
     users.push_back(user);
 }
 
@@ -58,7 +58,7 @@ void Channel::deleteUser(ChannelUser &user) {
                 ChannelUserList::iterator it = users.begin();
                 while (userInBlackList(*it))
                     it++;
-                it->mode = 'o';
+                it->channelMode = 'o';
                 users.erase(u);
             } else {
                 users.erase(u);
@@ -116,10 +116,10 @@ bool Channel::inviteModeOn() {
     }
 
 /**
- * Check if user has operator mode
+ * Check if user has operator channelMode
  */
 bool Channel::isUserOperator(ChannelUser &user) {
-    if (user.mode == 'o')
+    if (user.channelMode == 'o')
         return true;
     return false;
 }
@@ -150,7 +150,7 @@ void Channel::setUserMode(ChannelUser &user, char mode) {
     list<ChannelUser>::iterator end = users.end();
     list<ChannelUser>::iterator it = std::find(users.begin(), end, user);
     if ((mode == 'o' || mode == 'v') && it != end) {
-        it->mode = mode;
+        it->channelMode = mode;
     }
 }
 
@@ -165,7 +165,7 @@ ChannelUser& Channel::userInChannel(Channel &channel, int userFd) {
 }
 
 /**
-* Check if user has operator mode
+* Check if user has operator channelMode
 */
 ChannelUser& Channel::findUserByName(string name) {
     ChannelUserList::iterator it;
