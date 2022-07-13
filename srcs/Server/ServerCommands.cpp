@@ -43,17 +43,42 @@ bool nickExists(string &nickname, FdUserMap& map) {
     return false;
 }
 
-void Server::sendNeedMoreParamsMsg(string& cmd_name, int fd_idx) {
+void Server::sendNeedMoreParams(string& cmd_name, int fd_idx) {
     string reply(ERR_NEEDMOREPARAMS+cmd_name+STR_NEEDMOREPARAMS);
     DataToUser(fd_idx, reply, NUMERIC_REPLY);
 }
 
-void Server::sendNotRegisteredMsg(string &cmd_name, int fd_idx) {
+void Server::sendNotRegistered(string &cmd_name, int fd_idx) {
     string reply(ERR_NOTREGISTERED+cmd_name+STR_NOTREGISTERED);
     DataToUser(fd_idx, reply, NUMERIC_REPLY);
 }
 
-void Server::sendWelcomeMsg(string& name, string &prefix, int fd_idx) {
+void Server::sendNoSuchChannel(string &cmd_name, int fd_idx) {
+    string reply = (ERR_NOSUCHCHANNEL+cmd_name+STR_NOSUCHCHANNEL);
+    DataToUser(fd_idx, reply, NUMERIC_REPLY);
+}
+
+void Server::sendNotOnChannel(string &cmd_name, int fd_idx) {
+    string reply = (ERR_NOTONCHANNEL+cmd_name+STR_NOTONCHANNEL);
+    DataToUser(fd_idx, reply, NUMERIC_REPLY);
+}
+
+void Server::sendBadChannelMask(string &cmd_name, int fd_idx) {
+    string reply = (ERR_BADCHANMASK+cmd_name+STR_BADCHANMASK);
+    DataToUser(fd_idx, reply, NUMERIC_REPLY);
+}
+
+void Server::sendNoCannelModes(string &cmd_name, int fd_idx) {
+    string reply = (ERR_NOCHANMODES+cmd_name+STR_NOCHANMODES);
+    DataToUser(fd_idx, reply, NUMERIC_REPLY);
+}
+
+void Server::sendChannelOperatorNeeded(string &cmd_name, int fd_idx) {
+    string reply = (ERR_CHANOPRIVSNEEDED+cmd_name+STR_CHANOPRIVSNEEDED);
+    DataToUser(fd_idx, reply, NUMERIC_REPLY);
+}
+
+void Server::sendWelcome(string& name, string &prefix, int fd_idx) {
     string welcome_msg(RPL_WELCOME+name+RPL_WELCOME_STR_1+prefix);
     DataToUser(fd_idx, welcome_msg, NUMERIC_REPLY);
 }
@@ -119,7 +144,7 @@ void Server::NICK(Command &cmd, int fd_idx) {
     if (!user.name.empty() && !user.full_name.empty()) {
         user.setPrefixFromHost(hostname);
         user.registered = true;
-        return sendWelcomeMsg(user.name, user.prefix, fd_idx);
+        return sendWelcome(user.name, user.prefix, fd_idx);
     }
 }
 
@@ -136,7 +161,7 @@ void Server::USER(Command &cmd, int fd_idx) {
     }
     /* case arguments unsufficient */
     if (size < 5) {
-        return sendNeedMoreParamsMsg(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
 
     User& user = getUserFromFdIndex(fd_idx);
@@ -158,7 +183,7 @@ void Server::USER(Command &cmd, int fd_idx) {
     /* generic case (USER comand after NICK for registration) */
     user.setPrefixFromHost(hostname);
     user.registered = true;
-    return sendWelcomeMsg(user.name, user.prefix, fd_idx);
+    return sendWelcome(user.name, user.prefix, fd_idx);
 }
 
 /*
@@ -176,12 +201,12 @@ void Server::PING(Command &cmd, int fd_idx) {
     
     int size = cmd.args.size();
     if (size < 2) {
-        return sendNeedMoreParamsMsg(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
 
     User& user = getUserFromFdIndex(fd_idx);
     if (!user.registered) {
-        return sendNotRegisteredMsg(cmd.Name(), fd_idx);
+        return sendNotRegistered(cmd.Name(), fd_idx);
     }
     string pong_reply("PONG " + cmd.args[1]);
     DataToUser(fd_idx, pong_reply, NO_NUMERIC_REPLY);
@@ -229,56 +254,47 @@ void Server::JOIN(Command &cmd, int fd_idx) {
     string reply;
     LOG(DEBUG) << "join: started";
     if (size < 2) {
-        reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-        LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return ;
+        return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
     string channelName = cmd.args[1];
     ChannelUser user(fd_idx);
-    if (tools::starts_with_mask(channelName)) {
-        if (!channel_map.count(cmd.args[1])) {
-            LOG(DEBUG) << "join: channel doesn't exist";
-            LOG(DEBUG) << "join: creating channel with name " << channelName;
-            Channel channel(channelName, user);
-            LOG(DEBUG) << user.name << " has mode " << user.mode << " after joining channel";
-            channel.setUserMode(user, 'o');
-            channel_map.insert(std::make_pair(channelName, channel));
-            if (!cmd.args[2].empty()) {
-                channel.key = cmd.args[2];
-            }
-            LOG(DEBUG) << "join: users size: " << channel.users.size();
-        } else {
-            LOG(DEBUG) << "join: channel exists";
-            Channel &channel = channel_map.find(channelName)->second;
-            if (channel.inviteModeOn()) {
-                LOG(DEBUG) << channel.mode;
-                if (!channel.isInvited(user)) {
-                    reply = (ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
-                    LOG(DEBUG) << reply;
-                    DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                    return ;
-                }
-            } else if (channel.keyModeOn()) {
-                if (cmd.args[2].empty() || channel.key.compare(cmd.args[2])) {
-                    reply = (ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
-                    LOG(DEBUG) << reply;
-                    DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                    return ;
-                }
-            }
-            LOG(DEBUG) << "join: adding user to existing channel";
-            channel.addUser(user);
-            LOG(DEBUG) << user.name << " has mode " << user.mode << " after joining channel";
-            LOG(DEBUG) << "join: users size: " << channel.users.size();
-            // TODO: if user is already in channel?
-            // TODO: send rpl messages
+    if (!tools::starts_with_mask(channelName)) {
+        return sendBadChannelMask(cmd.Name(), fd_idx);
+    }
+    if (!channel_map.count(cmd.args[1])) {
+        LOG(DEBUG) << "join: channel doesn't exist";
+        LOG(DEBUG) << "join: creating channel with name " << channelName;
+        Channel channel(channelName, user);
+        LOG(DEBUG) << user.name << " has mode " << user.mode << " after joining channel";
+        channel.setUserMode(user, 'o');
+        channel_map.insert(std::make_pair(channelName, channel));
+        if (!cmd.args[2].empty()) {
+            channel.key = cmd.args[2];
         }
+        LOG(DEBUG) << "join: users size: " << channel.users.size();
     } else {
-        reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
-        LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return ;
+        LOG(DEBUG) << "join: channel exists";
+        Channel &channel = channel_map.find(channelName)->second;
+        if (channel.inviteModeOn()) {
+            LOG(DEBUG) << channel.mode;
+            if (!channel.isInvited(user)) {
+                reply = (ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
+                LOG(DEBUG) << reply;
+                return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+            }
+        } else if (channel.keyModeOn()) {
+            if (cmd.args[2].empty() || channel.key.compare(cmd.args[2])) {
+                reply = (ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
+                LOG(DEBUG) << reply;
+                return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+            }
+        }
+        LOG(DEBUG) << "join: adding user to existing channel";
+        channel.addUser(user);
+        LOG(DEBUG) << user.name << " has mode " << user.mode << " after joining channel";
+        LOG(DEBUG) << "join: users size: " << channel.users.size();
+        // TODO: if user is already in channel?
+        // TODO: send rpl messages
     }
 }
 
@@ -293,45 +309,36 @@ void Server::JOIN(Command &cmd, int fd_idx) {
  * 6. Send part or default message to channel
  */
 void Server::PART(Command &cmd, int fd_idx) {
-        int size = cmd.args.size();
-        string reply;
-        if (size < 2) {
-            reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-            DataToUser(fd_idx, reply, NUMERIC_REPLY);
-            return ;
-        }
-        if (tools::starts_with_mask(cmd.args[1])) {
-            if (!channel_map.count(cmd.args[1])) {
-                reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
-                DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                return ;
-            }
-            Channel &channel = channel_map.find(cmd.args[1])->second;
-            ChannelUser user = channel.userInChannel(channel, fd_idx);
-            if (user.fd == 0) {
-                reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
-                DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                return ;
-            }
-            LOG(DEBUG) << "part: deleting user " << user.name << " in channel " << channel.name;
-            LOG(DEBUG) << user.name << " has mode " << user.mode << " before being erased";
-            channel.deleteUser(user);
-            LOG(DEBUG) << "part: users size: " << channel.users.size();
-            if (channel.users.size() == 0) {
-                LOG(DEBUG) << "part: deleting empty channel";
-                channel_map.erase(channel_map.find(channel.name));
-            }
-        } else {
-            reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
-            DataToUser(fd_idx, reply, NUMERIC_REPLY);
-            return ;
-        }
-        if (size == 3) {
-            // TODO: mandar mensaje en los canales a los usuarios
-        } else {
-
-        }
+    int size = cmd.args.size();
+    string reply;
+    if (size < 2) {
+        return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
+    if (!tools::starts_with_mask(cmd.args[1])) {
+        return sendBadChannelMask(cmd.Name(), fd_idx);
+    }
+    if (!channel_map.count(cmd.args[1])) {
+        return sendNoSuchChannel(cmd.Name(), fd_idx);
+    }
+    Channel &channel = channel_map.find(cmd.args[1])->second;
+    ChannelUser user = channel.userInChannel(channel, fd_idx);
+    if (user.fd == 0) {
+        return sendNotOnChannel(cmd.Name(), fd_idx);
+    }
+    LOG(DEBUG) << "part: deleting user " << user.name << " in channel " << channel.name;
+    LOG(DEBUG) << user.name << " has mode " << user.mode << " before being erased";
+    channel.deleteUser(user);
+    LOG(DEBUG) << "part: users size: " << channel.users.size();
+    if (channel.users.size() == 0) {
+        LOG(DEBUG) << "part: deleting empty channel";
+        channel_map.erase(channel_map.find(channel.name));
+    }
+    if (size == 3) {
+        // TODO: mandar mensaje en los canales a los usuarios
+    } else {
+
+    }
+}
 
 /**
  * Command: TOPIC
@@ -348,58 +355,42 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
     int size = cmd.args.size();
     string reply;
     if (size < 2) {
-        string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return ;
+        return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
-    if (size >= 2) {
-        if (tools::starts_with_mask(cmd.args[1])) {
-            if (!channel_map.count(cmd.args[1])) {
-                reply = (ERR_NOSUCHCHANNEL+cmd.Name()+STR_NOSUCHCHANNEL);
-                DataToUser(fd_idx, reply, NUMERIC_REPLY);
+    if (size >= 2) { // este if tiene realmente sentido ? (antes se ha comprobado que size < 2) 
+        if (!tools::starts_with_mask(cmd.args[1])) {
+            return sendBadChannelMask(cmd.Name(), fd_idx);
+        }
+        if (!channel_map.count(cmd.args[1])) {
+            return sendNoSuchChannel(cmd.Name(), fd_idx);
+        }
+        Channel &channel = channel_map.find(cmd.args[1])->second;
+        ChannelUser user = channel.userInChannel(channel, fd_idx);
+        if (user.fd == 0) {
+            return sendNotOnChannel(cmd.Name(), fd_idx);
+        }
+        if (channel.mode.find("t") != string::npos) {
+            return sendNoCannelModes(cmd.Name(), fd_idx);
+        }
+        if (size == 2) {
+            if (channel.topic.empty()) {
+                reply = (RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
+                return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+            }
+            reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+            return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+        }
+        if (size == 3) {
+            if (channel.isUserOperator(user)) {
+                return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
+            }
+            if (cmd.args[2].length() == 1) {
+                channel.topic = "";
                 return ;
             }
-            Channel &channel = channel_map.find(cmd.args[1])->second;
-            ChannelUser user = channel.userInChannel(channel, fd_idx);
-            if (user.fd == 0) {
-                reply = (ERR_NOTONCHANNEL+cmd.Name()+STR_NOTONCHANNEL);
-                DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                return ;
-            }
-            if (channel.mode.find("t") != string::npos) {
-                reply = (ERR_NOCHANMODES+cmd.Name()+STR_NOCHANMODES);
-                DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                return ;
-            }
-            if (size == 2) {
-                if (channel.topic.empty()) {
-                    reply = (RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
-                    DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                    return ;
-                }
-                reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
-                DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                return ;
-            }
-            if (size == 3) {
-                if (channel.isUserOperator(user)) {
-                    reply = (ERR_CHANOPRIVSNEEDED+cmd.Name()+STR_CHANOPRIVSNEEDED);
-                    DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                    return ;
-                }
-                if (cmd.args[2].length() == 1) {
-                    channel.topic = "";
-                    return ;
-                }
-                channel.topic = cmd.args[2].substr(1);
-                reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
-                DataToUser(fd_idx, reply, NUMERIC_REPLY);
-                return ;
-            }
-        } else {
-            reply = (ERR_BADCHANMASK+cmd.Name()+STR_BADCHANMASK);
-            DataToUser(fd_idx, reply, NUMERIC_REPLY);
-            return ;
+            channel.topic = cmd.args[2].substr(1);
+            reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+            return DataToUser(fd_idx, reply, NUMERIC_REPLY);
         }
     }
 }
@@ -416,53 +407,34 @@ void Server::KICK(Command &cmd, int fd_idx) {
     int size = cmd.args.size();
     string reply;
     if (size < 3) {
-        string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-        LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return ;
+        return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
-    if (tools::starts_with_mask(cmd.args[1])) {
-        if (!channel_map.count(cmd.args[1])) {
-            reply = (ERR_NOSUCHCHANNEL + cmd.Name() + STR_NOSUCHCHANNEL);
-            LOG(DEBUG) << reply;
-            DataToUser(fd_idx, reply, NUMERIC_REPLY);
-            return;
-        }
-        Channel &channel = channel_map.find(cmd.args[1])->second;
-        ChannelUser user = channel.userInChannel(channel, fd_idx);
-        if (user.fd == 0) {
-            reply = (ERR_NOTONCHANNEL + cmd.Name() + STR_NOTONCHANNEL);
-            LOG(DEBUG) << reply;
-            DataToUser(fd_idx, reply, NUMERIC_REPLY);
-            return;
-        }
-        if (!channel.isUserOperator(user)) {
-            reply = (ERR_CHANOPRIVSNEEDED + cmd.Name() + STR_CHANOPRIVSNEEDED);
-            LOG(DEBUG) << reply;
-            DataToUser(fd_idx, reply, NUMERIC_REPLY);
-            return;
-        }
-        ChannelUser userToKick = channel.findUserByName(cmd.args[2]);
-        if (userToKick == NULL) {
-            reply = (ERR_NOTONCHANNEL + cmd.Name() + STR_NOTONCHANNEL);
-            LOG(DEBUG) << reply;
-            DataToUser(fd_idx, reply, NUMERIC_REPLY);
-            return;
-        }
-        channel.banUser(userToKick); // Ban this user??
-        channel.deleteUser(userToKick);
-    } else {
-        reply = (ERR_BADCHANMASK + cmd.Name() + STR_BADCHANMASK);
-        LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return;
+    if (!tools::starts_with_mask(cmd.args[1])) {
+        return sendBadChannelMask(cmd.Name(), fd_idx);
     }
+    if (!channel_map.count(cmd.args[1])) {
+        return sendNoSuchChannel(cmd.Name(), fd_idx);
+    }
+    Channel &channel = channel_map.find(cmd.args[1])->second;
+    ChannelUser user = channel.userInChannel(channel, fd_idx);
+    if (user.fd == 0) {
+        return sendNotOnChannel(cmd.Name(), fd_idx);
+    }
+    if (!channel.isUserOperator(user)) {
+        return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
+    }
+    ChannelUser userToKick = channel.findUserByName(cmd.args[2]);
+    if (userToKick.fd == 0) {
+        return sendNotOnChannel(cmd.Name(), fd_idx);
+    }
+    channel.banUser(userToKick); // Ban this user??
+    channel.deleteUser(userToKick);
+
     if (size == 3) {
         // TODO: mandar mensajes por defecto y por parametro a los channelUsers
     } else {
 
     }
-
 }
 
 /**
@@ -477,36 +449,24 @@ void Server::INVITE(Command &cmd, int fd_idx) {
     int size = cmd.args.size();
     string reply;
     if (size < 3) {
-        string reply = (ERR_NEEDMOREPARAMS+cmd.Name()+STR_NEEDMOREPARAMS);
-        LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return ;
+        return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
     if (!channel_map.count(cmd.args[2])) {
-        reply = (ERR_NOSUCHCHANNEL + cmd.Name() + STR_NOSUCHCHANNEL);
-        LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return;
+        return sendNoSuchChannel(cmd.Name(), fd_idx);
     }
     Channel &channel = channel_map.find(cmd.args[2])->second;
     if (channel.mode.find("i") != string::npos) {
-        reply = (ERR_NOCHANMODES+cmd.Name()+STR_NOCHANMODES);
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return ;
+        return sendNoCannelModes(cmd.Name(), fd_idx);
     }
     ChannelUser user = channel.userInChannel(channel, fd_idx);
     if (!channel.isUserOperator(user)) {
-        reply = (ERR_CHANOPRIVSNEEDED + cmd.Name() + STR_CHANOPRIVSNEEDED);
-        LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return;
+        return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
     }
     int fdUserToInvite;
     if (!nick_fd_map.count(cmd.args[1])) {
         reply = (ERR_NOSUCHNICK + cmd.Name() + STR_NOSUCHNICK);
         LOG(DEBUG) << reply;
-        DataToUser(fd_idx, reply, NUMERIC_REPLY);
-        return;
+        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
     fdUserToInvite = nick_fd_map.find(cmd.args[1])->second;
     User userToInvite = fd_user_map.find(fdUserToInvite)->second;
@@ -514,7 +474,7 @@ void Server::INVITE(Command &cmd, int fd_idx) {
     LOG(DEBUG) << "invite: channel user " << channelUser.nick << " has been invited";
     channel.addToWhitelist(channelUser);
     LOG(DEBUG) << "invite: whitelist size " << channel.whiteList.size();
-        if (size == 3) {
+    if (size == 3) {
         // TODO: mandar mensajes por defecto y por parametro a los channelUsers
     } else {
 

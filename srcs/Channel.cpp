@@ -167,7 +167,7 @@ ChannelUser& Channel::userInChannel(Channel &channel, int userFd) {
 /**
 * Check if user has operator mode
 */
-ChannelUser Channel::findUserByName(string name) {
+ChannelUser& Channel::findUserByName(string name) {
     ChannelUserList::iterator it;
     ChannelUserList::iterator end = users.end();
     for (it = users.begin(); it != end; it++) {
@@ -175,7 +175,7 @@ ChannelUser Channel::findUserByName(string name) {
             return *it;
         }
     }
-    return NULL;
+    return *end;
 }
 
 } // namespace

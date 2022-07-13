@@ -37,7 +37,7 @@ class Channel {
     void addToWhitelist(ChannelUser&);
     ChannelUser& userInChannel(Channel&, int fd);
     bool isUserOperator(ChannelUser&);
-    ChannelUser findUserByName(string);
+    ChannelUser &findUserByName(string);
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */

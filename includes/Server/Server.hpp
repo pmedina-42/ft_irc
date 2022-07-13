@@ -58,9 +58,14 @@ class Server
     void TOPIC(Command &cmd, int fd);
     void INVITE(Command &cmd, int fd);
     /* command implementations */
-    void sendNeedMoreParamsMsg(string& cmd_name, int fd_idx);
-    void sendNotRegisteredMsg(string &cmd_name, int fd_idx);
-    void sendWelcomeMsg(string& name, string &prefix, int fd_idx);
+    void sendWelcome(string& name, string &prefix, int fd_idx);
+    void sendNeedMoreParams(string& cmd_name, int fd_idx);
+    void sendNotRegistered(string &cmd_name, int fd_idx);
+    void sendNoSuchChannel(string &cmd_name, int fd_idx);
+    void sendNotOnChannel(string &cmd_name, int fd_idx);
+    void sendBadChannelMask(string &cmd_name, int fd_idx);
+    void sendNoCannelModes(string &cmd_name, int fd_idx);
+    void sendChannelOperatorNeeded(string &cmd_name, int fd_idx);
 
     /* utils */
     User& getUserFromFd(int fd);
