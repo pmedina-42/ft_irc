@@ -228,7 +228,7 @@ void Server::JOIN(Command &cmd, int fd_idx) {
         LOG(DEBUG) << user.name << " has mode " << user.mode << " after joining channel";
         channel.setUserMode(user, 'o');
         channel_map.insert(std::make_pair(channelName, channel));
-        if (!cmd.args[2].empty()) {
+        if (size >= 3) {
             channel.key = cmd.args[2];
         }
         LOG(DEBUG) << "join: users size: " << channel.users.size();
@@ -243,7 +243,9 @@ void Server::JOIN(Command &cmd, int fd_idx) {
                 return DataToUser(fd_idx, reply, NUMERIC_REPLY);
             }
         } else if (channel.keyModeOn()) {
-            if (cmd.args[2].empty() || channel.key.compare(cmd.args[2])) {
+            if (size == 2
+                || channel.key.compare(cmd.args[2]))
+            {
                 reply = (ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
                 LOG(DEBUG) << reply;
                 return DataToUser(fd_idx, reply, NUMERIC_REPLY);
@@ -281,7 +283,7 @@ void Server::PART(Command &cmd, int fd_idx) {
         return sendNoSuchChannel(cmd.Name(), fd_idx);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
-    ChannelUser user = channel.userInChannel(channel, fd_idx);
+    ChannelUser &user = channel.userInChannel(channel, fd_idx);
     if (user.fd == 0) {
         return sendNotOnChannel(cmd.Name(), fd_idx);
     }
@@ -317,41 +319,42 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
     if (size < 2) {
         return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
-    if (size >= 2) { // este if tiene realmente sentido ? (antes se ha comprobado que size < 2) 
-        if (!tools::starts_with_mask(cmd.args[1])) {
-            return sendBadChannelMask(cmd.Name(), fd_idx);
-        }
-        if (!channel_map.count(cmd.args[1])) {
-            return sendNoSuchChannel(cmd.Name(), fd_idx);
-        }
-        Channel &channel = channel_map.find(cmd.args[1])->second;
-        ChannelUser user = channel.userInChannel(channel, fd_idx);
-        if (user.fd == 0) {
-            return sendNotOnChannel(cmd.Name(), fd_idx);
-        }
-        if (channel.mode.find("t") != string::npos) {
-            return sendNoCannelModes(cmd.Name(), fd_idx);
-        }
-        if (size == 2) {
-            if (channel.topic.empty()) {
-                reply = (RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
-                return DataToUser(fd_idx, reply, NUMERIC_REPLY);
-            }
-            reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+    if (!tools::starts_with_mask(cmd.args[1])) {
+        return sendBadChannelMask(cmd.Name(), fd_idx);
+    }
+    if (!channel_map.count(cmd.args[1])) {
+        return sendNoSuchChannel(cmd.Name(), fd_idx);
+    }
+    Channel &channel = channel_map.find(cmd.args[1])->second;
+    ChannelUser user = channel.userInChannel(channel, fd_idx);
+    if (user.fd == 0) {
+        return sendNotOnChannel(cmd.Name(), fd_idx);
+    }
+    if (channel.mode.find("t") != string::npos) {
+        return sendNoCannelModes(cmd.Name(), fd_idx);
+    }
+    if (size == 2) {
+        if (channel.topic.empty()) {
+            reply = (RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
             return DataToUser(fd_idx, reply, NUMERIC_REPLY);
         }
-        if (size == 3) {
-            if (channel.isUserOperator(user)) {
-                return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
-            }
-            if (cmd.args[2].length() == 1) {
-                channel.topic = "";
-                return ;
-            }
-            channel.topic = cmd.args[2].substr(1);
-            reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
-            return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+        reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+    }
+    if (size == 3) {
+        if (channel.isUserOperator(user)) {
+            return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
         }
+        if (cmd.args[2].length() == 1) { // longitud 1 ? no sería .empty() ?
+            channel.topic = "";
+            return ;
+        }
+        channel.topic = cmd.args[2].substr(1);
+        reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+    }
+    else {
+        return ; // size > 3 
     }
 }
 
@@ -418,19 +421,19 @@ void Server::INVITE(Command &cmd, int fd_idx) {
     if (channel.mode.find("i") != string::npos) {
         return sendNoCannelModes(cmd.Name(), fd_idx);
     }
-    ChannelUser user = channel.userInChannel(channel, fd_idx);
+    ChannelUser &user = channel.userInChannel(channel, fd_idx);
     if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
     }
-    int fdUserToInvite;
+    int fd_user_to_invite;
     if (!nick_fd_map.count(cmd.args[1])) {
         reply = (ERR_NOSUCHNICK + cmd.Name() + STR_NOSUCHNICK);
         LOG(DEBUG) << reply;
         return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
-    fdUserToInvite = nick_fd_map.find(cmd.args[1])->second;
-    User userToInvite = fd_user_map.find(fdUserToInvite)->second;
-    ChannelUser channelUser(fdUserToInvite);
+    fd_user_to_invite = nick_fd_map.find(cmd.args[1])->second;
+    User& user_to_invite = fd_user_map.find(fd_user_to_invite)->second;
+    ChannelUser channelUser(fd_user_to_invite);
     LOG(DEBUG) << "invite: channel user " << channelUser.nick << " has been invited";
     channel.addToWhitelist(channelUser);
     LOG(DEBUG) << "invite: whitelist size " << channel.whiteList.size();
