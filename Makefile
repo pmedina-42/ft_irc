@@ -16,6 +16,7 @@ NAME		=	ft_irc
 SRCS		=	srcs/main.cpp\
 				srcs/Server/Server.cpp \
 				srcs/Server/ServerCommands.cpp \
+				srcs/Server/CommonReplies.cpp \
 				srcs/Server/FdManager.cpp \
 				srcs/User.cpp \
 				srcs/Channel.cpp \
