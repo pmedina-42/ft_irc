@@ -327,6 +327,12 @@ User& Server::getUserFromFdIndex(int fd_idx) {
     return it->second;
 }
 
+Channel& Server::getChannelFromName(string name) {
+    ChannelMap::iterator it = channel_map.find(name);
+    return it->second;
+}
+
+
 void Server::loadCommandMap(void) {
     cmd_map.insert(std::make_pair(string("NICK"), (&Server::NICK)));
     cmd_map.insert(std::make_pair(string("USER"), (&Server::USER)));

@@ -211,49 +211,53 @@ void Server::PONG(Command &cmd, int fd_idx) {
  */
 void Server::JOIN(Command &cmd, int fd_idx) {
     int size = cmd.args.size();
-    string reply;
     LOG(DEBUG) << "join: started";
     if (size < 2) {
         return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
-    string channelName = cmd.args[1];
-    ChannelUser user(fd_idx);
-    if (!tools::starts_with_mask(channelName)) {
+    User& user = getUserFromFdIndex(fd_idx);
+    if (!user.registered) {
+        return sendNotRegistered(cmd.Name(), fd_idx);
+    }
+    string channel_name = cmd.args[1];
+    ChannelUser channel_user(user);
+    if (!tools::starts_with_mask(channel_name)) {
         return sendBadChannelMask(cmd.Name(), fd_idx);
     }
+    /* case channel does not exist */
     if (!channel_map.count(cmd.args[1])) {
         LOG(DEBUG) << "join: channel doesn't exist";
-        LOG(DEBUG) << "join: creating channel with name " << channelName;
-        Channel channel(channelName, user);
-        LOG(DEBUG) << user.name << " has mode " << user.mode << " after joining channel";
-        channel.setUserMode(user, 'o');
-        channel_map.insert(std::make_pair(channelName, channel));
+        LOG(DEBUG) << "join: creating channel with name " << channel_name;
+        Channel channel(channel_name, channel_user);
+        LOG(DEBUG) << "channel user " << channel_user << " has mode " << channel_user.mode << " after joining channel";
+        channel.setUserMode(channel_user, 'o');
         if (size >= 3) {
             channel.key = cmd.args[2];
         }
+        channel_map.insert(std::make_pair(channel_name, channel));
         LOG(DEBUG) << "join: users size: " << channel.users.size();
+    /* case channel exists already */
     } else {
         LOG(DEBUG) << "join: channel exists";
-        Channel &channel = channel_map.find(channelName)->second;
+        
+        Channel &channel = getChannelFromName(channel_name);
         if (channel.inviteModeOn()) {
             LOG(DEBUG) << channel.mode;
-            if (!channel.isInvited(user)) {
-                reply = (ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
-                LOG(DEBUG) << reply;
+            if (!channel.isInvited(channel_user)) {
+                string reply(ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
                 return DataToUser(fd_idx, reply, NUMERIC_REPLY);
             }
         } else if (channel.keyModeOn()) {
             if (size == 2
                 || channel.key.compare(cmd.args[2]))
             {
-                reply = (ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
-                LOG(DEBUG) << reply;
+                string reply(ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
                 return DataToUser(fd_idx, reply, NUMERIC_REPLY);
             }
         }
         LOG(DEBUG) << "join: adding user to existing channel";
-        channel.addUser(user);
-        LOG(DEBUG) << user.name << " has mode " << user.mode << " after joining channel";
+        channel.addUser(channel_user);
+        LOG(DEBUG) << channel_user.name << " has mode " << channel_user.mode << " after joining channel";
         LOG(DEBUG) << "join: users size: " << channel.users.size();
         // TODO: if user is already in channel?
         // TODO: send rpl messages

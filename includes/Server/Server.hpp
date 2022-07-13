@@ -70,6 +70,7 @@ class Server
     /* utils */
     User& getUserFromFd(int fd);
     User& getUserFromFdIndex(int fd_idx);
+    Channel& getChannelFromName(string name);
 };
 
 /**

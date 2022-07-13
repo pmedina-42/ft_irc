@@ -145,13 +145,20 @@ bool Channel::isInvited(ChannelUser &user) {
 
 /**
  * Cambia el modo de un usuario dentro del canal
+ * !! Christian : Por qué hace falta buscar el usuario para setearle 
+ * un modo nuevo ? ChannelUser& user no es ya el usuario al que hay que
+ * cambiar el modo ? No bastaría con hacer user.mode = mode (si se trabaja
+ * con referencias es para que lo que le hagas a user también cambie
+ * dentro del canal sin necesitar acceder a el a traves del canal.)
  */
 void Channel::setUserMode(ChannelUser &user, char mode) {
-    list<ChannelUser>::iterator end = users.end();
+/*    list<ChannelUser>::iterator end = users.end();
     list<ChannelUser>::iterator it = std::find(users.begin(), end, user);
     if ((mode == 'o' || mode == 'v') && it != end) {
         it->mode = mode;
     }
+*/
+    user.mode = mode;
 }
 
 ChannelUser& Channel::userInChannel(Channel &channel, int userFd) {
