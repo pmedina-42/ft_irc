@@ -20,6 +20,8 @@ class ChannelUser : public User {
     ChannelUser(const ChannelUser& other);
     ChannelUser(const User &other);
     ~ChannelUser();
+    ChannelUser& operator=(const ChannelUser &other);
+    ChannelUser& operator=(const User &other);
     bool operator==(ChannelUser const &other) const;
 
     /* ATTRIBUTES */
