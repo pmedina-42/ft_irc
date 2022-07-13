@@ -109,11 +109,11 @@ bool Channel::inviteModeOn() {
 /**
  * Comprueba si el canal está en modo contraseña
  */
-    bool Channel::keyModeOn() {
-        if (mode.find("k") != string::npos)
-            return true;
-        return false;
-    }
+bool Channel::keyModeOn() {
+    if (mode.find("k") != string::npos)
+        return true;
+    return false;
+}
 
 /**
  * Check if user has operator mode

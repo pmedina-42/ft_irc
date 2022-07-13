@@ -316,6 +316,11 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
     } while (total_b_sent != (int)msg.size());
 }
 
+/* These functions ARE NOT SAFE !! They must be called
+ * after a succesfull .count() call on the map. It extracts
+ * information from maps ASSUMING the map has it !
+ */
+
 User& Server::getUserFromFd(int fd) {
     FdUserMap::iterator it = fd_user_map.find(fd);
     return it->second;
@@ -325,6 +330,17 @@ User& Server::getUserFromFdIndex(int fd_idx) {
     int fd = getFdFromIndex(fd_idx);
     FdUserMap::iterator it = fd_user_map.find(fd);
     return it->second;
+}
+
+int Server::getFdFromNick(string &nickname) {
+    NickFdMap::iterator it = nick_fd_map.find(nickname);
+    return it->second;
+}
+
+User& Server::getUserFromNick(string &nickname) {
+    int fd = getFdFromNick(nickname);
+    FdUserMap::iterator it_2 = fd_user_map.find(fd);
+    return it_2->second;
 }
 
 Channel& Server::getChannelFromName(string name) {

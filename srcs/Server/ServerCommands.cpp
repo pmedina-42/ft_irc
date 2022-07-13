@@ -319,7 +319,6 @@ void Server::PART(Command &cmd, int fd_idx) {
  */
 void Server::TOPIC(Command &cmd, int fd_idx) {
     int size = cmd.args.size();
-    string reply;
     if (size < 2) {
         return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
@@ -329,20 +328,20 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
     if (!channel_map.count(cmd.args[1])) {
         return sendNoSuchChannel(cmd.Name(), fd_idx);
     }
-    Channel &channel = channel_map.find(cmd.args[1])->second;
-    ChannelUser user = channel.userInChannel(channel, fd_idx);
+    Channel& channel = channel_map.find(cmd.args[1])->second;
+    ChannelUser& user = channel.userInChannel(channel, fd_idx);
     if (user.fd == 0) {
         return sendNotOnChannel(cmd.Name(), fd_idx);
     }
     if (channel.mode.find("t") != string::npos) {
-        return sendNoCannelModes(cmd.Name(), fd_idx);
+        return sendNoChannelModes(cmd.Name(), fd_idx);
     }
     if (size == 2) {
         if (channel.topic.empty()) {
-            reply = (RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
+            string reply(RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
             return DataToUser(fd_idx, reply, NUMERIC_REPLY);
         }
-        reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+        string reply(RPL_TOPIC+cmd.Name()+STR_TOPIC);
         return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
     if (size == 3) {
@@ -354,7 +353,7 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
             return ;
         }
         channel.topic = cmd.args[2].substr(1);
-        reply = (RPL_TOPIC+cmd.Name()+STR_TOPIC);
+        string reply(RPL_TOPIC+cmd.Name()+STR_TOPIC);
         return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
     else {
@@ -372,7 +371,6 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
  */
 void Server::KICK(Command &cmd, int fd_idx) {
     int size = cmd.args.size();
-    string reply;
     if (size < 3) {
         return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
@@ -382,15 +380,15 @@ void Server::KICK(Command &cmd, int fd_idx) {
     if (!channel_map.count(cmd.args[1])) {
         return sendNoSuchChannel(cmd.Name(), fd_idx);
     }
-    Channel &channel = channel_map.find(cmd.args[1])->second;
-    ChannelUser user = channel.userInChannel(channel, fd_idx);
+    Channel& channel = channel_map.find(cmd.args[1])->second;
+    ChannelUser& user = channel.userInChannel(channel, fd_idx);
     if (user.fd == 0) {
         return sendNotOnChannel(cmd.Name(), fd_idx);
     }
     if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
     }
-    ChannelUser userToKick = channel.findUserByName(cmd.args[2]);
+    ChannelUser& userToKick = channel.findUserByName(cmd.args[2]);
     if (userToKick.fd == 0) {
         return sendNotOnChannel(cmd.Name(), fd_idx);
     }
@@ -414,7 +412,6 @@ void Server::KICK(Command &cmd, int fd_idx) {
  */
 void Server::INVITE(Command &cmd, int fd_idx) {
     int size = cmd.args.size();
-    string reply;
     if (size < 3) {
         return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
@@ -423,24 +420,22 @@ void Server::INVITE(Command &cmd, int fd_idx) {
     }
     Channel &channel = channel_map.find(cmd.args[2])->second;
     if (channel.mode.find("i") != string::npos) {
-        return sendNoCannelModes(cmd.Name(), fd_idx);
+        return sendNoChannelModes(cmd.Name(), fd_idx);
     }
-    ChannelUser &user = channel.userInChannel(channel, fd_idx);
-    if (!channel.isUserOperator(user)) {
+    ChannelUser &channel_user = channel.userInChannel(channel, fd_idx);
+    if (!channel.isUserOperator(channel_user)) {
         return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
     }
-    int fd_user_to_invite;
-    if (!nick_fd_map.count(cmd.args[1])) {
-        reply = (ERR_NOSUCHNICK + cmd.Name() + STR_NOSUCHNICK);
+    string invited_nick = cmd.args[1];
+    if (!nick_fd_map.count(invited_nick)) {
+        string reply(ERR_NOSUCHNICK + cmd.Name() + STR_NOSUCHNICK);
         LOG(DEBUG) << reply;
         return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
-    fd_user_to_invite = nick_fd_map.find(cmd.args[1])->second;
-
-    // User& user_to_invite = fd_user_map.find(fd_user_to_invite)->second; !da error eb linux pq no se usa más adelante, supongo que luego sí se usará.
-    ChannelUser user_to_invite(fd_user_to_invite); // Esto necesita un constructor copia !!! No está definido en channel user. Este Channel User solo tiene el fd escrito. 
-    LOG(DEBUG) << "invite: channel user " << user_to_invite.nick << " has been invited";
-    channel.addToWhitelist(user_to_invite);
+    User& invited_user = getUserFromNick(invited_nick);
+    ChannelUser invited_channel_user(invited_user);
+    LOG(DEBUG) << "invite: channel user " << invited_channel_user.nick << " has been invited";
+    channel.addToWhitelist(invited_channel_user);
     LOG(DEBUG) << "invite: whitelist size " << channel.whiteList.size();
     if (size == 3) {
         // TODO: mandar mensajes por defecto y por parametro a los channelUsers

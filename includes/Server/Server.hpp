@@ -23,7 +23,6 @@ class Server
     ~Server();
     
     private:
-
     /* loop through all poll fd's */
     int mainLoop(void);
     void DataFromUser(int fd_idx);
@@ -57,6 +56,7 @@ class Server
     void PART(Command &cmd, int fd);
     void TOPIC(Command &cmd, int fd);
     void INVITE(Command &cmd, int fd);
+
     /* command implementations */
     void sendWelcome(string& name, string &prefix, int fd_idx);
     void sendNeedMoreParams(string& cmd_name, int fd_idx);
@@ -64,12 +64,14 @@ class Server
     void sendNoSuchChannel(string &cmd_name, int fd_idx);
     void sendNotOnChannel(string &cmd_name, int fd_idx);
     void sendBadChannelMask(string &cmd_name, int fd_idx);
-    void sendNoCannelModes(string &cmd_name, int fd_idx);
+    void sendNoChannelModes(string &cmd_name, int fd_idx);
     void sendChannelOperatorNeeded(string &cmd_name, int fd_idx);
 
     /* utils */
     User& getUserFromFd(int fd);
     User& getUserFromFdIndex(int fd_idx);
+    User& getUserFromNick(string& nickname);
+    int getFdFromNick(string& nickname);
     Channel& getChannelFromName(string name);
 };
 

@@ -29,7 +29,7 @@ void Server::sendBadChannelMask(string &cmd_name, int fd_idx) {
     DataToUser(fd_idx, reply, NUMERIC_REPLY);
 }
 
-void Server::sendNoCannelModes(string &cmd_name, int fd_idx) {
+void Server::sendNoChannelModes(string &cmd_name, int fd_idx) {
     string reply = (ERR_NOCHANMODES+cmd_name+STR_NOCHANMODES);
     DataToUser(fd_idx, reply, NUMERIC_REPLY);
 }
