@@ -433,14 +433,6 @@ void Server::INVITE(Command &cmd, int fd_idx) {
     }
     fd_user_to_invite = nick_fd_map.find(cmd.args[1])->second;
 
-    /* Necesitas crear ChannelUser::ChannelUser(const ChannelUser &other) para poder 
-     * inicializar channel users a partir de otros users, tal que :
-     * ChannelUser channel_user(ChannelUser& ) tenga sentido. (Fijate en Server.cpp cómo esta hecho el constructor Server::Server(const Server& other))
-     * Una vez lo hagas, podrás usar la línea que está comentada. Ya que de momento
-     * cuando creas ChannelUser user_to_invite(fd) se llama al constructor de User
-     * a partir de un fd, que crea un usuario NUEVO, no uno a partir del que ya existe.
-     */
-
     // User& user_to_invite = fd_user_map.find(fd_user_to_invite)->second; !da error eb linux pq no se usa más adelante, supongo que luego sí se usará.
     ChannelUser user_to_invite(fd_user_to_invite); // Esto necesita un constructor copia !!! No está definido en channel user. Este Channel User solo tiene el fd escrito. 
     LOG(DEBUG) << "invite: channel user " << user_to_invite.nick << " has been invited";

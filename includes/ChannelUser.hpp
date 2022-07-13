@@ -17,6 +17,8 @@ class ChannelUser : public User {
 
     public:
     ChannelUser(int fd);
+    ChannelUser(const ChannelUser& other);
+    ChannelUser(const User &other);
     ~ChannelUser();
     bool operator==(ChannelUser const &other) const;
 
