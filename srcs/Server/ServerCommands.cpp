@@ -5,7 +5,6 @@
 #include "Types.hpp"
 #include "User.hpp"
 #include "NumericReplies.hpp"
-#include "ChannelUser.hpp"
 #include "Log.hpp"
 
 #include <map>
@@ -203,7 +202,7 @@ void Server::PONG(Command &cmd, int fd_idx) {
  * Parameters: <channel> [<key>]
  * 1. If command JOIN has no arguments, error message is returned
  * 2. If channel mask is missing, bad mask error is returned
- * 3. If channel doesn't exist, create new channel and new channelUser with operator channel_mode and add it to the channel_map
+ * 3. If channel doesn't exist, create new channel and new User with operator channel_mode and add it to the channel_map
  * 4. If channel exists, check channel_mode
  * 4.1. If channel is in channel_mode 'i', check if user is invited to join it. If not, error message is returned
  * 4.2. If channel is in channel_mode 'K', check if user is providing the correct pw. If not, error message is returned
@@ -223,16 +222,15 @@ void Server::JOIN(Command &cmd, int fd_idx) {
         return sendNeedMoreParams(cmd.Name(), fd_idx);
     }
     string ch_name = cmd.args[1];
-    ChannelUser ch_user(user);
     if (!tools::starts_with_mask(ch_name)) {
         return sendBadChannelMask(cmd.Name(), fd_idx);
     }
     if (!channel_map.count(cmd.args[1])) {
         LOG(DEBUG) << "join: channel doesn't exist";
         LOG(DEBUG) << "join: creating channel with name " << ch_name;
-        Channel channel(ch_name, ch_user);
-        LOG(DEBUG) << ch_user.user.name << " has channel_mode " << ch_user.channel_mode << " after joining channel";
-        channel.setUserMode(ch_user, 'o');
+        Channel channel(ch_name, user);
+        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " after joining channel";
+        channel.setUserMode(user, 'o');
         channel_map.insert(std::make_pair(ch_name, channel));
         if (size >= 3) {
             channel.key = cmd.args[2];
@@ -243,7 +241,7 @@ void Server::JOIN(Command &cmd, int fd_idx) {
         Channel &channel = channel_map.find(ch_name)->second;
         if (channel.inviteModeOn()) {
             LOG(DEBUG) << channel.mode;
-            if (!channel.isInvited(ch_user)) {
+            if (!channel.isInvited(user)) {
                 reply = (ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
                 LOG(DEBUG) << reply;
                 return DataToUser(fd_idx, reply, NUMERIC_REPLY);
@@ -258,8 +256,8 @@ void Server::JOIN(Command &cmd, int fd_idx) {
             }
         }
         LOG(DEBUG) << "join: adding ch_user to existing channel";
-        channel.addUser(ch_user);
-        LOG(DEBUG) << ch_user.user.name << " has channel_mode " << ch_user.channel_mode << " after joining channel";
+        channel.addUser(user);
+        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " after joining channel";
         LOG(DEBUG) << "join: users size: " << channel.users.size();
         // TODO: if ch_user is already in channel?
         // TODO: send rpl messages
@@ -278,6 +276,7 @@ void Server::JOIN(Command &cmd, int fd_idx) {
  */
 void Server::PART(Command &cmd, int fd_idx) {
     User& user = getUserFromFdIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
     if (!user.registered) {
         return sendNotRegistered(cmd.Name(), fd_idx);
     }
@@ -292,13 +291,12 @@ void Server::PART(Command &cmd, int fd_idx) {
         return sendNoSuchChannel(cmd.Name(), fd_idx);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
-    ChannelUser &ch_user = channel.userInChannel(fd_idx);
-    if (ch_user.user.fd == 0) {
+    if (!channel.userIsInChannel(fd)) {
         return sendNotOnChannel(cmd.Name(), fd_idx);
     }
-    LOG(DEBUG) << "part: deleting ch_user " << ch_user.user.name << " in channel " << channel.name;
-    LOG(DEBUG) << ch_user.user.name << " has channel_mode " << ch_user.channel_mode << " before being erased";
-    channel.deleteUser(ch_user);
+    LOG(DEBUG) << "part: deleting ch_user " << user.name << " in channel " << channel.name;
+    LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " before being erased";
+    channel.deleteUser(user);
     LOG(DEBUG) << "part: users size: " << channel.users.size();
     if (channel.users.size() == 0) {
         LOG(DEBUG) << "part: deleting empty channel";
@@ -323,7 +321,10 @@ void Server::PART(Command &cmd, int fd_idx) {
  *  If not, error message is returned
  */
 void Server::TOPIC(Command &cmd, int fd_idx) {
+
     User& user = getUserFromFdIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
+    
     if (!user.registered) {
         return sendNotRegistered(cmd.Name(), fd_idx);
     }
@@ -339,8 +340,7 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
         return sendNoSuchChannel(cmd.Name(), fd_idx);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
-    ChannelUser ch_user = channel.userInChannel(fd_idx);
-    if (ch_user.user.fd == 0) {
+    if (!channel.userIsInChannel(fd)) {
         return sendNotOnChannel(cmd.Name(), fd_idx);
     }
     if (channel.mode.find("t") != string::npos) {
@@ -355,7 +355,7 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
         return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
     if (size == 3) {
-        if (channel.isUserOperator(ch_user)) {
+        if (channel.isUserOperator(user)) {
             return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
         }
         if (cmd.args[2].length() == 1) { // longitud 1 ? no sería .empty() ?
@@ -380,7 +380,10 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
  * 3. Reuse the PART method passing the comment as the part message
  */
 void Server::KICK(Command &cmd, int fd_idx) {
+
     User& user = getUserFromFdIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
+
     if (!user.registered) {
         return sendNotRegistered(cmd.Name(), fd_idx);
     }
@@ -396,22 +399,22 @@ void Server::KICK(Command &cmd, int fd_idx) {
         return sendNoSuchChannel(cmd.Name(), fd_idx);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
-    ChannelUser ch_user = channel.userInChannel(fd_idx);
-    if (ch_user.user.fd == 0) {
+    if (!channel.userIsInChannel(fd)) {
         return sendNotOnChannel(cmd.Name(), fd_idx);
     }
-    if (!channel.isUserOperator(ch_user)) {
+    if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
     }
-    ChannelUser user_to_kick = channel.findUserByNick(cmd.args[2]);
-    if (user_to_kick.user.fd == 0) {
+    string nick = cmd.args[2];
+    if (!channel.userIsInChannel(nick)) {
         return sendNotOnChannel(cmd.Name(), fd_idx);
     }
+    User& user_to_kick = channel.getUserFromNick(nick);
     channel.banUser(user_to_kick); // Ban this user??
     channel.deleteUser(user_to_kick);
 
     if (size == 3) {
-        // TODO: mandar mensajes por defecto y por parametro a los channelUsers
+        // TODO: mandar mensajes por defecto y por parametro a los Users
     } else {
 
     }
@@ -426,7 +429,10 @@ void Server::KICK(Command &cmd, int fd_idx) {
  * 3. Reuse the PART method passing the comment as the part message
  */
 void Server::INVITE(Command &cmd, int fd_idx) {
+
     User& user = getUserFromFdIndex(fd_idx);
+    int fd = getFdFromIndex(fd_idx);
+
     if (!user.registered) {
         return sendNotRegistered(cmd.Name(), fd_idx);
     }
@@ -442,8 +448,10 @@ void Server::INVITE(Command &cmd, int fd_idx) {
     if (channel.mode.find("i") != string::npos) {
         return sendNoCannelModes(cmd.Name(), fd_idx);
     }
-    ChannelUser &ch_user = channel.userInChannel(fd_idx);
-    if (!channel.isUserOperator(ch_user)) {
+    if (!channel.userIsInChannel(fd)) {
+        return sendNotOnChannel(cmd.Name(), fd_idx);
+    }
+    if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
     }
     if (!nick_fd_map.count(cmd.args[1])) {
@@ -451,17 +459,19 @@ void Server::INVITE(Command &cmd, int fd_idx) {
         LOG(DEBUG) << reply;
         return DataToUser(fd_idx, reply, NUMERIC_REPLY);
     }
-    int fd_user_to_invite = nick_fd_map.find(cmd.args[1])->second;
-    ChannelUser user_to_inv(getUserFromFd(fd_user_to_invite));
-
-    LOG(DEBUG) << "invite: channel channelUser " << user_to_inv.user.nick << " has been invited";
+    if (channel.userIsInChannel(cmd.args[1])) {
+        return ; // el usuario ya esta en el canal. no hace falta inv
+    }
+    // TODO : else, añadir el usuario a la whitelist (cuando haya que hacerlo, usuario exista etc.)
+    /*nick_fd_map.count(cmd.args[1]);
+    LOG(DEBUG) << "invite: channel User " << user_to_inv.nick << " has been invited";
     channel.addToWhitelist(user_to_inv);
     LOG(DEBUG) << "invite: WhiteList size " << channel.white_list.size();
     if (size == 3) {
-        // TODO: mandar mensajes por defecto y por parametro a los channelUsers
+        // TODO: mandar mensajes por defecto y por parametro a los Users
     } else {
 
-    }
+    }*/
 
 }
 

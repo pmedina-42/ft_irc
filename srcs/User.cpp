@@ -1,7 +1,8 @@
-#include "../includes/ChannelUser.hpp"
 #include "Tools.hpp"
 #include <unistd.h>
 #include <algorithm>
+#include <string.h>
+#include "User.hpp"
 
 namespace irc {
 
@@ -64,10 +65,18 @@ User& User::operator=(const User& other) {
     return *this;
 }
 
+bool User::operator==(User const &other) const {
+    return ( this->nick == other.nick);
+}
+
 void User::setPrefixFromHost(std::string &host) {
     prefix = nick + "!" + name + "@" + host;
 }
 
+void User::setChannelMask(string& name, char mode) {
+    (void)name;
+    (void)mode;
+}
 
 bool User::hasLeftovers(void) const {
     return !(buffer_size == 0);

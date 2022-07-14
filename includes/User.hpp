@@ -43,6 +43,8 @@ class User {
     virtual ~User();
 
     User& operator=(const User &other);
+    bool operator==(User const &other) const;
+
 
     void setPrefixFromHost(string &host);
     /* ATTRIBUTES */
@@ -50,11 +52,17 @@ class User {
     string nick;
     string name;
     string full_name;
-    string prefix; // nse si hara falta dis shit
-    string mask; // ¿¿¿ XD
+    string prefix;
+    string mask;
     string server_mode;
     string afk_msg;
     string connection_pass;
+
+    /* Channel Things */
+    char channel_mode;
+    bool banned;
+    ChannelMaskMap ch_name_mask_map;
+    void setChannelMask(string &name, char mode);
 
     char buffer[BUFF_MAX_SIZE];
     int buffer_size;

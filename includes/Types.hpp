@@ -34,13 +34,13 @@ typedef enum {
 
 class Channel;
 class User;
-class ChannelUser;
 class Command;
 class Server;
 
 typedef std::map<std::string, irc::Channel> ChannelMap;
-typedef std::map<std::string, irc::ChannelUser> NickChannelUserMap;
-typedef std::list<irc::ChannelUser> ChannelUserList;
+typedef std::map<std::string, irc::User> NickUserMap;
+typedef std::list<irc::User> UserList;
+typedef std::map<std::string, char> ChannelMaskMap;
 
 typedef std::map<int, irc::User> FdUserMap;
 typedef std::map<std::string, int> NickFdMap;

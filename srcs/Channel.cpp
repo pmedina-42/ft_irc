@@ -1,7 +1,8 @@
 #include "Channel.hpp"
-#include "ChannelUser.hpp"
 #include <algorithm>
 #include "Log.hpp"
+#include "User.hpp"
+#include "Tools.hpp"
 
 #include <Types.hpp>
 
@@ -15,10 +16,10 @@ namespace irc {
  * Al crearse el canal se setea al usuario creador el rol 'o' 
  * el canal al principio no tiene ningún modo. Se setea después 
  */
-Channel::Channel(string name, ChannelUser& ch_user) : name(name) {
+Channel::Channel(string name, User& user) : name(name) {
     mode = "";
-    ch_user.channel_mode = 'o';
-    users.push_back(ch_user);
+    user.setChannelMask(name, 'o');
+    users.push_back(user);
 }
 
 /**
@@ -37,11 +38,15 @@ Channel::~Channel() {
  * 1. Se comprueba la disponibilidad del canal a nivel de comando, antes de llamar esta funcion
  * 2. Se añade el usuario a la lista de usuarios
  */
-void Channel::addUser(ChannelUser &ch_user) {
-    users.push_back(ch_user);
+void Channel::addUser(User &user) {
+    users.push_back(user);
 }
 
-/**
+/** TODO : 
+ *  funcion que gestione asignar un nuevo operador :
+ *  busque primero algun otro usuario con 'o', y en caso de
+ *  que no que itere la lista hasta que de con el heredero correcto. 
+ * 
  * Borrar un usuario del canal:
  * 1. Se busca dicho usuario
  * 2.1 Si el usuario a borrar resulta ser el primero de la lista aka el creador:
@@ -50,12 +55,13 @@ void Channel::addUser(ChannelUser &ch_user) {
  * 2.2 Si es un usuario normal o cualquier otro operador, se borra sin más
  * 3. Se borra el canal de la lista de canales del usuario
  * */
-void Channel::deleteUser(ChannelUser &ch_user) {
-    ChannelUserList::iterator end = users.end();
-    for (ChannelUserList::iterator u = users.begin(); u != end; u++) {
-        if (!u->user.nick.compare(ch_user.user.nick)) {
+void Channel::deleteUser(User &user) {
+    UserList::iterator end = users.end();
+    for (UserList::iterator u = users.begin(); u != end; u++) {
+        if (!tools::isEqual(u->nick, user.nick)) {
+            /* If user is at beggining of list, then it is an operator */
             if (u == users.begin()) {
-                ChannelUserList::iterator it = users.begin();
+                UserList::iterator it = users.begin();
                 while (userInBlackList(*it))
                     it++;
                 it->channel_mode = 'o';
@@ -71,9 +77,9 @@ void Channel::deleteUser(ChannelUser &ch_user) {
 /**
  * Banea a un usuario
  */
-void Channel::banUser(ChannelUser &ch_user) {
-    ChannelUserList::iterator end = users.end();
-    ChannelUserList::iterator it = std::find(users.begin(), end, ch_user);
+void Channel::banUser(User &user) {
+    UserList::iterator end = users.end();
+    UserList::iterator it = std::find(users.begin(), end, user);
     if (it != end)
         it->banned = true;
 }
@@ -81,9 +87,9 @@ void Channel::banUser(ChannelUser &ch_user) {
 /**
  * Desbanea a un usuario
  */
-void Channel::unbanUser(ChannelUser &ch_user) {
-    list<ChannelUser>::iterator end = users.end();
-    list<ChannelUser>::iterator it = std::find(users.begin(), end, ch_user);
+void Channel::unbanUser(User &user) {
+    list<User>::iterator end = users.end();
+    list<User>::iterator it = std::find(users.begin(), end, user);
     if (it != end)
         it->banned = false;
 }
@@ -91,9 +97,9 @@ void Channel::unbanUser(ChannelUser &ch_user) {
 /**
  * Comprueba si el usuario está en la lista de baneados
  */
-bool Channel::userInBlackList(ChannelUser &ch_user) {
-    list<ChannelUser>::iterator end = users.end();
-    list<ChannelUser>::iterator it = std::find(users.begin(), end, ch_user);
+bool Channel::userInBlackList(User &user) {
+    list<User>::iterator end = users.end();
+    list<User>::iterator it = std::find(users.begin(), end, user);
     return it != end ?  true : false;
 }
 
@@ -114,53 +120,82 @@ bool Channel::keyModeOn() {
 /**
  * Check if user has operator channel_mode
  */
-bool Channel::isUserOperator(ChannelUser &ch_user) {
-    return (ch_user.channel_mode == 'o');
+bool Channel::isUserOperator(User &user) {
+    return (user.channel_mode == 'o');
 }
 
 /**
  * Añade un nuevo usuario a la whitelist 
  */
-void Channel::addToWhitelist(ChannelUser &ch_user) {
-    white_list.insert(std::make_pair(ch_user.user.nick, ch_user));
+void Channel::addToWhitelist(User &user) {
+    white_list.insert(std::make_pair(user.nick, user));
 }
 
 /**
  * Devuelve true si el usuario está en la white_list del canal 
  */
-bool Channel::isInvited(ChannelUser &ch_user) {
-    return (white_list.find(ch_user.user.nick) != white_list.end());
+bool Channel::isInvited(User &user) {
+    return (white_list.find(user.nick) != white_list.end());
 }
 
 /**
  * Cambia el modo de un usuario dentro del canal
  */
-void Channel::setUserMode(ChannelUser &ch_user, char mode) {
-    list<ChannelUser>::iterator end = users.end();
-    list<ChannelUser>::iterator it = std::find(users.begin(), end, ch_user);
+void Channel::setUserMode(User &user, char mode) {
+    list<User>::iterator end = users.end();
+    list<User>::iterator it = std::find(users.begin(), end, user);
     if ((mode == 'o' || mode == 'v') && it != end) {
         it->channel_mode = mode;
     }
 }
 
-ChannelUser& Channel::userInChannel(int userFd) {
-    ChannelUserList::iterator end = users.end();
-    for (ChannelUserList::iterator it = users.begin(); it != end; it++) {
-        if (it->user.fd == userFd) {
+bool Channel::userIsInChannel(int userFd) {
+    for (UserList::iterator it = users.begin(); it != users.end(); it++) {
+        if (it->fd == userFd) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Channel::userIsInChannel(string& nick) {
+    for (UserList::iterator it = users.begin(); it != users.end(); it++) {
+        if (tools::isEqual(it->nick, nick)) {
+            return true;
+        }
+    }
+    return false; 
+}
+
+User& Channel::getUserFromFd(int fd) {
+    UserList::iterator end = users.end();
+    for (UserList::iterator it = users.begin(); it != end; it++) {
+        if (it->fd == fd) {
             return *it;
         }
     }
-    return *end;
+    return *end; // it never gets here
+}
+
+User& Channel::getUserFromNick(string& nick) {
+    UserList::iterator end = users.end();
+    for (UserList::iterator it = users.begin(); it != end; it++) {
+        if (tools::isEqual(it->nick, nick)) {
+            return *it;
+        }
+    }
+    return *end; // it never gets here
+    
 }
 
 /**
 * Check if user has operator channel_mode
 */
-ChannelUser& Channel::findUserByNick(string nick) {
-    ChannelUserList::iterator it;
-    ChannelUserList::iterator end = users.end();
+User& Channel::findUserByNick(string& nick) {
+    UserList::iterator it;
+    UserList::iterator end = users.end();
     for (it = users.begin(); it != end; it++) {
-        if (!it->user.nick.compare(nick)) {
+        if (tools::isEqual(it->nick, nick)) {
             return *it;
         }
     }

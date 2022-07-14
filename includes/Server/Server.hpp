@@ -2,7 +2,6 @@
 # define IRC42_SERVER_H
 
 #include "Channel.hpp" // without this, it doesnt compile
-#include "ChannelUser.hpp"
 #include "Types.hpp"
 
 #include "Server/FdManager.hpp"
