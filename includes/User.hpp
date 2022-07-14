@@ -52,9 +52,9 @@ class User {
     string full_name;
     string prefix; // nse si hara falta dis shit
     string mask; // ¿¿¿ XD
-    string serverMode;
-    string afkMessage;
-    string connectionPassword;
+    string server_mode;
+    string afk_msg;
+    string connection_pass;
 
     char buffer[BUFF_MAX_SIZE];
     int buffer_size;

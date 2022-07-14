@@ -15,10 +15,10 @@ namespace irc {
  * Al crearse el canal se setea al usuario creador el rol 'o' 
  * el canal al principio no tiene ningún modo. Se setea después 
  */
-Channel::Channel(string name, ChannelUser& user) : name(name) {
+Channel::Channel(string name, ChannelUser& ch_user) : name(name) {
     mode = "";
-    user.channelMode = 'o';
-    users.push_back(user);
+    ch_user.channel_mode = 'o';
+    users.push_back(ch_user);
 }
 
 /**
@@ -37,8 +37,8 @@ Channel::~Channel() {
  * 1. Se comprueba la disponibilidad del canal a nivel de comando, antes de llamar esta funcion
  * 2. Se añade el usuario a la lista de usuarios
  */
-void Channel::addUser(ChannelUser &user) {
-    users.push_back(user);
+void Channel::addUser(ChannelUser &ch_user) {
+    users.push_back(ch_user);
 }
 
 /**
@@ -50,15 +50,15 @@ void Channel::addUser(ChannelUser &user) {
  * 2.2 Si es un usuario normal o cualquier otro operador, se borra sin más
  * 3. Se borra el canal de la lista de canales del usuario
  * */
-void Channel::deleteUser(ChannelUser &user) {
+void Channel::deleteUser(ChannelUser &ch_user) {
     ChannelUserList::iterator end = users.end();
     for (ChannelUserList::iterator u = users.begin(); u != end; u++) {
-        if (!u->nick.compare(user.nick)) {
+        if (!u->user.nick.compare(ch_user.user.nick)) {
             if (u == users.begin()) {
                 ChannelUserList::iterator it = users.begin();
                 while (userInBlackList(*it))
                     it++;
-                it->channelMode = 'o';
+                it->channel_mode = 'o';
                 users.erase(u);
             } else {
                 users.erase(u);
@@ -71,9 +71,9 @@ void Channel::deleteUser(ChannelUser &user) {
 /**
  * Banea a un usuario
  */
-void Channel::banUser(ChannelUser &user) {
+void Channel::banUser(ChannelUser &ch_user) {
     ChannelUserList::iterator end = users.end();
-    ChannelUserList::iterator it = std::find(users.begin(), end, user);
+    ChannelUserList::iterator it = std::find(users.begin(), end, ch_user);
     if (it != end)
         it->banned = true;
 }
@@ -81,9 +81,9 @@ void Channel::banUser(ChannelUser &user) {
 /**
  * Desbanea a un usuario
  */
-void Channel::unbanUser(ChannelUser &user) {
+void Channel::unbanUser(ChannelUser &ch_user) {
     list<ChannelUser>::iterator end = users.end();
-    list<ChannelUser>::iterator it = std::find(users.begin(), end, user);
+    list<ChannelUser>::iterator it = std::find(users.begin(), end, ch_user);
     if (it != end)
         it->banned = false;
 }
@@ -91,9 +91,9 @@ void Channel::unbanUser(ChannelUser &user) {
 /**
  * Comprueba si el usuario está en la lista de baneados
  */
-bool Channel::userInBlackList(ChannelUser &user) {
+bool Channel::userInBlackList(ChannelUser &ch_user) {
     list<ChannelUser>::iterator end = users.end();
-    list<ChannelUser>::iterator it = std::find(users.begin(), end, user);
+    list<ChannelUser>::iterator it = std::find(users.begin(), end, ch_user);
     return it != end ?  true : false;
 }
 
@@ -101,63 +101,52 @@ bool Channel::userInBlackList(ChannelUser &user) {
  * Comprueba si el canal está en modo invitación
  */
 bool Channel::inviteModeOn() {
-    if (mode.find("i") != string::npos)
-        return true;
-    return false;
+    return (mode.find("i") != string::npos);
 }
 
 /**
  * Comprueba si el canal está en modo contraseña
  */
-    bool Channel::keyModeOn() {
-        if (mode.find("k") != string::npos)
-            return true;
-        return false;
-    }
+bool Channel::keyModeOn() {
+    return (mode.find("k") != string::npos);
+}
 
 /**
- * Check if user has operator channelMode
+ * Check if user has operator channel_mode
  */
-bool Channel::isUserOperator(ChannelUser &user) {
-    if (user.channelMode == 'o')
-        return true;
-    return false;
+bool Channel::isUserOperator(ChannelUser &ch_user) {
+    return (ch_user.channel_mode == 'o');
 }
 
 /**
  * Añade un nuevo usuario a la whitelist 
  */
-void Channel::addToWhitelist(ChannelUser &user) {
-    whiteList.insert(pair<string, ChannelUser>(user.nick, user));
+void Channel::addToWhitelist(ChannelUser &ch_user) {
+    white_list.insert(std::make_pair(ch_user.user.nick, ch_user));
 }
 
 /**
- * Devuelve true si el usuario está en la whitelist del canal 
+ * Devuelve true si el usuario está en la white_list del canal 
  */
-bool Channel::isInvited(ChannelUser &user) {
-    ChannelUserMap::iterator it;
-    it = whiteList.find(user.nick);
-    if (it != whiteList.end()) {
-        return true;
-    }
-    return false;
+bool Channel::isInvited(ChannelUser &ch_user) {
+    return (white_list.find(ch_user.user.nick) != white_list.end());
 }
 
 /**
  * Cambia el modo de un usuario dentro del canal
  */
-void Channel::setUserMode(ChannelUser &user, char mode) {
+void Channel::setUserMode(ChannelUser &ch_user, char mode) {
     list<ChannelUser>::iterator end = users.end();
-    list<ChannelUser>::iterator it = std::find(users.begin(), end, user);
+    list<ChannelUser>::iterator it = std::find(users.begin(), end, ch_user);
     if ((mode == 'o' || mode == 'v') && it != end) {
-        it->channelMode = mode;
+        it->channel_mode = mode;
     }
 }
 
-ChannelUser& Channel::userInChannel(Channel &channel, int userFd) {
-    ChannelUserList::iterator end = channel.users.end();
-    for (ChannelUserList::iterator it = channel.users.begin(); it != end; it++) {
-        if (it->fd == userFd) {
+ChannelUser& Channel::userInChannel(int userFd) {
+    ChannelUserList::iterator end = users.end();
+    for (ChannelUserList::iterator it = users.begin(); it != end; it++) {
+        if (it->user.fd == userFd) {
             return *it;
         }
     }
@@ -165,13 +154,13 @@ ChannelUser& Channel::userInChannel(Channel &channel, int userFd) {
 }
 
 /**
-* Check if user has operator channelMode
+* Check if user has operator channel_mode
 */
-ChannelUser& Channel::findUserByName(string name) {
+ChannelUser& Channel::findUserByNick(string nick) {
     ChannelUserList::iterator it;
     ChannelUserList::iterator end = users.end();
     for (it = users.begin(); it != end; it++) {
-        if (!it->name.compare(name)) {
+        if (!it->user.nick.compare(nick)) {
             return *it;
         }
     }

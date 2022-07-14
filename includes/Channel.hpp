@@ -31,13 +31,13 @@ class Channel {
     bool inviteModeOn();
     bool keyModeOn();
     /* Esta función devuelve true si un usuario está invitado al canal
-        * si devuelve true, el usuario puede unirse al canal, si no no */
+     * si devuelve true, el usuario puede unirse al canal, si no no */
     bool isInvited(ChannelUser&);
     void setUserMode(ChannelUser&, char);
     void addToWhitelist(ChannelUser&);
-    ChannelUser& userInChannel(Channel&, int fd);
+    ChannelUser& userInChannel(int fd);
     bool isUserOperator(ChannelUser&);
-    ChannelUser &findUserByName(string);
+    ChannelUser& findUserByNick(string nick);
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */
@@ -45,7 +45,7 @@ class Channel {
     /* Lista de usuarios que son operadores */
     ChannelUserList _oper_users;
     /* Lista de usuarios invitados al canal */
-    ChannelUserMap whiteList; // list maybe  ?
+    NickChannelUserMap white_list; // list maybe  ?
 
     /* Nombre del canal */
     string name;

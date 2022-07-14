@@ -39,7 +39,7 @@ class Command;
 class Server;
 
 typedef std::map<std::string, irc::Channel> ChannelMap;
-typedef std::map<std::string, irc::ChannelUser> ChannelUserMap;
+typedef std::map<std::string, irc::ChannelUser> NickChannelUserMap;
 typedef std::list<irc::ChannelUser> ChannelUserList;
 
 typedef std::map<int, irc::User> FdUserMap;

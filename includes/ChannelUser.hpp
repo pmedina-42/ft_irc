@@ -13,19 +13,19 @@ namespace irc {
 class Channel;
 class User;
 
-class ChannelUser : public User {
+class ChannelUser {
 
     public:
-    ChannelUser(int fd);
     ChannelUser(const ChannelUser& other);
-    ChannelUser(const User &other);
+    ChannelUser(User &other);
     ~ChannelUser();
     ChannelUser& operator=(const ChannelUser &other);
     ChannelUser& operator=(const User &other);
     bool operator==(ChannelUser const &other) const;
 
     /* ATTRIBUTES */
-    char channelMode;
+    User& user;
+    char channel_mode;
     bool banned;
 
     /**

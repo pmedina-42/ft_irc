@@ -5,25 +5,17 @@ using std::string;
 
 namespace irc {
 
-/* Creo que es mejor quereciba un User */
-ChannelUser::ChannelUser(int fd)
-:
-        User(fd),
-        channelMode(' '),
-        banned(false)
-{}
-
 ChannelUser::ChannelUser(const ChannelUser& other)
 :
-        User(other),
-        channelMode(other.channelMode),
+        user(other.user),
+        channel_mode(other.channel_mode),
         banned(other.banned)
 {}
 
-ChannelUser::ChannelUser(const User &other)
+ChannelUser::ChannelUser(User &other)
 :
-        User(other),
-        channelMode(' '),
+        user(other),
+        channel_mode(' '),
         banned(false)
 {}
 
@@ -31,20 +23,20 @@ ChannelUser::~ChannelUser() {}
 
 ChannelUser& ChannelUser::operator=(const ChannelUser &other) {
     if (this != &other) {
-        User::operator=(other);
-        channelMode = other.channelMode;
+        user = other.user;
+        channel_mode = other.channel_mode;
         banned = other.banned;
     }
     return *this;
 }
 
 ChannelUser& ChannelUser::operator=(const User &other) {
-    User::operator=(other);
+    user = other;
     return *this;
 }
 
 bool ChannelUser::operator==(ChannelUser const &other) const {
-    return ( this->nick == other.nick);
+    return ( this->user.nick == other.user.nick);
 }
 
 } // namespace
