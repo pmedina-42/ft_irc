@@ -24,6 +24,7 @@ void IrcDataBase::addNewUser(int new_fd) {
     if (new_fd == -1) {
         return ;
     }
+    LOG(DEBUG) << "new instance of user HOPEFULLY EMPTY created";
     User user(new_fd);
     addFdUserPair(new_fd, user);
 }
@@ -36,6 +37,7 @@ void IrcDataBase::removeUser(int fd) {
     debugFdUserMap();
 
     User &user = getUserFromFd(fd);
+    User &ref = user;
     LOG(INFO) << "User " << user << " removed"; 
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {

@@ -192,7 +192,7 @@ size_t findLastCRLF(string& haystack) {
 
 void cleanBuffer(char *buff, size_t size) {
     if (size > 0 && buff != NULL) {
-        memset(buff, '\0', size);
+        ft_memset(buff, '\0', size);
     }
 }
 

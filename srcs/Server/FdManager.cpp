@@ -1,6 +1,7 @@
 #include "Server/FdManager.hpp"
 #include "Exceptions.hpp"
 #include "Log.hpp"
+#include "libft.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -103,7 +104,7 @@ int FdManager::setUpAddress(void) {
     size_t hostname_len = 96;
     const char* port = "6667";
 
-    memset(&hints, 0, sizeof(hints));
+    ft_memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; // Ipv4
     hints.ai_socktype = SOCK_STREAM; // TCP
 
@@ -133,7 +134,7 @@ int FdManager::setUpAddress(string &hostname, string &port) {
     struct addrinfo hints;
     struct addrinfo *servinfo = NULL;
 
-    memset(&hints, 0, sizeof(hints));
+    ft_memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET; // Ipv4
     hints.ai_socktype = SOCK_STREAM; // TCP
     if (get_addrinfo_from_params(hostname.c_str(), port.c_str(), &hints,

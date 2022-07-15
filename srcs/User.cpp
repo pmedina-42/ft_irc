@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string.h>
 #include "User.hpp"
+#include "libft.h"
 
 namespace irc {
 
@@ -21,7 +22,7 @@ User::User(int fd)
     mask = "";
     on_pong_hold = false;
     ping_str = "";
-    memset(buffer, '\0', BUFF_MAX_SIZE);
+    ft_memset(buffer, '\0', BUFF_MAX_SIZE);
 }
 
 User::User(const User &other)
@@ -38,7 +39,7 @@ User::User(const User &other)
     ping_send_time(other.ping_send_time),
     ping_str(other.ping_str)
 {
-    memset(buffer, '\0', BUFF_MAX_SIZE);
+    ft_memset(buffer, '\0', BUFF_MAX_SIZE);
     if (other.buffer_size > 0) {
         memcpy(buffer, other.buffer, other.buffer_size);
     }
@@ -51,7 +52,7 @@ User& User::operator=(const User& other) {
         name = other.name;
         full_name = other.full_name;
         prefix = other.prefix;
-        memset(buffer, '\0', BUFF_MAX_SIZE);
+        ft_memset(buffer, '\0', BUFF_MAX_SIZE);
         if (other.buffer_size > 0) {
             memcpy(buffer, other.buffer, other.buffer_size);
         }
@@ -124,9 +125,13 @@ bool User::isResgistered(void) {
     return registered;
 }
 
-
+/* 
+ * We use references, not pointers in this IRC. So memseting
+ * to 0 all space used by user class helps with weird errors
+ * that occurr when a stack address that was used by User1,
+ * once it is deleted is occupied by User2 */
 User::~User() {
-
+    ft_memset(this, '\0', sizeof(User));
 }
 
 } // namespace

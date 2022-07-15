@@ -12,6 +12,7 @@
 #include "Tools.hpp"
 #include "NumericReplies.hpp"
 #include "Log.hpp"
+#include "libft.h"
 
 using std::string;
 
@@ -39,7 +40,7 @@ Server::Server(void)
     FdManager(),
     IrcDataBase()
 {
-    memset(srv_buff, '\0', BUFF_MAX_SIZE);
+    ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
     mainLoop();
@@ -50,7 +51,7 @@ Server::Server(string &hostname, string &port)
     FdManager(hostname, port),
     IrcDataBase()
 {
-    memset(srv_buff, '\0', BUFF_MAX_SIZE);
+    ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
     mainLoop();
@@ -63,7 +64,7 @@ Server::Server(const Server& other)
     srv_buff_size(other.srv_buff_size),
     cmd_map(other.cmd_map)
 {
-    memset(srv_buff, '\0', BUFF_MAX_SIZE);
+    ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
     if (other.srv_buff_size > 0) {
         memcpy(srv_buff, other.srv_buff, other.srv_buff_size);
     }
