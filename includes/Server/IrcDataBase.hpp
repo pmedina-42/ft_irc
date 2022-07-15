@@ -46,6 +46,10 @@ class IrcDataBase {
 
     void addNewChannel(Channel& new_channel);
     void removeChannel(Channel& channel);
+
+    void debugNickFdMap();
+    void debugFdUserMap();
+    //void debugChannelMap();
 };
 
 }

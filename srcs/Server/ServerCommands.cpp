@@ -43,7 +43,7 @@ void Server::NICK(Command &cmd, int fd) {
     /* case nickname is equal to some other in the server
      * (ignoring upper/lower case) */
     if (nickExists(nick)) {
-        string reply(ERR_NICKNAMEINUSE+nick+STR_NICKNAMEINUSE);
+        string reply(ERR_NICKNAMEINUSE+real_nick+STR_NICKNAMEINUSE);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     User& user = getUserFromFd(fd);

@@ -318,6 +318,7 @@ void FdManager::closeConnection(int fd) {
                 throw irc::exc::FatalError("close -1");
             }
             fds[fd_idx].fd = -1;
+            break ;
         }
     }
 }

@@ -11,10 +11,8 @@ using std::string;
 
 namespace irc {
 
-class Server
-:
-    public FdManager,
-    public IrcDataBase
+class Server : public FdManager,
+               public IrcDataBase
 {
     public:
     Server(void);

@@ -30,6 +30,12 @@ void IrcDataBase::addNewUser(int new_fd) {
 
 
 void IrcDataBase::removeUser(int fd) {
+    
+    LOG(DEBUG);
+    LOG(DEBUG) << "REMOVING FD " << fd;
+    debugNickFdMap();
+    debugFdUserMap();
+
     User &user = getUserFromFd(fd);
     LOG(INFO) << "User " << user << " removed"; 
     /* If the user had a nick registered, erase it */
@@ -38,7 +44,12 @@ void IrcDataBase::removeUser(int fd) {
         removeNickFdPair(user.nick);
     }
     /* erase user from fd map (this entry is created after connection) */
-   removeFdUserPair(fd);
+    removeFdUserPair(fd);
+
+    LOG(DEBUG);
+    LOG(DEBUG) << "AFTER REMOVING FD " << fd;
+    debugNickFdMap();
+    debugFdUserMap();
 }
 
 void IrcDataBase::updateUserNick(int fd, string &new_nick,
@@ -121,6 +132,22 @@ User& IrcDataBase::getUserFromNick(string& nickname) {
 Channel& IrcDataBase::getChannelFromName(string& name) {
     ChannelMap::iterator it = channel_map.find(name);
     return it->second;
+}
+
+void IrcDataBase::debugFdUserMap(void) {
+    for(FdUserMap::const_iterator it = fd_user_map.begin();
+        it != fd_user_map.end(); ++it)
+    {
+        LOG(DEBUG) << "[FD USER MAP] first : " << it->first << ", second : " << &(it->second);
+    }
+}
+
+void IrcDataBase::debugNickFdMap(void) {
+    for(NickFdMap::const_iterator it = nick_fd_map.begin();
+        it != nick_fd_map.end(); ++it)
+    {
+        LOG(DEBUG) << "[NICK FD MAP] first : " << it->first << ", second : " << &(it->second);
+    }
 }
 
 } // namespace
