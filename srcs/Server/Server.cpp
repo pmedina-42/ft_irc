@@ -157,8 +157,7 @@ void Server::DataFromUser(int fd) {
     }
     if (srv_buff_size == 0) {
         removeUser(fd);
-        closeConnection(fd);
-        return ;
+        return closeConnection(fd);
     }
     /* Update when a user sends a command ! */
     User& user = getUserFromFd(fd);

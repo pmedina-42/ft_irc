@@ -136,7 +136,7 @@ void IrcDataBase::debugFdUserMap(void) {
     for(FdUserMap::const_iterator it = fd_user_map.begin();
         it != fd_user_map.end(); ++it)
     {
-        LOG(DEBUG) << "[FD USER MAP] first : " << it->first << ", second : " << &(it->second);
+        LOG(DEBUG) << "[FD USER MAP] fd : " << it->first << ", &user : " << &(it->second);
     }
 }
 
@@ -144,7 +144,7 @@ void IrcDataBase::debugNickFdMap(void) {
     for(NickFdMap::const_iterator it = nick_fd_map.begin();
         it != nick_fd_map.end(); ++it)
     {
-        LOG(DEBUG) << "[NICK FD MAP] first : " << it->first << ", second : " << &(it->second);
+        LOG(DEBUG) << "[NICK FD MAP] nick : " << it->first << ", fd : " << (it->second);
     }
 }
 
