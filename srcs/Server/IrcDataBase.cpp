@@ -46,7 +46,6 @@ void IrcDataBase::removeUser(int fd) {
     /* erase user from fd map (this entry is created after connection) */
     removeFdUserPair(fd);
 
-    LOG(DEBUG);
     LOG(DEBUG) << "AFTER REMOVING FD " << fd;
     debugNickFdMap();
     debugFdUserMap();
