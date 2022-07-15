@@ -60,15 +60,14 @@ class User {
     void addLeftovers(string &leftovers);
     std::string BufferToString(void) const;
 
-    inline string getNick() { return nick; }
-
-    /* PING PONG things
- *    */
+    /* PING PONG things */
     time_t getLastMsgTime(void);
     time_t getPingTime(void);
     bool isOnPongHold(void);
     void resetPingStatus(void);
     void updatePingStatus(std::string &random);
+
+    bool isResgistered(void);
 
     bool on_pong_hold;
     time_t last_received;

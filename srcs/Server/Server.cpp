@@ -39,7 +39,6 @@ Server::Server(void)
     FdManager(),
     IrcDataBase()
 {
-    start = time(NULL);
     memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
@@ -51,7 +50,6 @@ Server::Server(string &hostname, string &port)
     FdManager(hostname, port),
     IrcDataBase()
 {
-    start = time(NULL);
     memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
     loadCommandMap();
@@ -63,7 +61,6 @@ Server::Server(const Server& other)
     FdManager(other),
     IrcDataBase(other),
     srv_buff_size(other.srv_buff_size),
-    start(other.start),
     cmd_map(other.cmd_map)
 {
     memset(srv_buff, '\0', BUFF_MAX_SIZE);
@@ -90,11 +87,12 @@ int Server::mainLoop(void) {
             }
             /* listener is always at first entry */
             if (fd_idx == 0) {
-                int new_fd = AcceptConnection();
-                AddNewUser(new_fd);
+                int new_fd = acceptConnection();
+                addNewUser(new_fd);
                 continue;
             }
-            DataFromUser(fd_idx);
+            int fd = getFdFromIndex(fd_idx);
+            DataFromUser(fd);
         }
         pingLoop();
     }
@@ -122,16 +120,105 @@ void Server::pingLoop(void) {
             time_t since_ping = time(NULL) - user.getPingTime();
             if (since_ping >= PING_TIMEOUT_S) {
                 // Maybe send a message ? 
-                RemoveUser(fd);
-                CloseConnection(fd_idx);
+                removeUser(fd);
+                closeConnection(fd);
             }
             continue ;
         }
         time_t since_last_msg = time(NULL) - user.getLastMsgTime();
         if (since_last_msg >= PING_TIMEOUT_S) {
-            sendPingToUser(fd_idx);
+            sendPingToUser(fd);
         }
     }
+}
+
+void Server::sendPingToUser(int fd) {
+
+    User &user = getUserFromFd(fd);
+    /* send ping message */
+    string random = ":" + tools::rngString(10);
+    string ping_msg("PING " + random);
+    DataToUser(fd, ping_msg, NO_NUMERIC_REPLY);
+    user.updatePingStatus(random);
+}
+
+void Server::DataFromUser(int fd) {
+
+    srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
+    if (srv_buff_size == -1) {
+        if (socketErrorIsNotFatal(fd)) {
+            LOG(WARNING) << "DataFromUser closing fd " << fd
+                         << " from user " << getUserFromFd(fd)
+                         << " non fatal error";
+            removeUser(fd);
+            return closeConnection(fd);
+        }
+        throw irc::exc::FatalError("recv -1");
+    }
+    if (srv_buff_size == 0) {
+        removeUser(fd);
+        closeConnection(fd);
+        return ;
+    }
+    /* Update when a user sends a command ! */
+    User& user = getUserFromFd(fd);
+    if (!user.isOnPongHold()) {
+        user.last_received = time(NULL);
+    }
+
+    LOG(DEBUG) << "DataFromUser user " << user
+              << ", bytes " << srv_buff_size
+              << " content [" << srv_buff << "]";
+
+    string cmd_string = processLeftovers(fd);
+    /* cmd_string can be empty here in case there have been buffering 
+     * problems with the user */
+    if (!cmd_string.empty()) {
+        parseCommandBuffer(cmd_string, fd);
+    }
+}
+
+/* 
+ * sends [:<hostname> <msg>CRLF] to user with fd asociated.
+ * 
+ * Why send() function is controlled as follows : 
+ * https://stackoverflow.com/questions/33053507/econnreset-in-send-linux-c
+ * This way b_sent = 0 does not have to be controlled, because ECONNRESET
+ * will be returned by send in case we try to send to a closed connection
+ * twice.
+ */
+void Server::DataToUser(int fd, string &msg, int type) {
+
+    if (type == NUMERIC_REPLY) {
+        msg.insert(0, ":" + hostname);
+    }
+    msg.insert(msg.size(), CRLF);
+    
+    User& user = getUserFromFd(fd);
+
+    LOG(DEBUG) << "DataToUser user " << user
+              << ", bytes " << msg.size()
+              << ", content [" << msg << "]"; 
+
+    int b_sent = 0;
+    int total_b_sent = 0;
+
+    do {
+        b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
+        if (b_sent == -1) {
+            if (socketErrorIsNotFatal(fd)) {
+                LOG(WARNING) << "DataToUser closing fd " << fd
+                             << " from user " << user
+                             << " non fatal error";
+                removeUser(fd);
+                return closeConnection(fd);
+            }
+            throw irc::exc::FatalError("send = -1");
+        }
+        /* add bytes sent to total */
+        total_b_sent += b_sent;
+    /* keep looping until full message is sent */
+    } while (total_b_sent != (int)msg.size());
 }
 
 /* 
@@ -146,7 +233,7 @@ void Server::pingLoop(void) {
  * Cuando un comando más sus leftovers superan los 512 bytes y la string total
  * no contenga CRLF, se vaciará el comando y no se enviará nada.
  */
-string Server::processCommandBuffer(int fd) {
+string Server::processLeftovers(int fd) {
 
     User& user = getUserFromFd(fd);
 
@@ -191,46 +278,25 @@ string Server::processCommandBuffer(int fd) {
     return cmd_string;
 }
 
-void Server::DataFromUser(int fd_idx) {
-
-    int fd = getFdFromIndex(fd_idx);
-    srv_buff_size = recv(fd, srv_buff, sizeof(srv_buff), 0);
-
-    if (srv_buff_size == -1) {
-        if (socketErrorIsNotFatal(fd)) {
-            LOG(WARNING) << "DataFromUser closing fd " << fd
-                         << " from user " << getUserFromFd(fd)
-                         << " non fatal error";
-            RemoveUser(fd);
-            return CloseConnection(fd_idx);
-        }
-        throw irc::exc::FatalError("recv -1");
-    }
-    if (srv_buff_size == 0) {
-        RemoveUser(fd);
-        CloseConnection(fd_idx);
-        return ;
-    }
-    /* Update when a user sends a command ! */
-    User& user = getUserFromFd(fd);
-    if (!user.isOnPongHold()) {
-        user.last_received = time(NULL);
-    }
-
-    LOG(DEBUG) << "DataFromUser user " << user
-              << ", bytes " << srv_buff_size
-              << " content [" << srv_buff << "]";
-
-    string cmd_string = processCommandBuffer(fd);
-
-    /* cmd_string can be empty here in case there have been buffering 
-     * problems with the user */
-    if (cmd_string.empty()) {
-        return ;
-    }
-    /* parse all commands */
+/*
+ * Recieves full buffer from user, wether it contains or not leftovers,
+ * then splits it in CRLF. Each different command is then processed 
+ * matching the first word (or second in case user prefix is first)
+ * with a command name, sequentially. 
+ * - Empty commands are ignored (CMD1 CRLFCRLFCRLF CMD2) will call 
+ * CMD1 and CMD2, without raising an error.
+ * - Commands name DO NOT have to be in upper case letters, this is
+ * done internally. joIN &channel is the same as JOIN &channel.
+ * - If a command name does not match any on the command map, an
+ * error is raised. This is a prior check to user registration.
+ *
+ */
+void Server::parseCommandBuffer(string &cmd_content, int fd) {
+    
     vector<string> cmd_vector;
-    tools::split(cmd_vector, cmd_string, CRLF);
+    User& user = getUserFromFd(fd);
+
+    tools::split(cmd_vector, cmd_content, CRLF);
     int cmd_vector_size = cmd_vector.size();
     for (int i = 0; i < cmd_vector_size; i++) {
         Command command;
@@ -240,72 +306,16 @@ void Server::DataFromUser(int fd_idx) {
         /* command does not exist / ill formatted command */
         if (!cmd_map.count(command.Name())) {
             string msg(ERR_UNKNOWNCOMMAND+command.Name()+STR_UNKNOWNCOMMAND);
-            DataToUser(fd_idx, msg, NUMERIC_REPLY);
+            DataToUser(fd, msg, NUMERIC_REPLY);
             continue ;
         }
         if (user.isOnPongHold() && command.Name().compare("PONG")) {
             continue ;
         }
         CommandMap::iterator it = cmd_map.find(command.Name());
-        (*this.*it->second)(command, fd_idx);
+        (*this.*it->second)(command, fd);
     }
 }
-
-/* 
- * sends [:<hostname> <msg>CRLF] to user with fd asociated.
- * 
- * Why send() function is controlled as follows : 
- * https://stackoverflow.com/questions/33053507/econnreset-in-send-linux-c
- * This way b_sent = 0 does not have to be controlled, because ECONNRESET
- * will be returned by send in case we try to send to a closed connection
- * twice.
- */
-void Server::DataToUser(int fd_idx, string &msg, int type) {
-
-    if (type == NUMERIC_REPLY) {
-        msg.insert(0, ":" + hostname);
-    }
-    msg.insert(msg.size(), CRLF);
-    
-    int fd = getFdFromIndex(fd_idx);
-    User& user = getUserFromFd(fd);
-
-    LOG(DEBUG) << "DataToUser user " << user
-              << ", bytes " << msg.size()
-              << ", content [" << msg << "]"; 
-
-    int b_sent = 0;
-    int total_b_sent = 0;
-
-    do {
-        b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
-        if (b_sent == -1) {
-            if (socketErrorIsNotFatal(fd)) {
-                LOG(WARNING) << "DataToUser closing fd " << fd
-                             << " from user " << user
-                             << " non fatal error";
-                RemoveUser(fd);
-                return CloseConnection(fd_idx);
-            }
-            throw irc::exc::FatalError("send = -1");
-        }
-        /* add bytes sent to total */
-        total_b_sent += b_sent;
-    /* keep looping until full message is sent */
-    } while (total_b_sent != (int)msg.size());
-}
-
-/* These functions ARE NOT SAFE !! They must be called
- * after a succesfull .count() call on the map. It extracts
- * information from maps ASSUMING the map has it !
- */
-
-User& Server::getUserFromFdIndex(int fd_idx) {
-    int fd = getFdFromIndex(fd_idx);
-    FdUserMap::iterator it = fd_user_map.find(fd);
-    return it->second;
-}
-
 
 void Server::loadCommandMap(void) {
     cmd_map.insert(std::make_pair(string("NICK"), (&Server::NICK)));

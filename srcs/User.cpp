@@ -70,7 +70,7 @@ bool User::operator==(User const &other) const {
 }
 
 void User::setPrefixFromHost(std::string &host) {
-    prefix = nick + "!" + name + "@" + host;
+    prefix = real_nick + "!" + name + "@" + host;
 }
 
 void User::setChannelMask(string& name, char mode) {
@@ -119,6 +119,11 @@ void User::updatePingStatus(string &random) {
     on_pong_hold = true;
     ping_send_time = time(NULL);
 }
+
+bool User::isResgistered(void) {
+    return registered;
+}
+
 
 User::~User() {
 

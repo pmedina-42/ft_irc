@@ -255,7 +255,7 @@ int FdManager::getFdFromIndex(int fd_idx) {
 /* calls accept, and prepares the fd returned to be polled correctly. 
  * Throws in case of fatal error.
  */
-int FdManager::AcceptConnection(void) {
+int FdManager::acceptConnection(void) {
     struct sockaddr_storage client;
     socklen_t addrlen = sizeof(struct sockaddr_storage);
     int fd_new = -1;
@@ -310,11 +310,16 @@ int FdManager::AcceptConnection(void) {
     return fd_new;
 }
 
-void FdManager::CloseConnection(int fd_idx) {
-    if (close(fds[fd_idx].fd) == -1) {
-        throw irc::exc::FatalError("close -1");
+void FdManager::closeConnection(int fd) {
+
+    for (int fd_idx = 0; fd_idx < fds_size; fd_idx++) {
+        if (fds[fd_idx].fd == fd) {
+            if (close(fds[fd_idx].fd) == -1) {
+                throw irc::exc::FatalError("close -1");
+            }
+            fds[fd_idx].fd = -1;
+        }
     }
-    fds[fd_idx].fd = -1;
 }
 
 bool FdManager::socketErrorIsNotFatal(int fd) {

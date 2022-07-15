@@ -21,21 +21,31 @@ class IrcDataBase {
     NickFdMap nick_fd_map;  // <string nick, int fd>
     FdUserMap fd_user_map;  // <int fd, User>
 
+    /* checkers */
+    bool fdExists(int fd);
+    bool nickExists(string& nick);
+    bool nickFormatOk(string &nickname);
+    
     /* accessors */
-    bool fdExistsInServer(int fd);
-
     User& getUserFromFd(int fd);
     User& getUserFromNick(string& nick);
     int getFdFromNick(string& nick);
     Channel& getChannelFromName(string& name);
 
     /* interactors */
-    void AddNewUser(int new_fd);
-    void RemoveUser(int fd_idx);
+    void addNewUser(int new_fd);
+    void removeUser(int fd_idx);
 
-    /*void AddNewChannel(Channel& new_channel);
-    void RemoveChannel(Channel& channel);
-    */
+    void updateUserNick(int fd, string &new_nick, string &new_real_nick);
+
+    void addNickFdPair(string &nick, int fd);
+    void removeNickFdPair(string &nick);
+
+    void addFdUserPair(int fd, User& user);
+    void removeFdUserPair(int fd);
+
+    void addNewChannel(Channel& new_channel);
+    void removeChannel(Channel& channel);
 };
 
 }

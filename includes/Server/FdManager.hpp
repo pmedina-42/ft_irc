@@ -18,7 +18,7 @@ class FdManager {
     FdManager(void);
     FdManager(string &ip, string &port);
     FdManager(const FdManager &other);
-    ~FdManager(void);
+    ~FdManager();
 
     /* Setup */
     int setUpAddress(void);
@@ -28,8 +28,8 @@ class FdManager {
 
     /* main utils */
     void Poll(void);
-    int AcceptConnection(void);
-    void CloseConnection(int fd_idx);
+    int acceptConnection(void);
+    void closeConnection(int fd_idx);
 
     /* accessors */
     bool hasDataToRead(int entry);

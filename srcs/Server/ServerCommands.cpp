@@ -12,56 +12,14 @@
 
 namespace irc {
 
-/* See 
- * https://forums.mirc.com/ubbthreads.php/topics/186181/nickname-valid-characters */
-static bool nickFormatOk(string &nickname) {
-
-    if (nickname.empty() || nickname.length() > NAME_MAX_SIZE) { // not sure this can happen.
-        return false;
-    }
-    for (string::iterator it = nickname.begin(); it != nickname.end(); it++) {
-        if (ft_isalnum(*it) == 0
-            && *it != '`' && *it != '|' && *it != '^' && *it != '_'
-            && *it != '-' && *it != '{' && *it != '}' && *it != '['
-            && *it != ']' && *it != '\\')
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool nickExists(string &nickname, FdUserMap& map) {
-    for (FdUserMap::iterator it = map.begin();
-                        it != map.end(); it++)
-    {
-        if (tools::isEqual(nickname, it->second.nick)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void Server::sendPingToUser(int fd_idx) {
-
-    User &user = getUserFromFdIndex(fd_idx);
-    /* send ping message */
-    string random = ":" + tools::rngString(10);
-    string ping_msg("PING " + random);
-    DataToUser(fd_idx, ping_msg, NO_NUMERIC_REPLY);
-
-    user.updatePingStatus(random);
-}
-
 /**
  * Command: NICK
  * Parameters: <nickname>
  */
-void Server::NICK(Command &cmd, int fd_idx) {
-
-    int fd = getFdFromIndex(fd_idx);
+void Server::NICK(Command &cmd, int fd) {
 
     int size = cmd.args.size();
+    
     /* case too many params */
     if (size > 2) {
         return ;
@@ -69,42 +27,43 @@ void Server::NICK(Command &cmd, int fd_idx) {
     /* case no nickname */
     if (size < 2) {
         string reply(ERR_NONICKNAMEGIVEN "*" STR_NONICKNAMEGIVEN);
-        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
-    string nick = cmd.args[1];
-    if (nick[0] == ':') {
-        nick = nick.substr(1); // ignore : start.
+    string real_nick = cmd.args[1];
+    if (real_nick[0] == ':') {
+        real_nick = real_nick.substr(1); // ignore : start.
     }
+    string nick = real_nick; // nick is always upper case to ease lookup
+    tools::ToUpperCase(nick);
     /* case forbidden characters are found / incorrect length */
-    if (nickFormatOk(nick) == false) {
-        string reply(ERR_ERRONEUSNICKNAME+nick+STR_ERRONEUSNICKNAME);
-        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+    if (nickFormatOk(real_nick) == false) {
+        string reply(ERR_ERRONEUSNICKNAME+real_nick+STR_ERRONEUSNICKNAME);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     /* case nickname is equal to some other in the server
      * (ignoring upper/lower case) */
-    if (nickExists(nick, fd_user_map)) {
+    if (nickExists(nick)) {
         string reply(ERR_NICKNAMEINUSE+nick+STR_NICKNAMEINUSE);
-        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     User& user = getUserFromFd(fd);
     /* case nickname change */
-    if (user.registered == true) {
-        /* since we are changing the key, erase + insert is needed */
-        nick_fd_map.erase(user.nick);
-        nick_fd_map.insert(std::make_pair(nick, fd));
-        user.nick = nick;
+    if (user.isResgistered()) {
+        LOG(DEBUG) << "user with nick" << user.real_nick << "changing nick to " << real_nick;
+        updateUserNick(fd, nick, real_nick);
         // THIS SHOULD NOTIFY CHANNELS OF THE NICKNAME CHANGE CYA
         return ;
     }
     /* case the nickname is the first recieved from this user */
     user.nick = nick;
-    nick_fd_map.insert(std::make_pair(nick, fd));
+    user.real_nick = real_nick;
+    addNickFdPair(nick, fd);
     /* case nickname is recieved after valid USER command */
     if (!user.name.empty() && !user.full_name.empty()) {
         user.setPrefixFromHost(hostname);
         user.registered = true;
         user.server_mode = "+o";
-        return sendWelcome(user.name, user.prefix, fd_idx);
+        return sendWelcome(user.name, user.prefix, fd);
     }
 }
 
@@ -112,22 +71,22 @@ void Server::NICK(Command &cmd, int fd_idx) {
  * Command: USER
  * Parameters: <username> 0 * <realname>
  */
-void Server::USER(Command &cmd, int fd_idx) {
+void Server::USER(Command &cmd, int fd) {
 
     int size = cmd.args.size();
+    User& user = getUserFromFd(fd);
+
     /* case many params (from irc-hispano) */
     if (size > 5) {
         return ;
     }
     /* case arguments unsufficient */
     if (size < 5) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
-
-    User& user = getUserFromFdIndex(fd_idx);
     /* case user already sent a valid USER comand */
-    if (user.registered == true) {
-        return sendAlreadyRegistered(fd_idx);
+    if (user.isResgistered()) {
+        return sendAlreadyRegistered(user.real_nick, fd);
     }
     /* wether nick exists or not, name and full name should be saved */
     user.name = cmd.args[1];
@@ -142,8 +101,8 @@ void Server::USER(Command &cmd, int fd_idx) {
     /* generic case (USER comand after NICK for registration) */
     user.setPrefixFromHost(hostname);
     user.registered = true;
-    user.server_mode = "+o"; // ???
-    return sendWelcome(user.name, user.prefix, fd_idx);
+    user.server_mode = "+o";
+    return sendWelcome(user.name, user.prefix, fd);
 }
 
 /*
@@ -157,28 +116,27 @@ void Server::USER(Command &cmd, int fd_idx) {
  * :stirling.chathispano.com PONG stirling.chathispano.com :: : : : : :
  */
 
-void Server::PING(Command &cmd, int fd_idx) {
+void Server::PING(Command &cmd, int fd) {
     
     int size = cmd.args.size();
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
-
-    User& user = getUserFromFdIndex(fd_idx);
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
+    User& user = getUserFromFd(fd);
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
     }
     string pong_reply("PONG " + cmd.args[1]);
-    DataToUser(fd_idx, pong_reply, NO_NUMERIC_REPLY);
+    DataToUser(fd, pong_reply, NO_NUMERIC_REPLY);
 }
 
 /*
  * Command: PONG
  * Parameters: [<server>] <token>
  */
-void Server::PONG(Command &cmd, int fd_idx) {
+void Server::PONG(Command &cmd, int fd) {
 
-    User& user = getUserFromFdIndex(fd_idx);
+    User& user = getUserFromFd(fd);
 
     int size = cmd.args.size();
     /* PONG has no replies */
@@ -209,51 +167,50 @@ void Server::PONG(Command &cmd, int fd_idx) {
  * 5. Add user to channel
  * 6. Send replies
  */
-void Server::JOIN(Command &cmd, int fd_idx) {
+void Server::JOIN(Command &cmd, int fd) {
 
-    User& user = getUserFromFdIndex(fd_idx);
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
+    User& user = getUserFromFd(fd);
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
     }
-    LOG(DEBUG) << user.nick << " password is " << user.connection_pass;
+    //LOG(DEBUG) << user.nick << " password is " << user.connection_pass;
     int size = cmd.args.size();
-    LOG(DEBUG) << "join: started";
+    //LOG(DEBUG) << "join: started";
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
     string ch_name = cmd.args[1];
     if (!tools::starts_with_mask(ch_name)) {
-        return sendBadChannelMask(cmd.Name(), fd_idx);
+        return sendBadChannelMask(cmd.Name(), fd);
     }
     /* case channel does not exist */
     if (!channel_map.count(cmd.args[1])) {
-        LOG(DEBUG) << "join: channel doesn't exist";
-        LOG(DEBUG) << "join: creating channel with name " << ch_name;
+        //LOG(DEBUG) << "join: channel doesn't exist";
+        //LOG(DEBUG) << "join: creating channel with name " << ch_name;
         Channel channel(ch_name, user);
-        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " after joining channel";
+        //LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " after joining channel";
         channel.setUserMode(user, 'o');
-        channel_map.insert(std::make_pair(ch_name, channel));
         if (size >= 3) {
             channel.key = cmd.args[2];
         }
-        channel_map.insert(std::make_pair(ch_name, channel));
-        LOG(DEBUG) << "join: users size: " << channel.users.size();
+        addNewChannel(channel);
+        //LOG(DEBUG) << "join: users size: " << channel.users.size();
     /* case channel exists already */
     } else {
-        LOG(DEBUG) << "join: channel exists";
+        //LOG(DEBUG) << "join: channel exists";
         Channel &channel = getChannelFromName(ch_name);
         if (channel.inviteModeOn()) {
-            LOG(DEBUG) << channel.mode;
+            LOG(DEBUG) << "channel mode :" << channel.mode;
             if (!channel.isInvited(user)) {
                 string reply(ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
-                return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+                return DataToUser(fd, reply, NUMERIC_REPLY);
             }
         } else if (channel.keyModeOn()) {
             if (size == 2
                 || channel.key.compare(cmd.args[2]))
             {
                 string reply(ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
-                return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+                return DataToUser(fd, reply, NUMERIC_REPLY);
             }
         }
         LOG(DEBUG) << "join: adding ch_user to existing channel";
@@ -275,33 +232,34 @@ void Server::JOIN(Command &cmd, int fd_idx) {
  * 5. If channel has no users left, destroy channel
  * 6. Send part or default message to channel
  */
-void Server::PART(Command &cmd, int fd_idx) {
-    User& user = getUserFromFdIndex(fd_idx);
-    int fd = getFdFromIndex(fd_idx);
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
-    }
+void Server::PART(Command &cmd, int fd) {
+
+    User& user = getUserFromFd(fd);
     int size = cmd.args.size();
+    
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
+    }
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
     if (!tools::starts_with_mask(cmd.args[1])) {
-        return sendBadChannelMask(cmd.Name(), fd_idx);
+        return sendBadChannelMask(cmd.Name(), fd);
     }
     if (!channel_map.count(cmd.args[1])) {
-        return sendNoSuchChannel(cmd.Name(), fd_idx);
+        return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
     if (!channel.userIsInChannel(fd)) {
-        return sendNotOnChannel(cmd.Name(), fd_idx);
+        return sendNotOnChannel(cmd.Name(), fd);
     }
-    LOG(DEBUG) << "part: deleting ch_user " << user.name << " in channel " << channel.name;
-    LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " before being erased";
+    //LOG(DEBUG) << "part: deleting ch_user " << user.name << " in channel " << channel.name;
+    //LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " before being erased";
     channel.deleteUser(user);
-    LOG(DEBUG) << "part: users size: " << channel.users.size();
+    //LOG(DEBUG) << "part: users size: " << channel.users.size();
     if (channel.users.size() == 0) {
         LOG(DEBUG) << "part: deleting empty channel";
-        channel_map.erase(channel_map.find(channel.name));
+        removeChannel(channel);
     }
     if (size == 3) {
         // TODO: mandar mensaje en los canales a los usuarios
@@ -321,42 +279,41 @@ void Server::PART(Command &cmd, int fd_idx) {
  * 6. Return RLP_TOPIC to client
  *  If not, error message is returned
  */
-void Server::TOPIC(Command &cmd, int fd_idx) {
+void Server::TOPIC(Command &cmd, int fd) {
 
-    User& user = getUserFromFdIndex(fd_idx);
-    int fd = getFdFromIndex(fd_idx);
-    
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
-    }
+    User& user = getUserFromFd(fd);
     int size = cmd.args.size();
+
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
+    }
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
     if (!tools::starts_with_mask(cmd.args[1])) {
-        return sendBadChannelMask(cmd.Name(), fd_idx);
+        return sendBadChannelMask(cmd.Name(), fd);
     }
     if (!channel_map.count(cmd.args[1])) {
-        return sendNoSuchChannel(cmd.Name(), fd_idx);
+        return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
     if (!channel.userIsInChannel(fd)) {
-        return sendNotOnChannel(cmd.Name(), fd_idx);
+        return sendNotOnChannel(cmd.Name(), fd);
     }
     if (channel.mode.find("t") != string::npos) {
-        return sendNoChannelModes(cmd.Name(), fd_idx);
+        return sendNoChannelModes(cmd.Name(), fd);
     }
     if (size == 2) {
         if (channel.topic.empty()) {
             string reply(RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
-            return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+            return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         string reply(RPL_TOPIC+cmd.Name()+STR_TOPIC);
-        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     if (size == 3) {
         if (channel.isUserOperator(user)) {
-            return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
+            return sendChannelOperatorNeeded(cmd.Name(), fd);
         }
         if (cmd.args[2].length() == 1) { // longitud 1 ? no sería .empty() ?
             channel.topic = "";
@@ -364,7 +321,7 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
         }
         channel.topic = cmd.args[2].substr(1);
         string reply(RPL_TOPIC+cmd.Name()+STR_TOPIC);
-        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     else {
         return ; // size > 3 
@@ -379,34 +336,33 @@ void Server::TOPIC(Command &cmd, int fd_idx) {
  * 2. Find the user to kick in the channel, if it exists
  * 3. Reuse the PART method passing the comment as the part message
  */
-void Server::KICK(Command &cmd, int fd_idx) {
+void Server::KICK(Command &cmd, int fd) {
 
-    User& user = getUserFromFdIndex(fd_idx);
-    int fd = getFdFromIndex(fd_idx);
+    User& user = getUserFromFd(fd);
 
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
     }
     int size = cmd.args.size();
     if (size < 3) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
     if (!tools::starts_with_mask(cmd.args[1])) {
-        return sendBadChannelMask(cmd.Name(), fd_idx);
+        return sendBadChannelMask(cmd.Name(), fd);
     }
     if (!channel_map.count(cmd.args[1])) {
-        return sendNoSuchChannel(cmd.Name(), fd_idx);
+        return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
     if (!channel.userIsInChannel(fd)) {
-        return sendNotOnChannel(cmd.Name(), fd_idx);
+        return sendNotOnChannel(cmd.Name(), fd);
     }
     if (!channel.isUserOperator(user)) {
-        return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
+        return sendChannelOperatorNeeded(cmd.Name(), fd);
     }
     string nick = cmd.args[2];
     if (!channel.userIsInChannel(nick)) {
-        return sendNotOnChannel(cmd.Name(), fd_idx);
+        return sendNotOnChannel(cmd.Name(), fd);
     }
     User& user_to_kick = channel.getUserFromNick(nick);
     channel.banUser(user_to_kick); // Ban this user??
@@ -427,35 +383,34 @@ void Server::KICK(Command &cmd, int fd_idx) {
  * 2. Find the user to kick in the channel, if it exists
  * 3. Reuse the PART method passing the comment as the part message
  */
-void Server::INVITE(Command &cmd, int fd_idx) {
+void Server::INVITE(Command &cmd, int fd) {
 
-    User& user = getUserFromFdIndex(fd_idx);
-    int fd = getFdFromIndex(fd_idx);
+    User& user = getUserFromFd(fd);
 
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
     }
     int size = cmd.args.size();
     if (size < 3) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
     if (!channel_map.count(cmd.args[2])) {
-        return sendNoSuchChannel(cmd.Name(), fd_idx);
+        return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[2])->second;
     if (channel.mode.find("i") != string::npos) {
-        return sendNoChannelModes(cmd.Name(), fd_idx);
+        return sendNoChannelModes(cmd.Name(), fd);
     }
     if (!channel.userIsInChannel(fd)) {
-        return sendNotOnChannel(cmd.Name(), fd_idx);
+        return sendNotOnChannel(cmd.Name(), fd);
     }
     if (!channel.isUserOperator(user)) {
-        return sendChannelOperatorNeeded(cmd.Name(), fd_idx);
+        return sendChannelOperatorNeeded(cmd.Name(), fd);
     }
     if (!nick_fd_map.count(cmd.args[1])) {
         string reply = (ERR_NOSUCHNICK + cmd.Name() + STR_NOSUCHNICK);
         LOG(DEBUG) << reply;
-        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     if (channel.userIsInChannel(cmd.args[1])) {
         return ; // el usuario ya esta en el canal. no hace falta inv
@@ -482,14 +437,16 @@ void Server::INVITE(Command &cmd, int fd_idx) {
  * Parameters: <channel>/<user> <channel/userMode> [<modeParams>]
  * TODO
  */
-void Server::MODE(Command &cmd, int fd_idx) {
-    User& user = getUserFromFdIndex(fd_idx);
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
+void Server::MODE(Command &cmd, int fd) {
+
+    User& user = getUserFromFd(fd);
+    
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
     }
     int size = cmd.args.size();
     if (size < 3) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
     // CHANGE CHANNEL MODE. COMPLEX PATH
     if (tools::starts_with_mask(cmd.args[1])) {
@@ -502,13 +459,13 @@ void Server::MODE(Command &cmd, int fd_idx) {
             || user.server_mode.find("O") == string::npos) {
             string reply = (ERR_CHANOPRIVSNEEDED + cmd.Name() + STR_CHANOPRIVSNEEDED);
             LOG(DEBUG) << reply;
-            return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+            return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         // Check if serverUser is sending a different nickname
         if (cmd.args[1].compare(user.nick) != 0) {
             string reply = (ERR_USERSDONTMATCH + cmd.Name() + STR_USERSDONTMATCH);
             LOG(DEBUG) << reply;
-            return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+            return DataToUser(fd, reply, NUMERIC_REPLY);
         }
 
     }
@@ -519,14 +476,16 @@ void Server::MODE(Command &cmd, int fd_idx) {
  * Parameters: <password>
  * This command must be sent before user registration to set a connection password
  */
-void Server::PASS(Command &cmd, int fd_idx) {
-    User &user = getUserFromFdIndex(fd_idx);
+void Server::PASS(Command &cmd, int fd) {
+
+    User &user = getUserFromFd(fd);
+    
     if (user.registered) {
-        return sendAlreadyRegistered(fd_idx);
+        return sendAlreadyRegistered(user.real_nick, fd);
     }
     int size = cmd.args.size();
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd_idx);
+        return sendNeedMoreParams(cmd.Name(), fd);
     }
     user.connection_pass = cmd.args[1];
 }
@@ -536,15 +495,17 @@ void Server::PASS(Command &cmd, int fd_idx) {
  * Parameters: [<quitMessage>]
  * The server aknowledges this by sending an error client to the server
  */
-void Server::QUIT(Command &cmd, int fd_idx) {
-    User &user = getUserFromFdIndex(fd_idx);
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
+void Server::QUIT(Command &cmd, int fd) {
+
+    User &user = getUserFromFd(fd);
+    
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
     }
     int size = cmd.args.size();
     string reply = "User " + user.nick + " has left the server.";
     reply = size == 2 ? user.nick.append(": ").append(cmd.args[1]) : reply;
-    DataToUser(fd_idx, reply, NO_NUMERIC_REPLY);
+    DataToUser(fd, reply, NO_NUMERIC_REPLY);
     // TODO : find the most effective way to erase the fd & mantain user data for possible reconnection
 }
 
@@ -554,10 +515,12 @@ void Server::QUIT(Command &cmd, int fd_idx) {
  * With parameter, sets afk_msg. Without, unsets it.
  * Always return if user is away or not
  */
-void Server::AWAY(Command &cmd, int fd_idx) {
-    User &user = getUserFromFdIndex(fd_idx);
-    if (!user.registered) {
-        return sendNotRegistered(cmd.Name(), fd_idx);
+void Server::AWAY(Command &cmd, int fd) {
+
+    User &user = getUserFromFd(fd);
+    
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
     }
     int size = cmd.args.size();
     if (size == 2) {
@@ -570,11 +533,11 @@ void Server::AWAY(Command &cmd, int fd_idx) {
     if (user.server_mode.find("+a") != string::npos) {
         string reply = (RPL_NOWAWAY STR_NOWAWAY);
         LOG(DEBUG) << user.server_mode;
-        return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     string reply = (RPL_UNAWAY STR_UNAWAY);
     LOG(DEBUG) << user.server_mode;
-    return DataToUser(fd_idx, reply, NUMERIC_REPLY);
+    return DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 } // namespace irc

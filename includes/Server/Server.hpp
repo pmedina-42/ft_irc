@@ -11,7 +11,6 @@ using std::string;
 
 namespace irc {
 
-
 class Server
 :
     public FdManager,
@@ -26,30 +25,24 @@ class Server
     private:
     /* loop through all poll fd's */
     int mainLoop(void);
-    void DataFromUser(int fd_idx);
-    void DataToUser(int fd_idx, string &data, int type);
-
-    string processCommandBuffer(int fd_idx);
+    void DataFromUser(int fd);
+    void DataToUser(int fd, string &data, int type);
 
     char srv_buff[BUFF_MAX_SIZE];
     int srv_buff_size;
+    string processLeftovers(int fd); // leftovers
+    void parseCommandBuffer(string &cmd_content, int fd);
 
-    ChannelMap channel_map; /* Find channels by name */
-    NickFdMap nick_fd_map;  /* Find users by nickname */
-    FdUserMap fd_user_map; /* Find nickname by fd_idx (entry of fds[]) */
-
-    /* time stuff */
-    time_t start;
+    /* ping pong flow */
     void pingLoop(void);
-    void sendPingToUser(int fd_idx);
+    void sendPingToUser(int fd);
     
     CommandMap cmd_map;
     void loadCommandMap(void);
-    /* Map with all command responses */
-    void NICK(Command &cmd, int fd_idx);
-    void USER(Command &cmd, int fd_idx);
-    void PING(Command &cmd, int fd_idx);
-    void PONG(Command &cmd, int fd_idx);
+    void NICK(Command &cmd, int fd);
+    void USER(Command &cmd, int fd);
+    void PING(Command &cmd, int fd);
+    void PONG(Command &cmd, int fd);
     void MODE(Command &cmd, int fd);
     void PASS(Command &cmd, int fd);
     void AWAY(Command &cmd, int fd);
@@ -60,20 +53,16 @@ class Server
     void TOPIC(Command &cmd, int fd);
     void INVITE(Command &cmd, int fd);
 
-
-    /* command implementations */
-    void sendWelcome(string& name, string &prefix, int fd_idx);
-    void sendNeedMoreParams(string& cmd_name, int fd_idx);
-    void sendNotRegistered(string &cmd_name, int fd_idx);
-    void sendNoSuchChannel(string &cmd_name, int fd_idx);
-    void sendNotOnChannel(string &cmd_name, int fd_idx);
-    void sendBadChannelMask(string &cmd_name, int fd_idx);
-    void sendNoChannelModes(string &cmd_name, int fd_idx);
-    void sendChannelOperatorNeeded(string &cmd_name, int fd_idx);
-    void sendAlreadyRegistered(int fd_idx);
-
-    /* utils */
-    User& getUserFromFdIndex(int fd_idx);
+    /* Common replies */
+    void sendWelcome(string& name, string &prefix, int fd);
+    void sendNeedMoreParams(string& cmd_name, int fd);
+    void sendNotRegistered(string &cmd_name, int fd);
+    void sendNoSuchChannel(string &cmd_name, int fd);
+    void sendNotOnChannel(string &cmd_name, int fd);
+    void sendBadChannelMask(string &cmd_name, int fd);
+    void sendNoChannelModes(string &cmd_name, int fd);
+    void sendChannelOperatorNeeded(string &cmd_name, int fd);
+    void sendAlreadyRegistered(string &nick, int fd);
 };
 
 /**

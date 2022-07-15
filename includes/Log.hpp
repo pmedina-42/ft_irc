@@ -17,10 +17,10 @@ enum typelog {
 };
 
 const std::string loglevel[4] = {
-    "DEBUG",
+    "DBUG",
     "INFO",
-    "WARNING",
-    "ERROR"
+    "WARN",
+    "ERRO"
 };
 
 class LOG {
