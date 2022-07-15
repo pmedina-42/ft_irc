@@ -14,6 +14,18 @@
 # define RPL_WELCOME_STR_1 " :Welcome to the Internet Relay Network, "
 
 /**
+ *  Sent as a reply to the AWAY command, this lets the client know that they are no longer set as being away
+ */
+# define RPL_UNAWAY " 305 "
+# define STR_UNAWAY ":You are no longer marked as being away"
+
+/**
+ *  Sent as a reply to the AWAY command, this lets the client know that they are set as being away
+ */
+# define RPL_NOWAWAY " 306 "
+# define STR_NOWAWAY ":You have been marked as being away"
+
+/**
  * Sent to a client who recently joined a channel with no topic set
  */
 # define RPL_NOTOPIC " 331 "
@@ -106,7 +118,7 @@
 
 /**
  * Returned to indicate that a JOIN command failed because the channel is set to
- * invite mode and the client has not been invited
+ * invite channelMode and the client has not been invited
  */
 # define ERR_INVITEONLYCHAN " 473 "
 # define STR_INVITEONLYCHAN " :Cannot join channel (+i)"
@@ -135,5 +147,11 @@
  */
 # define ERR_CHANOPRIVSNEEDED " 482 "
 # define STR_CHANOPRIVSNEEDED ":You're not channel operator"
+
+/**
+ * A MODE command affecting a user failed because it's trying to set or view modes for other users.
+ */
+# define ERR_USERSDONTMATCH " 502 "
+# define STR_USERSDONTMATCH ":Cant change mode for other users"
 
 #endif /* IRC42_NUMERICREPLIES_H */

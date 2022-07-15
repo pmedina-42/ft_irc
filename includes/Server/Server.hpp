@@ -2,7 +2,6 @@
 # define IRC42_SERVER_H
 
 #include "Channel.hpp" // without this, it doesnt compile
-#include "ChannelUser.hpp"
 #include "Types.hpp"
 
 #include "Server/FdManager.hpp"
@@ -51,11 +50,17 @@ class Server
     void USER(Command &cmd, int fd_idx);
     void PING(Command &cmd, int fd_idx);
     void PONG(Command &cmd, int fd_idx);
+    void MODE(Command &cmd, int fd);
+    void PASS(Command &cmd, int fd);
+    void AWAY(Command &cmd, int fd);
+    void QUIT(Command &cmd, int fd);
+
     void JOIN(Command &cmd, int fd);
     void KICK(Command &cmd, int fd);
     void PART(Command &cmd, int fd);
     void TOPIC(Command &cmd, int fd);
     void INVITE(Command &cmd, int fd);
+
 
     /* command implementations */
     void sendWelcome(string& name, string &prefix, int fd_idx);
@@ -66,6 +71,7 @@ class Server
     void sendBadChannelMask(string &cmd_name, int fd_idx);
     void sendNoChannelModes(string &cmd_name, int fd_idx);
     void sendChannelOperatorNeeded(string &cmd_name, int fd_idx);
+    void sendAlreadyRegistered(int fd_idx);
 
     /* utils */
     User& getUserFromFd(int fd);
