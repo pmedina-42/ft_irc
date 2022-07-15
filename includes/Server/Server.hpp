@@ -5,6 +5,7 @@
 #include "Types.hpp"
 
 #include "Server/FdManager.hpp"
+#include "Server/IrcDataBase.hpp"
 
 using std::string;
 
@@ -13,7 +14,8 @@ namespace irc {
 
 class Server
 :
-    public FdManager
+    public FdManager,
+    public IrcDataBase
 {
     public:
     Server(void);
@@ -27,8 +29,6 @@ class Server
     void DataFromUser(int fd_idx);
     void DataToUser(int fd_idx, string &data, int type);
 
-    void AddNewUser(int new_fd);
-    void RemoveUser(int fd_idx);
     string processCommandBuffer(int fd_idx);
 
     char srv_buff[BUFF_MAX_SIZE];
@@ -54,7 +54,6 @@ class Server
     void PASS(Command &cmd, int fd);
     void AWAY(Command &cmd, int fd);
     void QUIT(Command &cmd, int fd);
-
     void JOIN(Command &cmd, int fd);
     void KICK(Command &cmd, int fd);
     void PART(Command &cmd, int fd);
@@ -74,11 +73,7 @@ class Server
     void sendAlreadyRegistered(int fd_idx);
 
     /* utils */
-    User& getUserFromFd(int fd);
     User& getUserFromFdIndex(int fd_idx);
-    User& getUserFromNick(string& nickname);
-    int getFdFromNick(string& nickname);
-    Channel& getChannelFromName(string name);
 };
 
 /**

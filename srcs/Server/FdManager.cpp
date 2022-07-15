@@ -310,8 +310,6 @@ int FdManager::AcceptConnection(void) {
     return fd_new;
 }
 
-/* Maybe eventually handle closing connections in such a way
- * we dont end up with all fd's at -1 ? */
 void FdManager::CloseConnection(int fd_idx) {
     if (close(fds[fd_idx].fd) == -1) {
         throw irc::exc::FatalError("close -1");

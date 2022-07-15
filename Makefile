@@ -18,6 +18,7 @@ SRCS		=	srcs/main.cpp\
 				srcs/Server/ServerCommands.cpp \
 				srcs/Server/CommonReplies.cpp \
 				srcs/Server/FdManager.cpp \
+				srcs/Server/IrcDataBase.cpp \
 				srcs/User.cpp \
 				srcs/Channel.cpp \
 				srcs/Tools.cpp \

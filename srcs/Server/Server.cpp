@@ -36,7 +36,8 @@ namespace irc {
 
 Server::Server(void)
 :
-    FdManager()
+    FdManager(),
+    IrcDataBase()
 {
     start = time(NULL);
     memset(srv_buff, '\0', BUFF_MAX_SIZE);
@@ -47,7 +48,8 @@ Server::Server(void)
 
 Server::Server(string &hostname, string &port)
 :
-    FdManager(hostname, port)
+    FdManager(hostname, port),
+    IrcDataBase()
 {
     start = time(NULL);
     memset(srv_buff, '\0', BUFF_MAX_SIZE);
@@ -59,10 +61,8 @@ Server::Server(string &hostname, string &port)
 Server::Server(const Server& other)
 :
     FdManager(other),
+    IrcDataBase(other),
     srv_buff_size(other.srv_buff_size),
-    channel_map(other.channel_map),
-    nick_fd_map(other.nick_fd_map),
-    fd_user_map(other.fd_user_map),
     start(other.start),
     cmd_map(other.cmd_map)
 {
@@ -122,7 +122,7 @@ void Server::pingLoop(void) {
             time_t since_ping = time(NULL) - user.getPingTime();
             if (since_ping >= PING_TIMEOUT_S) {
                 // Maybe send a message ? 
-                RemoveUser(fd_idx);
+                RemoveUser(fd);
                 CloseConnection(fd_idx);
             }
             continue ;
@@ -132,27 +132,6 @@ void Server::pingLoop(void) {
             sendPingToUser(fd_idx);
         }
     }
-}
-
-void Server::AddNewUser(int new_fd) {
-    /* case server is full of users */
-    if (new_fd == -1) {
-        return ;
-    }
-    User user(new_fd);
-    fd_user_map.insert(std::make_pair(new_fd, user));
-}
-
-void Server::RemoveUser(int fd_idx) {
-    int fd = getFdFromIndex(fd_idx);
-    User &user = getUserFromFd(fd);
-    LOG(INFO) << "User " << user << " removed";
-    /* If the user had a nick registered, erase it */
-    if (nick_fd_map.count(user.nick)) {
-        nick_fd_map.erase(user.nick);
-    }
-    /* erase user from fd map (this entry is created after connection) */
-    fd_user_map.erase(fd);
 }
 
 /* 
@@ -222,13 +201,13 @@ void Server::DataFromUser(int fd_idx) {
             LOG(WARNING) << "DataFromUser closing fd " << fd
                          << " from user " << getUserFromFd(fd)
                          << " non fatal error";
-            RemoveUser(fd_idx);
+            RemoveUser(fd);
             return CloseConnection(fd_idx);
         }
         throw irc::exc::FatalError("recv -1");
     }
     if (srv_buff_size == 0) {
-        RemoveUser(fd_idx);
+        RemoveUser(fd);
         CloseConnection(fd_idx);
         return ;
     }
@@ -305,7 +284,7 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
                 LOG(WARNING) << "DataToUser closing fd " << fd
                              << " from user " << user
                              << " non fatal error";
-                RemoveUser(fd_idx);
+                RemoveUser(fd);
                 return CloseConnection(fd_idx);
             }
             throw irc::exc::FatalError("send = -1");
@@ -321,30 +300,9 @@ void Server::DataToUser(int fd_idx, string &msg, int type) {
  * information from maps ASSUMING the map has it !
  */
 
-User& Server::getUserFromFd(int fd) {
-    FdUserMap::iterator it = fd_user_map.find(fd);
-    return it->second;
-}
-
 User& Server::getUserFromFdIndex(int fd_idx) {
     int fd = getFdFromIndex(fd_idx);
     FdUserMap::iterator it = fd_user_map.find(fd);
-    return it->second;
-}
-
-int Server::getFdFromNick(string &nickname) {
-    NickFdMap::iterator it = nick_fd_map.find(nickname);
-    return it->second;
-}
-
-User& Server::getUserFromNick(string &nickname) {
-    int fd = getFdFromNick(nickname);
-    FdUserMap::iterator it_2 = fd_user_map.find(fd);
-    return it_2->second;
-}
-
-Channel& Server::getChannelFromName(string name) {
-    ChannelMap::iterator it = channel_map.find(name);
     return it->second;
 }
 
