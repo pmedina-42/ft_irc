@@ -31,7 +31,6 @@ void IrcDataBase::addNewUser(int new_fd) {
 
 void IrcDataBase::removeUser(int fd) {
     
-    LOG(DEBUG);
     LOG(DEBUG) << "REMOVING FD " << fd;
     debugNickFdMap();
     debugFdUserMap();
