@@ -66,7 +66,7 @@ Server::Server(const Server& other)
 {
     ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
     if (other.srv_buff_size > 0) {
-        memcpy(srv_buff, other.srv_buff, other.srv_buff_size);
+        ft_memcpy(srv_buff, other.srv_buff, other.srv_buff_size);
     }
 }
 
@@ -80,10 +80,9 @@ int Server::mainLoop(void) {
     while (42) {
         Poll();
         for (int fd_idx = 0; fd_idx < fds_size; fd_idx++) {
-            if (skipFd(fd_idx)) {
-                continue;
-            }
-            if (!hasDataToRead(fd_idx)) {
+            if (skipFd(fd_idx)
+                || !hasDataToRead(fd_idx))
+            {
                 continue;
             }
             /* listener is always at first entry */

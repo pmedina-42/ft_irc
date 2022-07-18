@@ -10,30 +10,45 @@ namespace irc {
 User::User(int fd)
 :
 		fd(fd),
+        real_nick(),
+        nick(),
+        name(),
+        full_name(),
+        prefix(),
+        mask(),
+        server_mode(),
+        afk_msg(),
+        connection_pass(),
+        channel_mode(),
+        banned(false),
+        ch_name_mask_map(),
         buffer_size(0),
         registered(false),
+        on_pong_hold(false),
         last_received(time(NULL)),
-        ping_send_time(0)
+        ping_send_time(0),
+        ping_str()
 {
-    nick = "";
-    name = "";
-    full_name = "";
-    prefix = "";
-    mask = "";
-    on_pong_hold = false;
-    ping_str = "";
     ft_memset(buffer, '\0', BUFF_MAX_SIZE);
 }
 
 User::User(const User &other)
 :
     fd(other.fd),
+    real_nick(other.real_nick),
     nick(other.nick),
     name(other.name),
     full_name(other.full_name),
     prefix(other.prefix),
     mask(other.mask),
+    server_mode(other.server_mode),
+    afk_msg(other.afk_msg),
+    connection_pass(other.connection_pass),
+    channel_mode(other.channel_mode),
+    banned(other.banned),
+    ch_name_mask_map(other.ch_name_mask_map),
     buffer_size(other.buffer_size),
+    registered(other.registered),
     on_pong_hold(other.on_pong_hold),
     last_received(other.last_received),
     ping_send_time(other.ping_send_time),
@@ -41,23 +56,31 @@ User::User(const User &other)
 {
     ft_memset(buffer, '\0', BUFF_MAX_SIZE);
     if (other.buffer_size > 0) {
-        memcpy(buffer, other.buffer, other.buffer_size);
+        ft_memcpy(buffer, other.buffer, other.buffer_size);
     }
 }
 
 User& User::operator=(const User& other) {
     if (this != &other) {
         fd = other.fd;
+        real_nick = other.real_nick;
         nick = other.nick;
         name = other.name;
         full_name = other.full_name;
         prefix = other.prefix;
+        mask = other.mask;
+        server_mode = other.server_mode;
+        afk_msg = other.afk_msg;
+        connection_pass = other.connection_pass;
+        channel_mode = other.channel_mode;
+        banned = other.banned;
+        ch_name_mask_map = other.ch_name_mask_map;
         ft_memset(buffer, '\0', BUFF_MAX_SIZE);
         if (other.buffer_size > 0) {
-            memcpy(buffer, other.buffer, other.buffer_size);
+            ft_memcpy(buffer, other.buffer, other.buffer_size);
         }
         buffer_size = other.buffer_size;
-        /* pign stuff (important) */
+        registered = other.registered;
         on_pong_hold = other.on_pong_hold;
         last_received = other.last_received;
         ping_send_time = other.ping_send_time;
@@ -66,14 +89,22 @@ User& User::operator=(const User& other) {
     return *this;
 }
 
+/*
+ * A user is equal to some other if their nick are strcase equal.
+ */
 bool User::operator==(User const &other) const {
     return ( this->nick == other.nick);
 }
 
+/*
+ * Prefix from host is done with the real nick ! The other
+ * (nick) is always in uppercase.
+ */
 void User::setPrefixFromHost(std::string &host) {
     prefix = real_nick + "!" + name + "@" + host;
 }
 
+// TODO
 void User::setChannelMask(string& name, char mode) {
     (void)name;
     (void)mode;
@@ -89,7 +120,7 @@ void User::resetBuffer(void) {
 }
 
 void User::addLeftovers(std::string &leftovers) {
-    memcpy(buffer + buffer_size, leftovers.c_str(), leftovers.size());
+    ft_memcpy(buffer + buffer_size, leftovers.c_str(), leftovers.size());
     buffer_size += leftovers.size();
 }
 
@@ -125,13 +156,7 @@ bool User::isResgistered(void) {
     return registered;
 }
 
-/* 
- * We use references, not pointers in this IRC. So memseting
- * to 0 all space used by user class helps with weird errors
- * that occurr when a stack address that was used by User1,
- * once it is deleted is occupied by User2 */
 User::~User() {
-    ft_memset(this, '\0', sizeof(User));
 }
 
 } // namespace

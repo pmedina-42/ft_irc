@@ -32,24 +32,14 @@ void IrcDataBase::addNewUser(int new_fd) {
 
 void IrcDataBase::removeUser(int fd) {
     
-    LOG(DEBUG) << "REMOVING FD " << fd;
-    debugNickFdMap();
-    debugFdUserMap();
-
     User &user = getUserFromFd(fd);
-    User &ref = user;
-    LOG(INFO) << "User " << user << " removed"; 
+    LOG(INFO) << "User " << user << " removed";
     /* If the user had a nick registered, erase it */
     if (nick_fd_map.count(user.nick)) {
-        LOG(DEBUG) << "removing user with nick " << user.real_nick << " from nickfdmap";
         removeNickFdPair(user.nick);
     }
     /* erase user from fd map (this entry is created after connection) */
     removeFdUserPair(fd);
-
-    LOG(DEBUG) << "AFTER REMOVING FD " << fd;
-    debugNickFdMap();
-    debugFdUserMap();
 }
 
 void IrcDataBase::updateUserNick(int fd, string &new_nick,

@@ -212,21 +212,6 @@ int FdManager::setUpListener(void) {
     return socketfd;
 }
 
-/* Some socket errors, specially on send() should not terminate
- * the program. */
-int FdManager::getSocketError(int fd) {
-
-    int err_code;
-    socklen_t len = sizeof(err_code);
-
-    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err_code, &len) == 0) {
-        err_code = errno;
-    } else {
-        errno = err_code; // problem getting error code
-    }
-    return err_code;
-}
-
 void FdManager::setUpPoll(void) {
     fds[0].fd = listener;
     fds[0].events = POLLIN;
@@ -322,6 +307,21 @@ void FdManager::closeConnection(int fd) {
             break ;
         }
     }
+}
+
+/* Some socket errors, specially on send() should not terminate
+ * the program. */
+int FdManager::getSocketError(int fd) {
+
+    int err_code;
+    socklen_t len = sizeof(err_code);
+
+    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &err_code, &len) == 0) {
+        err_code = errno;
+    } else {
+        errno = err_code; // problem getting error code
+    }
+    return err_code;
 }
 
 bool FdManager::socketErrorIsNotFatal(int fd) {
