@@ -7,10 +7,6 @@
 
 #include "Types.hpp"
 
-using std::list;
-using std::map;
-using std::string;
-
 namespace irc {
 
 class User;
@@ -18,7 +14,7 @@ class User;
 
 class Channel {
     public:
-    Channel(string name, User& user);
+    Channel(std::string name, User& user);
     ~Channel();
 
     /* Class functions */
@@ -36,11 +32,11 @@ class Channel {
     void setUserMode(User& user, char mode);
     void addToWhitelist(User& user);
     User& getUserFromFd(int fd);
-    User& getUserFromNick(string& nick);
+    User& getUserFromNick(std::string& nick);
     bool userIsInChannel(int userFd);
-    bool userIsInChannel(string& nick);
+    bool userIsInChannel(std::string& nick);
     bool isUserOperator(User& user);
-    User& findUserByNick(string& nick);
+    User& findUserByNick(std::string& nick);
 
     /* ATTRIBUTES */
     /* Lista de usuarios que pertenecen al canal */
@@ -51,19 +47,19 @@ class Channel {
     NickUserMap white_list; // list maybe  ?
 
     /* Nombre del canal */
-    string name;
+    std::string name;
     /* Tema del canal */
-    string _topic;
+    std::string _topic;
     /* Modo del canal */
-    string mode;
+    std::string mode;
     /* Maximo de usuarios en el canal */
     unsigned int _max_users;
     /* Clave, si es que la tiene y el modo es k */
-    string key;
+    std::string key;
     /**
      * Channel topic
      */
-    string topic;
+    std::string topic;
 
 };
 

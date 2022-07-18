@@ -4,6 +4,8 @@
 #include "Channel.hpp"
 #include "libft.h"
 
+using std::string;
+
 namespace irc {
 
 IrcDataBase::IrcDataBase(void) {

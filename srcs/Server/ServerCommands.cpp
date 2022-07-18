@@ -10,6 +10,8 @@
 #include <map>
 #include <iostream>
 
+using std::string;
+
 namespace irc {
 
 /**

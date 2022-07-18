@@ -17,6 +17,8 @@
 #include <iostream>
 #include <cerrno>
 
+using std::string;
+
 namespace irc {
 
 FdManager::FdManager(void)

@@ -5,6 +5,8 @@
 #include "User.hpp"
 #include "libft.h"
 
+using std::string;
+
 namespace irc {
 
 User::User(int fd)
@@ -100,7 +102,7 @@ bool User::operator==(User const &other) const {
  * Prefix from host is done with the real nick ! The other
  * (nick) is always in uppercase.
  */
-void User::setPrefixFromHost(std::string &host) {
+void User::setPrefixFromHost(string &host) {
     prefix = real_nick + "!" + name + "@" + host;
 }
 
@@ -119,7 +121,7 @@ void User::resetBuffer(void) {
    buffer_size = 0;
 }
 
-void User::addLeftovers(std::string &leftovers) {
+void User::addLeftovers(string &leftovers) {
     ft_memcpy(buffer + buffer_size, leftovers.c_str(), leftovers.size());
     buffer_size += leftovers.size();
 }

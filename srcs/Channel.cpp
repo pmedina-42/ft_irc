@@ -7,8 +7,6 @@
 #include <Types.hpp>
 
 using std::string;
-using std::list;
-using std::pair;
 
 namespace irc {
 
@@ -88,8 +86,8 @@ void Channel::banUser(User &user) {
  * Desbanea a un usuario
  */
 void Channel::unbanUser(User &user) {
-    list<User>::iterator end = users.end();
-    list<User>::iterator it = std::find(users.begin(), end, user);
+    UserList::iterator end = users.end();
+    UserList::iterator it = std::find(users.begin(), end, user);
     if (it != end)
         it->banned = false;
 }
@@ -98,8 +96,8 @@ void Channel::unbanUser(User &user) {
  * Comprueba si el usuario está en la lista de baneados
  */
 bool Channel::userInBlackList(User &user) {
-    list<User>::iterator end = users.end();
-    list<User>::iterator it = std::find(users.begin(), end, user);
+    UserList::iterator end = users.end();
+    UserList::iterator it = std::find(users.begin(), end, user);
     return it != end ?  true : false;
 }
 
@@ -142,8 +140,8 @@ bool Channel::isInvited(User &user) {
  * Cambia el modo de un usuario dentro del canal
  */
 void Channel::setUserMode(User &user, char mode) {
-    /*list<User>::iterator end = users.end();
-    list<User>::iterator it = std::find(users.begin(), end, user);
+    /*UserList::iterator end = users.end();
+    UserList::iterator it = std::find(users.begin(), end, user);
     if ((mode == 'o' || mode == 'v') && it != end) {
         it->channel_mode = mode;
     }*/

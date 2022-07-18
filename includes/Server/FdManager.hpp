@@ -9,20 +9,18 @@
 #include <string>
 #include "Types.hpp"
 
-using std::string;
-
 namespace irc {
 
 class FdManager {
     public:
     FdManager(void);
-    FdManager(string &ip, string &port);
+    FdManager(std::string &ip, std::string &port);
     FdManager(const FdManager &other);
     ~FdManager();
 
     /* Setup */
     int setUpAddress(void);
-    int setUpAddress(string &hostname, string &port);
+    int setUpAddress(std::string &hostname, std::string &port);
     int setUpListener(void);
     void setUpPoll(void);
 
@@ -46,7 +44,7 @@ class FdManager {
     int fds_size;
     struct addrinfo *servinfo;
     int listener;
-    string hostname;
+    std::string hostname;
 };
 
 }

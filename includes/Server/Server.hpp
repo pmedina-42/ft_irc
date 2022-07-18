@@ -7,8 +7,6 @@
 #include "Server/FdManager.hpp"
 #include "Server/IrcDataBase.hpp"
 
-using std::string;
-
 namespace irc {
 
 class Server : public FdManager,
@@ -16,7 +14,7 @@ class Server : public FdManager,
 {
     public:
     Server(void);
-    Server(string &ip, string &port);
+    Server(std::string &ip, std::string &port);
     Server(const Server &other);
     ~Server();
     
@@ -24,12 +22,12 @@ class Server : public FdManager,
     /* loop through all poll fd's */
     int mainLoop(void);
     void DataFromUser(int fd);
-    void DataToUser(int fd, string &data, int type);
+    void DataToUser(int fd, std::string &data, int type);
 
     char srv_buff[BUFF_MAX_SIZE];
     int srv_buff_size;
-    string processLeftovers(int fd); // leftovers
-    void parseCommandBuffer(string &cmd_content, int fd);
+    std::string processLeftovers(int fd); // leftovers
+    void parseCommandBuffer(std::string &cmd_content, int fd);
 
     /* ping pong flow */
     void pingLoop(void);
@@ -52,15 +50,15 @@ class Server : public FdManager,
     void INVITE(Command &cmd, int fd);
 
     /* Common replies */
-    void sendWelcome(string& name, string &prefix, int fd);
-    void sendNeedMoreParams(string& cmd_name, int fd);
-    void sendNotRegistered(string &cmd_name, int fd);
-    void sendNoSuchChannel(string &cmd_name, int fd);
-    void sendNotOnChannel(string &cmd_name, int fd);
-    void sendBadChannelMask(string &cmd_name, int fd);
-    void sendNoChannelModes(string &cmd_name, int fd);
-    void sendChannelOperatorNeeded(string &cmd_name, int fd);
-    void sendAlreadyRegistered(string &nick, int fd);
+    void sendWelcome(std::string& name, std::string &prefix, int fd);
+    void sendNeedMoreParams(std::string& cmd_name, int fd);
+    void sendNotRegistered(std::string &cmd_name, int fd);
+    void sendNoSuchChannel(std::string &cmd_name, int fd);
+    void sendNotOnChannel(std::string &cmd_name, int fd);
+    void sendBadChannelMask(std::string &cmd_name, int fd);
+    void sendNoChannelModes(std::string &cmd_name, int fd);
+    void sendChannelOperatorNeeded(std::string &cmd_name, int fd);
+    void sendAlreadyRegistered(std::string &nick, int fd);
 };
 
 /**

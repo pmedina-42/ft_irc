@@ -31,7 +31,7 @@ class ServerSetUpError : public std::exception {
 class FatalError : public std::exception {
     
     public:
-    FatalError(const string msg) : m_msg(msg) {}
+    FatalError(const std::string msg) : m_msg(msg) {}
     virtual ~FatalError() throw() {}
 
     virtual const char* what() const throw ()  {
@@ -39,7 +39,7 @@ class FatalError : public std::exception {
             return m_msg.c_str();
     }
 
-   const string m_msg;
+   const std::string m_msg;
 };
 
 }

@@ -4,10 +4,7 @@
 #include "Types.hpp"
 #include <iostream>
 
-using std::string;
-
 namespace irc {
-
 
 /*
  * Los usuarios tendrán 2 nicks : El que dicen que tienen (real),
@@ -32,24 +29,24 @@ class User {
     User& operator=(const User &other);
     bool operator==(User const &other) const;
 
-    void setPrefixFromHost(string &host);
+    void setPrefixFromHost(std::string &host);
     /* ATTRIBUTES */
     int fd;
-    string real_nick; /* caRCe-b042 */
-    string nick;     /* CARCE-B042 */
-    string name;
-    string full_name;
-    string prefix;
-    string mask;
-    string server_mode;
-    string afk_msg;
-    string connection_pass;
+    std::string real_nick; /* caRCe-b042 */
+    std::string nick;     /* CARCE-B042 */
+    std::string name;
+    std::string full_name;
+    std::string prefix;
+    std::string mask;
+    std::string server_mode;
+    std::string afk_msg;
+    std::string connection_pass;
 
     /* Channel Things */
     char channel_mode;
     bool banned;
     ChannelMaskMap ch_name_mask_map;
-    void setChannelMask(string &name, char mode);
+    void setChannelMask(std::string &name, char mode);
 
     char buffer[BUFF_MAX_SIZE];
     int buffer_size;
@@ -57,7 +54,7 @@ class User {
 
     bool hasLeftovers(void) const;
     void resetBuffer(void);
-    void addLeftovers(string &leftovers);
+    void addLeftovers(std::string &leftovers);
     std::string BufferToString(void) const;
 
     /* PING PONG things */
@@ -72,7 +69,7 @@ class User {
     bool on_pong_hold;
     time_t last_received;
     time_t ping_send_time;
-    string ping_str;
+    std::string ping_str;
 
 };
 

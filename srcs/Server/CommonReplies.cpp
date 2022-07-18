@@ -2,6 +2,8 @@
 #include "Command.hpp"
 #include "NumericReplies.hpp"
 
+using std::string;
+
 namespace irc {
 
 void Server::sendNeedMoreParams(string& cmd_name, int fd) {

@@ -6,8 +6,6 @@
 #include <vector>
 #include "Types.hpp"
 
-using std::string;
-using std::vector;
 
 namespace irc {
 
@@ -32,7 +30,7 @@ class Command {
      * va en un solo argumento, junto a ':'.
      * Si un comando es válido sólo una string contendrá el valor ':'.
      */
-    int Parse(string &cmd);
+    int Parse(std::string &cmd);
     std::string &Name();
 
     /* Esto tendrá que tener en su momento, una especie de mapa s.t.:
@@ -42,12 +40,12 @@ class Command {
      * .
      * .
      */
-    vector<string> args;
+    std::vector<std::string> args;
 
     private:
     void debugCommand() const;
-    bool colon_placed_incorrectly(string &str);
-    bool newlines_left(string &str);
+    bool colon_placed_incorrectly(std::string &str);
+    bool newlines_left(std::string &str);
 };
 
 } // namespace

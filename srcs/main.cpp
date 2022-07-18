@@ -20,8 +20,6 @@
  * Destructor of the class is not called if exception is thrown in its
  * constructor.
  *
- * NEXT THING : PING PONG LOOP
- * 
  * Para conectarse a irc hispano :
  * nc irc.irc-hispano.org 6667
  */
