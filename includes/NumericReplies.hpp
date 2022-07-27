@@ -13,8 +13,35 @@
 # define RPL_WELCOME " 001 "
 # define RPL_WELCOME_STR_1 " :Welcome to the Internet Relay Network, "
 
+
+/**
+ * The first message sent after client registration
+ */
+# define RPL_YOURHOST " 002 "
+# define STR_YOURHOST " :Your host is <servername>, running version <ver>"
+
+
+/**
+ * The first message sent after client registration
+ */
+# define RPL_CREATED " 003 "
+# define STR_CREATED " :This server was created <date>"
+
+
+/**
+ * The first message sent after client registration
+ */
+# define RPL_MYINFO " 004 "
+# define STR_MYINFO " :<servername> <version> <available user modes><available channel modes>"
+
 /**
  *  Sent as a reply to the AWAY command, this lets the client know that they are no longer set as being away
+ */
+# define RPL_UMODEIS " 221 "
+# define STR_UMODEIS " <user modes>"
+
+/**
+ *  Sent to a client to inform that client of their currently-set user modes
  */
 # define RPL_UNAWAY " 305 "
 # define STR_UNAWAY ":You are no longer marked as being away"
@@ -147,6 +174,12 @@
  */
 # define ERR_CHANOPRIVSNEEDED " 482 "
 # define STR_CHANOPRIVSNEEDED ":You're not channel operator"
+
+/**
+ * A MODE command affecting a user failed because it's trying to set or view modes for other users.
+ */
+# define ERR_UMODEUNKNOWNFLAG " 501 "
+# define STR_UMODEUNKNOWNFLAG ":Unknown MODE flag"
 
 /**
  * A MODE command affecting a user failed because it's trying to set or view modes for other users.

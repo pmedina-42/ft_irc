@@ -148,6 +148,31 @@ bool starts_with_mask(string const str) {
     return (str[0] == '!' || str[0] == '#' || str[0] == '+' || str[0] == '&');
 }
 
+/* Check if MODE passed as parameter has any unknown flag. 's' could be implemented but it's deprecated */
+bool hasUnknownFlag(const string &mode) {
+    return (mode.find("-") == string::npos
+        && mode.find("+") == string::npos)
+        || (mode.find("a") == string::npos
+        && mode.find("o") == string::npos
+        && mode.find("O") == string::npos
+        && mode.find("r") == string::npos
+        && mode.find("w") == string::npos
+        && mode.find("i") == string::npos);
+}
+
+/* Check if a char is inside a string */
+bool charIsInString(const string &str, const char c) {
+    return (str.find(c) != string::npos);
+}
+
+/* Check if a char is inside a string */
+string toUpper(string str) {
+    for (int i = 0; str[i]; i++) {
+        toupper(str[i]);
+    }
+    return str;
+}
+
 /*
  * from https://stackoverflow.com/questions/440133
  * See https://cplusplus.com/reference/cstdlib/rand/

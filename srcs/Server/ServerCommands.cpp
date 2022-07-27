@@ -64,7 +64,7 @@ void Server::NICK(Command &cmd, int fd) {
     if (!user.name.empty() && !user.full_name.empty()) {
         user.setPrefixFromHost(hostname);
         user.registered = true;
-        user.server_mode = "+o";
+        user.server_mode = "o";
         return sendWelcome(user.name, user.prefix, fd);
     }
 }
@@ -103,7 +103,7 @@ void Server::USER(Command &cmd, int fd) {
     /* generic case (USER comand after NICK for registration) */
     user.setPrefixFromHost(hostname);
     user.registered = true;
-    user.server_mode = "+o";
+    user.server_mode = "o";
     return sendWelcome(user.name, user.prefix, fd);
 }
 
@@ -302,7 +302,7 @@ void Server::TOPIC(Command &cmd, int fd) {
     if (!channel.userIsInChannel(fd)) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
-    if (channel.mode.find("t") != string::npos) {
+    if (tools::charIsInString(channel.mode, 't')) {
         return sendNoChannelModes(cmd.Name(), fd);
     }
     if (size == 2) {
@@ -378,8 +378,8 @@ void Server::KICK(Command &cmd, int fd) {
 }
 
 /**
- * Command: KICK
- * Parameters: <channel> <user> [<comment>]
+ * Command: INVITE
+ * Parameters: <nickname> <channel>
  * 1. Check correct parameter size & if user and channel exist
  * 1. Check if user has the correct permissions to do kick another user
  * 2. Find the user to kick in the channel, if it exists
@@ -400,7 +400,7 @@ void Server::INVITE(Command &cmd, int fd) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[2])->second;
-    if (channel.mode.find("i") != string::npos) {
+    if (!tools::charIsInString(channel.mode, 'i')) {
         return sendNoChannelModes(cmd.Name(), fd);
     }
     if (!channel.userIsInChannel(fd)) {
@@ -409,7 +409,9 @@ void Server::INVITE(Command &cmd, int fd) {
     if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(cmd.Name(), fd);
     }
-    if (!nick_fd_map.count(cmd.args[1])) {
+    LOG(DEBUG) << cmd.args[1];
+    LOG(DEBUG) << nick_fd_map.find(tools::toUpper(cmd.args[1]))->first;
+    if (!nick_fd_map.count(tools::toUpper(cmd.args[1]))) {
         string reply = (ERR_NOSUCHNICK + cmd.Name() + STR_NOSUCHNICK);
         LOG(DEBUG) << reply;
         return DataToUser(fd, reply, NUMERIC_REPLY);
@@ -452,24 +454,56 @@ void Server::MODE(Command &cmd, int fd) {
     }
     // CHANGE CHANNEL MODE. COMPLEX PATH
     if (tools::starts_with_mask(cmd.args[1])) {
-
+        if (size < 4) {
+            return sendNeedMoreParams(cmd.Name(), fd);
+        }
+        if (!channel_map.count(cmd.args[1])) {
+            return sendNoSuchChannel(cmd.Name(), fd);
+        }
+        Channel &channel = channel_map.find(cmd.args[1])->second;
+        if (tools::charIsInString(cmd.args[2], '+')
+            && tools::charIsInString(cmd.args[2], 'i')) {
+            channel.mode.append("i");
+        }
     // CHANGE USER MODE
     } else {
+        string mode = cmd.args[2];
+        if (tools::hasUnknownFlag(mode)) {
+            string reply = (ERR_UMODEUNKNOWNFLAG""STR_UMODEUNKNOWNFLAG);
+            LOG(DEBUG) << reply;
+            return DataToUser(fd, reply, NUMERIC_REPLY);
+
+        }
+        if (tools::charIsInString(mode, 'o')
+            || tools::charIsInString(mode, 'O')) {
+            if (tools::isEqual(cmd.args[1], user.nick)) {
+                string reply = (ERR_USERSDONTMATCH + cmd.Name() + STR_USERSDONTMATCH);
+                LOG(DEBUG) << reply;
+                return DataToUser(fd, reply, NUMERIC_REPLY);
+            }
+        }
         // Check if user is trying to give itself an operator mode
         // Check if serverUser is operator
-        if (user.server_mode.find("o") == string::npos
+        /*if (user.server_mode.find("o") == string::npos
             || user.server_mode.find("O") == string::npos) {
             string reply = (ERR_CHANOPRIVSNEEDED + cmd.Name() + STR_CHANOPRIVSNEEDED);
             LOG(DEBUG) << reply;
             return DataToUser(fd, reply, NUMERIC_REPLY);
-        }
+        }*/
         // Check if serverUser is sending a different nickname
-        if (cmd.args[1].compare(user.nick) != 0) {
+        if (!tools::isEqual(cmd.args[1], user.nick)) {
             string reply = (ERR_USERSDONTMATCH + cmd.Name() + STR_USERSDONTMATCH);
             LOG(DEBUG) << reply;
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-
+        if (tools::charIsInString(mode, '+')
+            && tools::charIsInString(mode, 'a')) {
+            user.server_mode.append("a");
+        }
+        if (tools::charIsInString(mode, '-')
+            && tools::charIsInString(mode, 'a')) {
+            user.server_mode.erase(mode.find("a"));
+        }
     }
 }
 
@@ -532,7 +566,7 @@ void Server::AWAY(Command &cmd, int fd) {
         user.afk_msg = "";
         LOG(DEBUG) << user.afk_msg;
     }
-    if (user.server_mode.find("+a") != string::npos) {
+    if (tools::charIsInString(user.server_mode, 'a')) {
         string reply = (RPL_NOWAWAY STR_NOWAWAY);
         LOG(DEBUG) << user.server_mode;
         return DataToUser(fd, reply, NUMERIC_REPLY);
