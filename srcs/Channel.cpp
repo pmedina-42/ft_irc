@@ -126,13 +126,14 @@ bool Channel::isUserOperator(User &user) {
  * Añade un nuevo usuario a la whitelist 
  */
 void Channel::addToWhitelist(User &user) {
-    white_list.insert(std::make_pair(user.nick, user));
+    white_list.insert(std::make_pair(tools::toUpper(user.nick), user));
 }
 
 /**
  * Devuelve true si el usuario está en la white_list del canal 
  */
 bool Channel::isInvited(User &user) {
+    LOG(DEBUG) << user.nick;
     return (white_list.find(user.nick) != white_list.end());
 }
 

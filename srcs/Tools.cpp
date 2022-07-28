@@ -168,7 +168,7 @@ bool charIsInString(const string &str, const char c) {
 /* Check if a char is inside a string */
 string toUpper(string str) {
     for (int i = 0; str[i]; i++) {
-        toupper(str[i]);
+        str[i] = toupper(str[i]);
     }
     return str;
 }

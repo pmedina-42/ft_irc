@@ -409,8 +409,6 @@ void Server::INVITE(Command &cmd, int fd) {
     if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(cmd.Name(), fd);
     }
-    LOG(DEBUG) << cmd.args[1];
-    LOG(DEBUG) << nick_fd_map.find(tools::toUpper(cmd.args[1]))->first;
     if (!nick_fd_map.count(tools::toUpper(cmd.args[1]))) {
         string reply = (ERR_NOSUCHNICK + cmd.Name() + STR_NOSUCHNICK);
         LOG(DEBUG) << reply;
@@ -419,6 +417,11 @@ void Server::INVITE(Command &cmd, int fd) {
     if (channel.userIsInChannel(cmd.args[1])) {
         return ; // el usuario ya esta en el canal. no hace falta inv
     }
+    string nick = cmd.args[1];
+    tools::ToUpperCase(nick);
+    User invited_user = getUserFromNick(nick);
+    channel.addToWhitelist(invited_user);
+    LOG(DEBUG) << "User is invited " << channel.isInvited(user);
     // TODO : else, añadir el usuario a la whitelist (cuando haya que hacerlo, usuario exista etc.)
     /*nick_fd_map.count(cmd.args[1]);
     LOG(DEBUG) << "invite: channel User " << user_to_inv.nick << " has been invited";
