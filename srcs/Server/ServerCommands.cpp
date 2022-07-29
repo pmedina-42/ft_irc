@@ -196,10 +196,10 @@ void Server::JOIN(Command &cmd, int fd) {
             channel.key = cmd.args[2];
         }
         addNewChannel(channel);
-        //LOG(DEBUG) << "join: users size: " << channel.users.size();
+        LOG(DEBUG) << "join: users size: " << channel.users.size();
     /* case channel exists already */
     } else {
-        //LOG(DEBUG) << "join: channel exists";
+        LOG(DEBUG) << "join: channel exists";
         Channel &channel = getChannelFromName(ch_name);
         if (channel.inviteModeOn()) {
             LOG(DEBUG) << "channel mode :" << channel.mode;
@@ -252,13 +252,14 @@ void Server::PART(Command &cmd, int fd) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
+	std::cout << "Is user in channel " << !channel.userIsInChannel(fd);
     if (!channel.userIsInChannel(fd)) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
-    //LOG(DEBUG) << "part: deleting ch_user " << user.name << " in channel " << channel.name;
-    //LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " before being erased";
+    LOG(DEBUG) << "part: deleting ch_user " << user.name << " in channel " << channel.name;
+    LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " before being erased";
     channel.deleteUser(user);
-    //LOG(DEBUG) << "part: users size: " << channel.users.size();
+    LOG(DEBUG) << "part: users size: " << channel.users.size();
     if (channel.users.size() == 0) {
         LOG(DEBUG) << "part: deleting empty channel";
         removeChannel(channel);

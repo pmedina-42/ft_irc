@@ -56,17 +56,20 @@ void Channel::addUser(User &user) {
 void Channel::deleteUser(User &user) {
     UserList::iterator end = users.end();
     for (UserList::iterator u = users.begin(); u != end; u++) {
-        if (!tools::isEqual(u->nick, user.nick)) {
+    LOG(DEBUG) << "usernick -" << user.nick << "- u->nick -" << u->nick << "-";
+        if (tools::isEqual(u->nick, user.nick)) {
             /* If user is at beggining of list, then it is an operator */
             if (u == users.begin()) {
                 UserList::iterator it = users.begin();
                 while (userInBlackList(*it))
                     it++;
-                it->channel_mode = 'o';
-                users.erase(u);
-            } else {
-                users.erase(u);
+                if (it != end) {
+                    it->channel_mode = 'o';
+                }
             }
+            LOG(DEBUG) << "Before deleting user " << users.size();
+            users.erase(u);
+            LOG(DEBUG) << "After deleting user " << users.size();
             break ;
         }
     }
@@ -96,9 +99,7 @@ void Channel::unbanUser(User &user) {
  * Comprueba si el usuario está en la lista de baneados
  */
 bool Channel::userInBlackList(User &user) {
-    UserList::iterator end = users.end();
-    UserList::iterator it = std::find(users.begin(), end, user);
-    return it != end ?  true : false;
+    return user.banned;
 }
 
 /**
