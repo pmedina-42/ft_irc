@@ -191,16 +191,21 @@ void Server::JOIN(Command &cmd, int fd) {
         //LOG(DEBUG) << "join: creating channel with name " << ch_name;
         Channel channel(ch_name, user);
         //LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " after joining channel";
-        channel.setUserMode(user, 'o');
+        channel.setUserMode(user, "o");
         if (size >= 3) {
             channel.key = cmd.args[2];
         }
         addNewChannel(channel);
         LOG(DEBUG) << "join: users size: " << channel.users.size();
+        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode.find(channel.name)->second << " after joining channel";
     /* case channel exists already */
     } else {
         LOG(DEBUG) << "join: channel exists";
         Channel &channel = getChannelFromName(ch_name);
+        if (channel.userIsInChannel(fd)) {
+            string reply(ERR_USERONCHANNEL" "+user.nick+" "+channel.name+" "STR_USERONCHANNEL);
+            return DataToUser(fd, reply, NUMERIC_REPLY);
+        }
         if (channel.inviteModeOn()) {
             LOG(DEBUG) << "channel mode :" << channel.mode;
             if (!channel.isInvited(user)) {
@@ -216,10 +221,13 @@ void Server::JOIN(Command &cmd, int fd) {
             }
         }
         LOG(DEBUG) << "join: adding ch_user to existing channel";
-        channel.addUser(user);
-        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " after joining channel";
+        channel.addUser(user, channel.name, "");
+        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode.find(channel.name)->second << " after joining channel " << channel.name;
         LOG(DEBUG) << "join: users size: " << channel.users.size();
-        // TODO: if ch_user is already in channel?
+        if (channel.topicModeOn()) {
+            string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
+            DataToUser(fd, reply, NUMERIC_REPLY);
+        }
         // TODO: send rpl messages
     }
 }
@@ -257,8 +265,9 @@ void Server::PART(Command &cmd, int fd) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     LOG(DEBUG) << "part: deleting ch_user " << user.name << " in channel " << channel.name;
-    LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " before being erased";
+    LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode.find(channel.name)->second << " before being erased";
     channel.deleteUser(user);
+    user.deleteChannelMask(channel.name);
     LOG(DEBUG) << "part: users size: " << channel.users.size();
     if (channel.users.size() == 0) {
         LOG(DEBUG) << "part: deleting empty channel";
@@ -303,7 +312,7 @@ void Server::TOPIC(Command &cmd, int fd) {
     if (!channel.userIsInChannel(fd)) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
-    if (tools::charIsInString(channel.mode, 't')) {
+    if (!tools::charIsInString(channel.mode, 't')) {
         return sendNoChannelModes(cmd.Name(), fd);
     }
     if (size == 2) {
@@ -311,19 +320,19 @@ void Server::TOPIC(Command &cmd, int fd) {
             string reply(RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        string reply(RPL_TOPIC+cmd.Name()+STR_TOPIC);
+        string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     if (size == 3) {
-        if (channel.isUserOperator(user)) {
+        if (!channel.isUserOperator(user)) {
             return sendChannelOperatorNeeded(cmd.Name(), fd);
         }
-        if (cmd.args[2].length() == 1) { // longitud 1 ? no sería .empty() ?
+        if (cmd.args[2].empty()) {
             channel.topic = "";
             return ;
         }
         channel.topic = cmd.args[2].substr(1);
-        string reply(RPL_TOPIC+cmd.Name()+STR_TOPIC);
+        string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     else {
@@ -465,9 +474,52 @@ void Server::MODE(Command &cmd, int fd) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
-        if (tools::charIsInString(cmd.args[2], '+')
-            && tools::charIsInString(cmd.args[2], 'i')) {
-            channel.mode.append("i");
+        if (!channel.userIsInChannel(fd)) {
+            return sendNotOnChannel(cmd.Name(), fd);
+        }
+        LOG(DEBUG) << user.channel_mode.find(channel.name)->second;
+        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode.find(channel.name)->second << " after joining channel " << channel.name;
+        if (!channel.isUserOperator(user)) {
+            return sendChannelOperatorNeeded(cmd.Name(), fd);
+        }
+        if (tools::charIsInString(cmd.args[2], '+')) {
+            if (tools::charIsInString(cmd.args[2], 'i')) {
+                channel.mode.append("i");
+            }
+            if (tools::charIsInString(cmd.args[2], 't')) {
+                channel.mode.append("t");
+            }
+            if (tools::charIsInString(cmd.args[2], 'm')) {
+                channel.mode.append("m");
+            }
+            if (tools::charIsInString(cmd.args[2], 'k')) {
+                if (size < 4) {
+                    return sendNeedMoreParams(cmd.Name(), fd);
+                }
+                channel.mode.append("k");
+                channel.key = cmd.args[3];
+            }
+        }
+        if (tools::charIsInString(cmd.args[2], '-')) {
+            if (tools::charIsInString(cmd.args[2], 'i')) {
+                channel.mode.erase(channel.mode.find("i"));
+            }
+            if (tools::charIsInString(cmd.args[2], 't')) {
+                channel.mode.erase(channel.mode.find("t"));
+            }
+            if (tools::charIsInString(cmd.args[2], 'm')) {
+                channel.mode.erase(channel.mode.find("m"));
+            }
+            if (tools::charIsInString(cmd.args[2], 'k')) {
+                if (size < 4) {
+                    return sendNeedMoreParams(cmd.Name(), fd);
+                }
+                if (cmd.args[3].compare(channel.key)) {
+                    string reply = (ERR_BADCHANNELKEY + cmd.Name() + STR_BADCHANNELKEY);
+
+                }
+                channel.mode.erase(channel.mode.find("k"));
+            }
         }
     // CHANGE USER MODE
     } else {

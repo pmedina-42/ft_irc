@@ -43,10 +43,10 @@ class User {
     std::string connection_pass;
 
     /* Channel Things */
-    char channel_mode;
-    bool banned;
+    ChannelModeMap channel_mode;
     ChannelMaskMap ch_name_mask_map;
-    void setChannelMask(std::string &name, char mode);
+    void addChannelMask(std::string &name, std::string mode);
+    void deleteChannelMask(std::string &channel);
 
     char buffer[BUFF_MAX_SIZE];
     int buffer_size;
