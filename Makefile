@@ -15,7 +15,7 @@
 NAME		=	ft_irc
 SRCS		=	srcs/main.cpp\
 				srcs/Server/Server.cpp \
-				srcs/Server/ServerCommands.cpp \
+				srcs/Server/AIrcCommands.cpp \
 				srcs/Server/CommonReplies.cpp \
 				srcs/Server/FdManager.cpp \
 				srcs/Server/IrcDataBase.cpp \

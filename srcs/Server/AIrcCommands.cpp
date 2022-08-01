@@ -1,24 +1,46 @@
-#include "Server/Server.hpp"
-#include "libft.h"
+#include "Server/AIrcCommands.hpp"
 #include "Tools.hpp"
 #include "Command.hpp"
 #include "Types.hpp"
 #include "User.hpp"
 #include "NumericReplies.hpp"
 #include "Log.hpp"
+#include "Channel.hpp"
+
+#include "libft.h"
 
 #include <map>
 #include <iostream>
 
-using std::string;
-
 namespace irc {
+
+AIrcCommands::AIrcCommands(void)
+:
+    FdManager(),
+    IrcDataBase()
+{}
+
+AIrcCommands::AIrcCommands(string &hostname, string &port)
+:
+    FdManager(hostname, port),
+    IrcDataBase()
+{}
+
+AIrcCommands::AIrcCommands(const AIrcCommands& other)
+:
+    FdManager(other),
+    IrcDataBase(other)
+{}
+
+AIrcCommands::~AIrcCommands()
+{}
+
 
 /**
  * Command: NICK
  * Parameters: <nickname>
  */
-void Server::NICK(Command &cmd, int fd) {
+void AIrcCommands::NICK(Command &cmd, int fd) {
 
     int size = cmd.args.size();
     
@@ -73,7 +95,7 @@ void Server::NICK(Command &cmd, int fd) {
  * Command: USER
  * Parameters: <username> 0 * <realname>
  */
-void Server::USER(Command &cmd, int fd) {
+void AIrcCommands::USER(Command &cmd, int fd) {
 
     int size = cmd.args.size();
     User& user = getUserFromFd(fd);
@@ -118,7 +140,7 @@ void Server::USER(Command &cmd, int fd) {
  * :stirling.chathispano.com PONG stirling.chathispano.com :: : : : : :
  */
 
-void Server::PING(Command &cmd, int fd) {
+void AIrcCommands::PING(Command &cmd, int fd) {
     
     int size = cmd.args.size();
     if (size < 2) {
@@ -136,7 +158,7 @@ void Server::PING(Command &cmd, int fd) {
  * Command: PONG
  * Parameters: [<server>] <token>
  */
-void Server::PONG(Command &cmd, int fd) {
+void AIrcCommands::PONG(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
 
@@ -169,7 +191,7 @@ void Server::PONG(Command &cmd, int fd) {
  * 5. Add user to channel
  * 6. Send replies
  */
-void Server::JOIN(Command &cmd, int fd) {
+void AIrcCommands::JOIN(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
     if (!user.isResgistered()) {
@@ -234,7 +256,7 @@ void Server::JOIN(Command &cmd, int fd) {
  * 5. If channel has no users left, destroy channel
  * 6. Send part or default message to channel
  */
-void Server::PART(Command &cmd, int fd) {
+void AIrcCommands::PART(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
     int size = cmd.args.size();
@@ -282,7 +304,7 @@ void Server::PART(Command &cmd, int fd) {
  * 6. Return RLP_TOPIC to client
  *  If not, error message is returned
  */
-void Server::TOPIC(Command &cmd, int fd) {
+void AIrcCommands::TOPIC(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
     int size = cmd.args.size();
@@ -339,7 +361,7 @@ void Server::TOPIC(Command &cmd, int fd) {
  * 2. Find the user to kick in the channel, if it exists
  * 3. Reuse the PART method passing the comment as the part message
  */
-void Server::KICK(Command &cmd, int fd) {
+void AIrcCommands::KICK(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
 
@@ -386,7 +408,7 @@ void Server::KICK(Command &cmd, int fd) {
  * 2. Find the user to kick in the channel, if it exists
  * 3. Reuse the PART method passing the comment as the part message
  */
-void Server::INVITE(Command &cmd, int fd) {
+void AIrcCommands::INVITE(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
 
@@ -445,7 +467,7 @@ void Server::INVITE(Command &cmd, int fd) {
  * Parameters: <channel>/<user> <channel/userMode> [<modeParams>]
  * TODO
  */
-void Server::MODE(Command &cmd, int fd) {
+void AIrcCommands::MODE(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
     
@@ -516,7 +538,7 @@ void Server::MODE(Command &cmd, int fd) {
  * Parameters: <password>
  * This command must be sent before user registration to set a connection password
  */
-void Server::PASS(Command &cmd, int fd) {
+void AIrcCommands::PASS(Command &cmd, int fd) {
 
     User &user = getUserFromFd(fd);
     
@@ -535,7 +557,7 @@ void Server::PASS(Command &cmd, int fd) {
  * Parameters: [<quitMessage>]
  * The server aknowledges this by sending an error client to the server
  */
-void Server::QUIT(Command &cmd, int fd) {
+void AIrcCommands::QUIT(Command &cmd, int fd) {
 
     User &user = getUserFromFd(fd);
     
@@ -555,7 +577,7 @@ void Server::QUIT(Command &cmd, int fd) {
  * With parameter, sets afk_msg. Without, unsets it.
  * Always return if user is away or not
  */
-void Server::AWAY(Command &cmd, int fd) {
+void AIrcCommands::AWAY(Command &cmd, int fd) {
 
     User &user = getUserFromFd(fd);
     

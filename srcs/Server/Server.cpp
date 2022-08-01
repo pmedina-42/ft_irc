@@ -37,8 +37,7 @@ namespace irc {
 
 Server::Server(void)
 :
-    FdManager(),
-    IrcDataBase()
+    AIrcCommands()
 {
     ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
@@ -48,8 +47,7 @@ Server::Server(void)
 
 Server::Server(string &hostname, string &port)
 :
-    FdManager(hostname, port),
-    IrcDataBase()
+    AIrcCommands(hostname, port)
 {
     ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
@@ -59,10 +57,9 @@ Server::Server(string &hostname, string &port)
 
 Server::Server(const Server& other)
 :
-    FdManager(other),
-    IrcDataBase(other),
-    srv_buff_size(other.srv_buff_size),
-    cmd_map(other.cmd_map)
+    AIrcCommands(other),
+    cmd_map(other.cmd_map),
+    srv_buff_size(other.srv_buff_size)
 {
     ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
     if (other.srv_buff_size > 0) {
@@ -71,6 +68,22 @@ Server::Server(const Server& other)
 }
 
 Server::~Server(void) {
+}
+
+void Server::loadCommandMap(void) {
+    cmd_map.insert(std::make_pair(string("NICK"), &AIrcCommands::NICK));
+    cmd_map.insert(std::make_pair(string("USER"), &AIrcCommands::USER));
+    cmd_map.insert(std::make_pair(string("PING"), &AIrcCommands::PING));
+    cmd_map.insert(std::make_pair(string("PONG"), &AIrcCommands::PONG));
+    cmd_map.insert(std::make_pair(string("JOIN"), &AIrcCommands::JOIN));
+    cmd_map.insert(std::make_pair(string("PART"), &AIrcCommands::PART));
+    cmd_map.insert(std::make_pair(string("KICK"), &AIrcCommands::KICK));
+    cmd_map.insert(std::make_pair(string("TOPIC"), &AIrcCommands::TOPIC));
+    cmd_map.insert(std::make_pair(string("INVITE"), &AIrcCommands::INVITE));
+    cmd_map.insert(std::make_pair(string("MODE"), &AIrcCommands::MODE));
+    cmd_map.insert(std::make_pair(string("PASS"), &AIrcCommands::PASS));
+    cmd_map.insert(std::make_pair(string("AWAY"), &AIrcCommands::AWAY));
+    cmd_map.insert(std::make_pair(string("QUIT"), &AIrcCommands::QUIT));
 }
 
 // this might have to manage signals at some point ?? 
@@ -315,23 +328,6 @@ void Server::parseCommandBuffer(string &cmd_content, int fd) {
         (*this.*it->second)(command, fd);
     }
 }
-
-void Server::loadCommandMap(void) {
-    cmd_map.insert(std::make_pair(string("NICK"), (&Server::NICK)));
-    cmd_map.insert(std::make_pair(string("USER"), (&Server::USER)));
-    cmd_map.insert(std::make_pair(string("PING"), (&Server::PING)));
-    cmd_map.insert(std::make_pair(string("PONG"), (&Server::PONG)));
-    cmd_map.insert(std::make_pair(string("JOIN"), (&Server::JOIN)));
-    cmd_map.insert(std::make_pair(string("PART"), (&Server::PART)));
-    cmd_map.insert(std::make_pair(string("KICK"), (&Server::KICK)));
-    cmd_map.insert(std::make_pair(string("TOPIC"), (&Server::TOPIC)));
-    cmd_map.insert(std::make_pair(string("INVITE"), (&Server::INVITE)));
-    cmd_map.insert(std::make_pair(string("MODE"), (&Server::MODE)));
-    cmd_map.insert(std::make_pair(string("PASS"), (&Server::PASS)));
-    cmd_map.insert(std::make_pair(string("AWAY"), (&Server::AWAY)));
-    cmd_map.insert(std::make_pair(string("QUIT"), (&Server::QUIT)));
-}
-
 
 } /* namespace irc */
 

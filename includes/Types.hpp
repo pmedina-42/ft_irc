@@ -35,7 +35,7 @@ typedef enum {
 class Channel;
 class User;
 class Command;
-class Server;
+class AIrcCommands;
 
 typedef std::map<std::string, irc::Channel> ChannelMap;
 typedef std::map<std::string, irc::User> NickUserMap;
@@ -45,7 +45,7 @@ typedef std::map<std::string, char> ChannelMaskMap;
 typedef std::map<int, irc::User> FdUserMap;
 typedef std::map<std::string, int> NickFdMap;
 
-typedef void (irc::Server::*CommandFnx)(Command &cmd, int fd);
+typedef void (irc::AIrcCommands::*CommandFnx)(Command &cmd, int fd);
 typedef std::map<std::string, CommandFnx> CommandMap;
 
 }

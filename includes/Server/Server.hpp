@@ -4,14 +4,12 @@
 #include "Channel.hpp" // without this, it doesnt compile
 #include "Types.hpp"
 
-#include "Server/FdManager.hpp"
-#include "Server/IrcDataBase.hpp"
+#include "Server/AIrcCommands.hpp"
 
 namespace irc {
 
-class Server : public FdManager,
-               public IrcDataBase
-{
+class Server : public AIrcCommands {
+
     public:
     Server(void);
     Server(std::string &ip, std::string &port);
@@ -19,46 +17,24 @@ class Server : public FdManager,
     ~Server();
     
     private:
-    /* loop through all poll fd's */
-    int mainLoop(void);
+
     void DataFromUser(int fd);
     void DataToUser(int fd, std::string &data, int type);
+    
+    int mainLoop(void);
 
-    char srv_buff[BUFF_MAX_SIZE];
-    int srv_buff_size;
-    std::string processLeftovers(int fd); // leftovers
-    void parseCommandBuffer(std::string &cmd_content, int fd);
-
-    /* ping pong flow */
     void pingLoop(void);
     void sendPingToUser(int fd);
-    
-    CommandMap cmd_map;
-    void loadCommandMap(void);
-    void NICK(Command &cmd, int fd);
-    void USER(Command &cmd, int fd);
-    void PING(Command &cmd, int fd);
-    void PONG(Command &cmd, int fd);
-    void MODE(Command &cmd, int fd);
-    void PASS(Command &cmd, int fd);
-    void AWAY(Command &cmd, int fd);
-    void QUIT(Command &cmd, int fd);
-    void JOIN(Command &cmd, int fd);
-    void KICK(Command &cmd, int fd);
-    void PART(Command &cmd, int fd);
-    void TOPIC(Command &cmd, int fd);
-    void INVITE(Command &cmd, int fd);
 
-    /* Common replies */
-    void sendWelcome(std::string& name, std::string &prefix, int fd);
-    void sendNeedMoreParams(std::string& cmd_name, int fd);
-    void sendNotRegistered(std::string &cmd_name, int fd);
-    void sendNoSuchChannel(std::string &cmd_name, int fd);
-    void sendNotOnChannel(std::string &cmd_name, int fd);
-    void sendBadChannelMask(std::string &cmd_name, int fd);
-    void sendNoChannelModes(std::string &cmd_name, int fd);
-    void sendChannelOperatorNeeded(std::string &cmd_name, int fd);
-    void sendAlreadyRegistered(std::string &nick, int fd);
+    CommandMap cmd_map;
+    void loadCommandMap();
+
+    /* Buffer management */
+    char srv_buff[BUFF_MAX_SIZE];
+    int srv_buff_size;
+    std::string processLeftovers(int fd);
+    void parseCommandBuffer(std::string &cmd_content, int fd);
+
 };
 
 /**
