@@ -482,6 +482,9 @@ void Server::MODE(Command &cmd, int fd) {
         if (!channel.isUserOperator(user)) {
             return sendChannelOperatorNeeded(cmd.Name(), fd);
         }
+        /* CYA : y si la string es +-i-----++tm---k  que se hace? esta condicion
+         * solo cubre que tenga o no un +, no que tenga un + y una letra
+         * siguiente. */
         if (tools::charIsInString(cmd.args[2], '+')) {
             if (tools::charIsInString(cmd.args[2], 'i')) {
                 channel.mode.append("i");

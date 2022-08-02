@@ -54,23 +54,33 @@ void Channel::addUser(User &user, std::string channel, std::string mode) {
  * 2.1.2 Ese siguiente no debe estar en la lista de baneados
  * 2.2 Si es un usuario normal o cualquier otro operador, se borra sin más
  * 3. Se borra el canal de la lista de canales del usuario
- * */
+ * 
+ */
 void Channel::deleteUser(User &user) {
     UserList::iterator end = users.end();
     for (UserList::iterator u = users.begin(); u != end; u++) {
+        /* CYA : No hace falta la función isEqual. Los nick de usuario están
+         * todos ya en mayúscula, para que la búsqueda no tenga que hacerse
+         * pasando todo a mayuscula siempre. Cuando necesites el nick del usuario
+         * real (en plan PmEdinA en vez de PMEDINA, eso es user.real_nick)
+         */
     LOG(DEBUG) << "usernick -" << user.nick << "- u->nick -" << u->nick << "-";
         if (tools::isEqual(u->nick, user.nick)) {
-            /* If user is at beggining of list, then it is an operator */
+            /* Search for first non-blacklist user */
             if (u == users.begin()) {
                 UserList::iterator it = ++users.begin();
                 while (userInBlackList(*it) && it != end)
-                    ;
+                    it++;
+                /* no users outside blacklist, delete channel */
                 if (it == end) {
-                    for (it = users.begin(); it != end; it++) {
-                        users.erase(it);
-                    }
+                    /* CYA : no se pueden usar iteradores a la vez que se
+                     * llama a erase. Esto da problemas graves de memoria (si se le da un par de vueltas tiene sentido).
+                     * Para una lista, borrar todas las entradas es clear()
+                     */
+                    users.clear();
                     return ;
                 }
+                /* first non-blacklist user is now channel operator */
                 it->addChannelMask(name, "o");
                 LOG(DEBUG) << it->name << " mode " << it->channel_mode.find(name)->second;
             }
@@ -96,7 +106,7 @@ void Channel::unbanUser(User &user) {
     list<string>::iterator end = black_list.end();
     list<string>::iterator it = std::find(black_list.begin(), end, user.nick);
     if (it != end)
-        black_list.erase(it);;
+        black_list.erase(it);
 }
 
 /**
