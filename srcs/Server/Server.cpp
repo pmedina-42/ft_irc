@@ -71,19 +71,19 @@ Server::~Server(void) {
 }
 
 void Server::loadCommandMap(void) {
-    cmd_map.insert(std::make_pair(string("NICK"), &AIrcCommands::NICK));
-    cmd_map.insert(std::make_pair(string("USER"), &AIrcCommands::USER));
-    cmd_map.insert(std::make_pair(string("PING"), &AIrcCommands::PING));
-    cmd_map.insert(std::make_pair(string("PONG"), &AIrcCommands::PONG));
-    cmd_map.insert(std::make_pair(string("JOIN"), &AIrcCommands::JOIN));
-    cmd_map.insert(std::make_pair(string("PART"), &AIrcCommands::PART));
-    cmd_map.insert(std::make_pair(string("KICK"), &AIrcCommands::KICK));
-    cmd_map.insert(std::make_pair(string("TOPIC"), &AIrcCommands::TOPIC));
-    cmd_map.insert(std::make_pair(string("INVITE"), &AIrcCommands::INVITE));
-    cmd_map.insert(std::make_pair(string("MODE"), &AIrcCommands::MODE));
-    cmd_map.insert(std::make_pair(string("PASS"), &AIrcCommands::PASS));
-    cmd_map.insert(std::make_pair(string("AWAY"), &AIrcCommands::AWAY));
-    cmd_map.insert(std::make_pair(string("QUIT"), &AIrcCommands::QUIT));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("NICK"), &AIrcCommands::NICK));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("USER"), &AIrcCommands::USER));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("PING"), &AIrcCommands::PING));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("PONG"), &AIrcCommands::PONG));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("JOIN"), &AIrcCommands::JOIN));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("PART"), &AIrcCommands::PART));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("KICK"), &AIrcCommands::KICK));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("TOPIC"), &AIrcCommands::TOPIC));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("INVITE"), &AIrcCommands::INVITE));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("MODE"), &AIrcCommands::MODE));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("PASS"), &AIrcCommands::PASS));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("AWAY"), &AIrcCommands::AWAY));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("QUIT"), &AIrcCommands::QUIT));
 }
 
 // this might have to manage signals at some point ?? 
@@ -116,7 +116,7 @@ int Server::mainLoop(void) {
  * the server sends a PING <random_10_byte_string> that the user has to
  * reply within SERVER_PONG_TIME_SEC with PONG <random_10_byte_string>.
  * If the user does not send the PONG message in time, the user is 
- * removed.
+ * removed. The bytes correspond to printable chars.
  * 
  * See
  * https://stackoverflow.com/questions/14315497/ 

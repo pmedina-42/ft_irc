@@ -6,10 +6,12 @@
 
 // A stands for Abstract
 
-/* This class is to abstract the command implementations from the
- * Server interface. Servers will then only have to inherit from AIrcCommands,
- * and when adding/substracting commands from AIrcCommands, the Server will
- * remain the same. 
+/* 
+ * Esta clase sirve para abstraer las implementaciones de comandos de la 
+ * interfaz del servidor.
+ * Un Server, entonces, solo tendrá que heredar de AIrcCommands y llamar
+ * a loadCommands() con los comandos que se quieran habilitar. 
+ *
  */
 
 namespace irc {
@@ -28,6 +30,7 @@ class AIrcCommands : public FdManager,
     virtual void DataToUser(int fd, std::string &data, int type) = 0;
     virtual void loadCommandMap(void) = 0;
 
+    /* Command implementations */
     void NICK(Command &cmd, int fd);
     void USER(Command &cmd, int fd);
     void PING(Command &cmd, int fd);

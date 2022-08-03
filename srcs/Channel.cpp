@@ -150,7 +150,7 @@ bool Channel::isUserOperator(User &user) {
  * Añade un nuevo usuario a la whitelist 
  */
 void Channel::addToWhitelist(User &user) {
-    white_list.insert(std::make_pair(tools::toUpper(user.nick), user));
+    white_list.insert(std::pair<std::string, User>(tools::toUpper(user.nick), user));
 }
 
 /**

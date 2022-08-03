@@ -55,7 +55,7 @@ void IrcDataBase::updateUserNick(int fd, string &new_nick,
 }
 
 void IrcDataBase::addFdUserPair(int fd, User& user) {
-    fd_user_map.insert(std::make_pair(fd, user));
+    fd_user_map.insert(std::pair<int, User>(fd, user));
 }
 
 void IrcDataBase::removeFdUserPair(int fd) {
@@ -63,7 +63,7 @@ void IrcDataBase::removeFdUserPair(int fd) {
 }
 
 void IrcDataBase::addNickFdPair(string &nick, int fd) {
-    nick_fd_map.insert(std::make_pair(nick, fd));
+    nick_fd_map.insert(std::pair<string, int>(nick, fd));
 }
 
 void IrcDataBase::removeNickFdPair(string &nick) {
@@ -71,7 +71,7 @@ void IrcDataBase::removeNickFdPair(string &nick) {
 }
 
 void IrcDataBase::addNewChannel(Channel& new_channel) {
-    channel_map.insert(std::make_pair(new_channel.name, new_channel));
+    channel_map.insert(std::pair<string, Channel>(new_channel.name, new_channel));
 }
 
 void IrcDataBase::removeChannel(Channel& channel) {

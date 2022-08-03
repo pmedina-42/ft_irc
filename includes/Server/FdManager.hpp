@@ -11,7 +11,15 @@
 
 namespace irc {
 
+/* 
+ * Esta clase sirve de base de datos para los sockets del servidor.
+ * Se encarga de inicializar el que está en esucha, de trabajar con
+ * la estructura de poll, y de aceptar y derivar conexiones de forma
+ * agnóstica: ni lee ni escribe de los sockets.
+ */
+
 class FdManager {
+
     public:
     FdManager(void);
     FdManager(std::string &ip, std::string &port);

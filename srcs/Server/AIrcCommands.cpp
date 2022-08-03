@@ -73,7 +73,8 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     User& user = getUserFromFd(fd);
     /* case nickname change */
     if (user.isResgistered()) {
-        LOG(DEBUG) << "user with nick" << user.real_nick << "changing nick to " << real_nick;
+        LOG(DEBUG) << "user with nick" << user.real_nick
+                   << " changing nick to " << real_nick;
         updateUserNick(fd, nick, real_nick);
         // THIS SHOULD NOTIFY CHANNELS OF THE NICKNAME CHANGE CYA
         return ;
@@ -118,6 +119,7 @@ void AIrcCommands::USER(Command &cmd, int fd) {
     if (full_name[0] == ':') {
         full_name = full_name.substr(1);
     }
+    user.full_name = full_name;
     /* rare case USER cmd is recieved before nick (irc hispano allows this) */
     if (user.nick.empty()) {
         return ;

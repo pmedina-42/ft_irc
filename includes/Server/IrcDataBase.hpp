@@ -6,6 +6,18 @@
 
 namespace irc {
 
+/* Esta clase guarda toda la información sobre usuarios y canales
+ * del servidor. Sirve para consultar, extraer, o añadir información
+ * sobre ambos. No se debe retraer un objeto User o Channel de ningun
+ * otro lugar que no sea esta clase. Para hacerlo, es importante 
+ * recuperarlos con referencias:
+ * User& user = getUserFrom___();
+ * Channel& channel = getChannelFrom___();
+ * De esta forma, se cumple RAII (Resource Aquisition Is Initialization),
+ * a la vez que se consigue una interfaz uniforme para trabajar con la 
+ * información que se tiene.
+ */
+
 class IrcDataBase {
 
     public:
@@ -33,7 +45,8 @@ class IrcDataBase {
     void addNewUser(int new_fd);
     void removeUser(int fd_idx);
 
-    void updateUserNick(int fd, std::string &new_nick, std::string &new_real_nick);
+    void updateUserNick(int fd, std::string &new_nick,
+                                std::string &new_real_nick);
 
     void addNickFdPair(std::string &nick, int fd);
     void removeNickFdPair(std::string &nick);

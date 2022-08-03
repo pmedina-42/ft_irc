@@ -32,8 +32,8 @@ class User {
     void setPrefixFromHost(std::string &host);
     /* ATTRIBUTES */
     int fd;
-    std::string real_nick; /* caRCe-b042 */
-    std::string nick;     /* CARCE-B042 */
+    std::string real_nick; // caRCe-b042 
+    std::string nick;      // CARCE-B042 (for lookups)
     std::string name;
     std::string full_name;
     std::string prefix;
