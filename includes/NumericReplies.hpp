@@ -62,7 +62,6 @@
  * Sent to a client who recently joined a channel with the topic, if set
  */
 # define RPL_TOPIC " 332 "
-# define STR_TOPIC "<nick><setat>"
 
 /**
  * Sent as a reply to the INVITE command to indicate that the attempt was
@@ -162,6 +161,12 @@
  */
 # define ERR_BADCHANMASK " 476 "
 # define STR_BADCHANMASK ":Bad Channel Mask"
+
+/**
+ * Returned when user tries to join more than once in a channel
+ */
+# define ERR_USERONCHANNEL " 443 "
+# define STR_USERONCHANNEL ":is already on channel"
 
 /**
  * Returned when a channel doesn't support modes

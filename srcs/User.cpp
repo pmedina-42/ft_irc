@@ -22,7 +22,6 @@ User::User(int fd)
         afk_msg(),
         connection_pass(),
         channel_mode(),
-        banned(false),
         ch_name_mask_map(),
         buffer_size(0),
         registered(false),
@@ -47,7 +46,6 @@ User::User(const User &other)
     afk_msg(other.afk_msg),
     connection_pass(other.connection_pass),
     channel_mode(other.channel_mode),
-    banned(other.banned),
     ch_name_mask_map(other.ch_name_mask_map),
     buffer_size(other.buffer_size),
     registered(other.registered),
@@ -75,7 +73,6 @@ User& User::operator=(const User& other) {
         afk_msg = other.afk_msg;
         connection_pass = other.connection_pass;
         channel_mode = other.channel_mode;
-        banned = other.banned;
         ch_name_mask_map = other.ch_name_mask_map;
         ft_memset(buffer, '\0', BUFF_MAX_SIZE);
         if (other.buffer_size > 0) {
@@ -106,10 +103,12 @@ void User::setPrefixFromHost(string &host) {
     prefix = real_nick + "!" + name + "@" + host;
 }
 
-// TODO
-void User::setChannelMask(string& name, char mode) {
-    (void)name;
-    (void)mode;
+void User::addChannelMask(string& channel, string mode) {
+    this->channel_mode.insert(std::make_pair(channel, mode));
+}
+
+void User::deleteChannelMask(string& channel) {
+    this->channel_mode.erase(channel);
 }
 
 bool User::hasLeftovers(void) const {
