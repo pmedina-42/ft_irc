@@ -18,44 +18,32 @@ class Channel {
     ~Channel();
 
     /* Class functions */
-    void addUser(User& user, std::string channel, std::string mode);
+    void addUser(User& user);
     void deleteUser(User& user);
     void banUser(User& user);
     void unbanUser(User& user);
-    bool userInBlackList(User& user);
+    bool userInBlackList(std::string nick);
     /* Esta función devuelve true si el canal está en modo invitación */
     bool inviteModeOn();
     bool keyModeOn();
     bool topicModeOn();
-    /* Esta función devuelve true si un usuario está invitado al canal
-     * si devuelve true, el usuario puede unirse al canal, si no no */
-    bool isInvited(User& user);
+    bool isInvited(std::string &nick);
     void setUserMode(User& user, char mode);
-    void addToWhitelist(User& user);
-    User& getUserFromFd(int fd);
-    User& getUserFromNick(std::string& nick);
-    bool userIsInChannel(int userFd);
+    void addToWhitelist(std::string &nick);
     bool userIsInChannel(std::string& nick);
     bool isUserOperator(User& user);
-    User& findUserByNick(std::string& nick);
     void setUserMode(User &user, std::string mode);
+    std::string getNextOpUser(std::string& nick);
 
     /* ATTRIBUTES */
-    /* Lista de usuarios que pertenecen al canal */
-    UserList users;
-    /* Lista de usuarios que son operadores */
-    UserList _oper_users;
-    /* Lista de usuarios invitados al canal */
-    NickUserMap white_list; // list maybe  ?
-    std::list<std::string> black_list;
+    NickList users;
+    NickList white_list;
+    NickList black_list;
 
-    /* Nombre del canal */
     std::string name;
-    /* Modo del canal */
+    // TODO: change channel mode to bitmask
     std::string mode;
-    /* Maximo de usuarios en el canal */
-    unsigned int _max_users;
-    /* Clave, si es que la tiene y el modo es k */
+    unsigned int max_users;
     std::string key;
     /**
      * Channel topic

@@ -21,7 +21,6 @@ User::User(int fd)
         server_mode(),
         afk_msg(),
         connection_pass(),
-        channel_mode(),
         ch_name_mask_map(),
         buffer_size(0),
         registered(false),
@@ -45,7 +44,6 @@ User::User(const User &other)
     server_mode(other.server_mode),
     afk_msg(other.afk_msg),
     connection_pass(other.connection_pass),
-    channel_mode(other.channel_mode),
     ch_name_mask_map(other.ch_name_mask_map),
     buffer_size(other.buffer_size),
     registered(other.registered),
@@ -72,7 +70,6 @@ User& User::operator=(const User& other) {
         server_mode = other.server_mode;
         afk_msg = other.afk_msg;
         connection_pass = other.connection_pass;
-        channel_mode = other.channel_mode;
         ch_name_mask_map = other.ch_name_mask_map;
         ft_memset(buffer, '\0', BUFF_MAX_SIZE);
         if (other.buffer_size > 0) {
@@ -101,14 +98,6 @@ bool User::operator==(User const &other) const {
  */
 void User::setPrefixFromHost(string &host) {
     prefix = real_nick + "!" + name + "@" + host;
-}
-
-void User::addChannelMask(string& channel, string mode) {
-    this->channel_mode.insert(std::make_pair(channel, mode));
-}
-
-void User::deleteChannelMask(string& channel) {
-    this->channel_mode.erase(channel);
 }
 
 bool User::hasLeftovers(void) const {
@@ -155,6 +144,34 @@ void User::updatePingStatus(string &random) {
 
 bool User::isResgistered(void) {
     return registered;
+}
+
+bool User::isAway(void) {
+    return ((server_mode & 0x40) >> 6);
+}
+
+bool User::isOperator(void) {
+    return ((server_mode & 0x80) >> 7);
+}
+
+void User::addChannelMask(string &channel, int bits) {
+    unsigned char &mask = ch_name_mask_map.find(channel)->second;
+    mask |= (0x01 << bits);
+}
+
+void User::deleteChannelMask(string &channel, int bits) {
+    unsigned char &mask = ch_name_mask_map.find(channel)->second;
+    mask &= ~(0x01 << bits);
+}
+
+void User::addServerMask(int bits) {
+    unsigned char &mask = server_mode;
+    mask |= (0x01 << bits);
+}
+
+void User::deleteServerMask(int bits) {
+    unsigned char &mask = server_mode;
+    mask &= ~(0x01 << bits);
 }
 
 User::~User() {

@@ -17,8 +17,7 @@ namespace irc {
  */
 Channel::Channel(string name, User& user) : name(name) {
     mode = "";
-    users.push_back(user);
-    user.addChannelMask(name, "o");
+    users.push_back(user.nick);
 }
 
 /**
@@ -37,9 +36,8 @@ Channel::~Channel() {
  * 1. Se comprueba la disponibilidad del canal a nivel de comando, antes de llamar esta funcion
  * 2. Se añade el usuario a la lista de usuarios
  */
-void Channel::addUser(User &user, std::string channel, std::string mode) {
-    users.push_back(user);
-    user.addChannelMask(channel, mode);
+void Channel::addUser(User &user) {
+    users.push_back(user.nick);
 }
 
 /** TODO : 
@@ -57,39 +55,40 @@ void Channel::addUser(User &user, std::string channel, std::string mode) {
  * 
  */
 void Channel::deleteUser(User &user) {
-    UserList::iterator end = users.end();
-    for (UserList::iterator u = users.begin(); u != end; u++) {
-        /* CYA : No hace falta la función isEqual. Los nick de usuario están
-         * todos ya en mayúscula, para que la búsqueda no tenga que hacerse
-         * pasando todo a mayuscula siempre. Cuando necesites el nick del usuario
-         * real (en plan PmEdinA en vez de PMEDINA, eso es user.real_nick)
-         */
-    LOG(DEBUG) << "usernick -" << user.nick << "- u->nick -" << u->nick << "-";
-        if (tools::isEqual(u->nick, user.nick)) {
+    NickList::iterator end = users.end();
+    for (NickList::iterator u = users.begin(); u != end; u++) {
+        if (!u->compare(user.nick)) {
             /* Search for first non-blacklist user */
-            if (u == users.begin()) {
-                UserList::iterator it = ++users.begin();
+            if (u == users.begin() && users.size() > 1) {
+                NickList::iterator it = ++users.begin();
                 while (userInBlackList(*it) && it != end)
                     it++;
                 /* no users outside blacklist, delete channel */
                 if (it == end) {
-                    /* CYA : no se pueden usar iteradores a la vez que se
-                     * llama a erase. Esto da problemas graves de memoria (si se le da un par de vueltas tiene sentido).
-                     * Para una lista, borrar todas las entradas es clear()
-                     */
                     users.clear();
-                    return ;
                 }
-                /* first non-blacklist user is now channel operator */
-                it->addChannelMask(name, "o");
-                LOG(DEBUG) << it->name << " mode " << it->channel_mode.find(name)->second;
             }
-            LOG(DEBUG) << "Before deleting user " << users.size();
             users.erase(u);
-            LOG(DEBUG) << "After deleting user " << users.size();
             break ;
         }
     }
+}
+
+string Channel::getNextOpUser(string &nick) {
+    NickList::iterator end = users.end();
+    for (NickList::iterator u = users.begin(); u != end; u++) {
+        LOG(DEBUG) << "Entra con " << nick << ", compara con " << *u << ", el primero es " << *users.begin();
+        if (!u->compare(nick) && u == users.begin() && users.size() > 1) {
+            NickList::iterator it = ++users.begin();
+            while (userInBlackList(*it) && it != end)
+                    it++;
+            if (it != end) {
+                LOG(DEBUG) << "Devuelve siguiente usuario " << *it;
+                return (*it);
+            }
+        }
+    }
+    return "";
 }
 
 /**
@@ -112,9 +111,9 @@ void Channel::unbanUser(User &user) {
 /**
  * Comprueba si el usuario está en la lista de baneados
  */
-bool Channel::userInBlackList(User &user) {
+bool Channel::userInBlackList(string nick) {
     list<string>::iterator end = black_list.end();
-    list<string>::iterator it = std::find(black_list.begin(), end, user.nick);
+    list<string>::iterator it = std::find(black_list.begin(), end, nick);
     return (it != end);
 }
 
@@ -143,82 +142,27 @@ bool Channel::topicModeOn() {
  * Check if user has operator channel_mode
  */
 bool Channel::isUserOperator(User &user) {
-    return (user.channel_mode.find(name)->second.find("o") != string::npos);
+    char mask = user.ch_name_mask_map.find(name)->second;
+    return (((mask & 0x80) >> 7));
 }
 
 /**
  * Añade un nuevo usuario a la whitelist 
  */
-void Channel::addToWhitelist(User &user) {
-    white_list.insert(std::pair<std::string, User>(tools::toUpper(user.nick), user));
+void Channel::addToWhitelist(std::string &nick) {
+    white_list.push_back(nick);
 }
 
 /**
  * Devuelve true si el usuario está en la white_list del canal 
  */
-bool Channel::isInvited(User &user) {
-    LOG(DEBUG) << user.nick;
-    return (white_list.find(user.nick) != white_list.end());
-}
-
-/**
- * Cambia el modo de un usuario dentro del canal
- */
-void Channel::setUserMode(User &user, string mode) {
-    user.channel_mode.find(name)->second = mode;
-}
-
-bool Channel::userIsInChannel(int userFd) {
-    for (UserList::iterator it = users.begin(); it != users.end(); it++) {
-        if (it->fd == userFd) {
-            return true;
-        }
-    }
-    return false;
+bool Channel::isInvited(std::string &nick) {
+    return (std::find(white_list.begin(), white_list.end(), nick) != white_list.end());
 }
 
 bool Channel::userIsInChannel(string& nick) {
-    for (UserList::iterator it = users.begin(); it != users.end(); it++) {
-        if (tools::isEqual(it->nick, nick)) {
-            return true;
-        }
-    }
-    return false; 
+    return (std::find(users.begin(), users.end(), nick) != users.end());
 }
 
-User& Channel::getUserFromFd(int fd) {
-    UserList::iterator end = users.end();
-    for (UserList::iterator it = users.begin(); it != end; it++) {
-        if (it->fd == fd) {
-            return *it;
-        }
-    }
-    return *end; // it never gets here
-}
-
-User& Channel::getUserFromNick(string& nick) {
-    UserList::iterator end = users.end();
-    for (UserList::iterator it = users.begin(); it != end; it++) {
-        if (tools::isEqual(it->nick, nick)) {
-            return *it;
-        }
-    }
-    return *end; // it never gets here
-    
-}
-
-/**
-* Check if user has operator channel_mode
-*/
-User& Channel::findUserByNick(string& nick) {
-    UserList::iterator it;
-    UserList::iterator end = users.end();
-    for (it = users.begin(); it != end; it++) {
-        if (tools::isEqual(it->nick, nick)) {
-            return *it;
-        }
-    }
-    return *end;
-}
 
 } // namespace

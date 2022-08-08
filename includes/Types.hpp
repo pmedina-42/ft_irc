@@ -32,6 +32,13 @@ typedef enum {
     NUMERIC_REPLY
 } FLAG_NUMERIC;
 
+typedef enum {
+    OPER = 7,
+    CH_MOD = 6,
+    SV_AWAY = 6
+} IRC_MODES;
+
+
 class Channel;
 class User;
 class Command;
@@ -39,8 +46,8 @@ class AIrcCommands;
 
 typedef std::map<std::string, irc::Channel> ChannelMap;
 typedef std::map<std::string, irc::User> NickUserMap;
-typedef std::list<irc::User> UserList;
-typedef std::map<std::string, char> ChannelMaskMap;
+typedef std::list<std::string> NickList;
+typedef std::map<std::string, unsigned char> ChannelMaskMap;
 typedef std::map<std::string, std::string> ChannelModeMap;
 
 typedef std::map<int, irc::User> FdUserMap;

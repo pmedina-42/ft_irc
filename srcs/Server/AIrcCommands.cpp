@@ -87,7 +87,7 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     if (!user.name.empty() && !user.full_name.empty()) {
         user.setPrefixFromHost(hostname);
         user.registered = true;
-        user.server_mode = "o";
+        user.addServerMask(OPER);
         return sendWelcome(user.name, user.prefix, fd);
     }
 }
@@ -127,7 +127,7 @@ void AIrcCommands::USER(Command &cmd, int fd) {
     /* generic case (USER comand after NICK for registration) */
     user.setPrefixFromHost(hostname);
     user.registered = true;
-    user.server_mode = "o";
+    user.addServerMask(OPER);
     return sendWelcome(user.name, user.prefix, fd);
 }
 
@@ -211,28 +211,21 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     }
     /* case channel does not exist */
     if (!channel_map.count(cmd.args[1])) {
-        //LOG(DEBUG) << "join: channel doesn't exist";
-        //LOG(DEBUG) << "join: creating channel with name " << ch_name;
         Channel channel(ch_name, user);
-        //LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode << " after joining channel";
-        channel.setUserMode(user, "o");
+        user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x80));
         if (size >= 3) {
             channel.key = cmd.args[2];
         }
         addNewChannel(channel);
-        LOG(DEBUG) << "join: users size: " << channel.users.size();
-        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode.find(channel.name)->second << " after joining channel";
     /* case channel exists already */
     } else {
-        LOG(DEBUG) << "join: channel exists";
         Channel &channel = getChannelFromName(ch_name);
-        if (channel.userIsInChannel(fd)) {
+        if (channel.userIsInChannel(user.nick)) {
             string reply(ERR_USERONCHANNEL" "+user.nick+" "+channel.name+" "STR_USERONCHANNEL);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         if (channel.inviteModeOn()) {
-            LOG(DEBUG) << "channel mode :" << channel.mode;
-            if (!channel.isInvited(user)) {
+            if (!channel.isInvited(user.nick)) {
                 string reply(ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
                 return DataToUser(fd, reply, NUMERIC_REPLY);
             }
@@ -244,10 +237,8 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
                 return DataToUser(fd, reply, NUMERIC_REPLY);
             }
         }
-        LOG(DEBUG) << "join: adding ch_user to existing channel";
-        channel.addUser(user, channel.name, "");
-        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode.find(channel.name)->second << " after joining channel " << channel.name;
-        LOG(DEBUG) << "join: users size: " << channel.users.size();
+        channel.addUser(user);
+        user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x0));
         if (channel.topicModeOn()) {
             string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
             DataToUser(fd, reply, NUMERIC_REPLY);
@@ -284,15 +275,16 @@ void AIrcCommands::PART(Command &cmd, int fd) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
-	std::cout << "Is user in channel " << !channel.userIsInChannel(fd);
-    if (!channel.userIsInChannel(fd)) {
+    if (!channel.userIsInChannel(user.nick)) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
-    LOG(DEBUG) << "part: deleting ch_user " << user.name << " in channel " << channel.name;
-    LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode.find(channel.name)->second << " before being erased";
+    string next =  channel.getNextOpUser(user.nick);
+    if (next.compare("")) {
+        User &nextOp = getUserFromNick(next);
+        nextOp.addChannelMask(channel.name, OPER);
+    }
     channel.deleteUser(user);
-    user.deleteChannelMask(channel.name);
-    LOG(DEBUG) << "part: users size: " << channel.users.size();
+    user.ch_name_mask_map.erase(channel.name);
     if (channel.users.size() == 0) {
         LOG(DEBUG) << "part: deleting empty channel";
         removeChannel(channel);
@@ -333,7 +325,7 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
-    if (!channel.userIsInChannel(fd)) {
+    if (!channel.userIsInChannel(user.nick)) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     if (!tools::charIsInString(channel.mode, 't')) {
@@ -390,7 +382,7 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
-    if (!channel.userIsInChannel(fd)) {
+    if (!channel.userIsInChannel(user.nick)) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     if (!channel.isUserOperator(user)) {
@@ -400,7 +392,7 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     if (!channel.userIsInChannel(nick)) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
-    User& user_to_kick = channel.getUserFromNick(nick);
+    User& user_to_kick = getUserFromNick(nick);
     channel.banUser(user_to_kick); // Ban this user??
     channel.deleteUser(user_to_kick);
 
@@ -437,36 +429,25 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
     if (!tools::charIsInString(channel.mode, 'i')) {
         return sendNoChannelModes(cmd.Name(), fd);
     }
-    if (!channel.userIsInChannel(fd)) {
+    if (!channel.userIsInChannel(user.nick)) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(cmd.Name(), fd);
     }
-    if (!nick_fd_map.count(tools::toUpper(cmd.args[1]))) {
+    string nick = cmd.args[1];
+    tools::ToUpperCase(nick);
+    if (!nick_fd_map.count(nick)) {
         string reply = (ERR_NOSUCHNICK + cmd.Name() + STR_NOSUCHNICK);
         LOG(DEBUG) << reply;
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
-    if (channel.userIsInChannel(cmd.args[1])) {
-        return ; // el usuario ya esta en el canal. no hace falta inv
+    if (channel.userIsInChannel(nick)) {
+        string reply(ERR_USERONCHANNEL" "+user.nick+" "+nick+" "+channel.name+" "STR_USERONCHANNEL);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
-    string nick = cmd.args[1];
-    tools::ToUpperCase(nick);
-    User invited_user = getUserFromNick(nick);
-    channel.addToWhitelist(invited_user);
-    LOG(DEBUG) << "User is invited " << channel.isInvited(user);
-    // TODO : else, añadir el usuario a la whitelist (cuando haya que hacerlo, usuario exista etc.)
-    /*nick_fd_map.count(cmd.args[1]);
-    LOG(DEBUG) << "invite: channel User " << user_to_inv.nick << " has been invited";
-    channel.addToWhitelist(user_to_inv);
-    LOG(DEBUG) << "invite: WhiteList size " << channel.white_list.size();
-    if (size == 3) {
-        // TODO: mandar mensajes por defecto y por parametro a los Users
-    } else {
-
-    }*/
-
+    channel.addToWhitelist(nick);
+    // TODO: mandar mensajes por defecto y por parametro a los Users
 }
 
 /**
@@ -498,11 +479,9 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
-        if (!channel.userIsInChannel(fd)) {
+        if (!channel.userIsInChannel(user.nick)) {
             return sendNotOnChannel(cmd.Name(), fd);
         }
-        LOG(DEBUG) << user.channel_mode.find(channel.name)->second;
-        LOG(DEBUG) << user.name << " has channel_mode " << user.channel_mode.find(channel.name)->second << " after joining channel " << channel.name;
         if (!channel.isUserOperator(user)) {
             return sendChannelOperatorNeeded(cmd.Name(), fd);
         }
@@ -581,11 +560,11 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         }
         if (tools::charIsInString(mode, '+')
             && tools::charIsInString(mode, 'a')) {
-            user.server_mode.append("a");
+            user.addServerMask(SV_AWAY);
         }
         if (tools::charIsInString(mode, '-')
             && tools::charIsInString(mode, 'a')) {
-            user.server_mode.erase(mode.find("a"));
+            user.deleteServerMask(SV_AWAY);
         }
     }
 }
@@ -649,7 +628,7 @@ void AIrcCommands::AWAY(Command &cmd, int fd) {
         user.afk_msg = "";
         LOG(DEBUG) << user.afk_msg;
     }
-    if (tools::charIsInString(user.server_mode, 'a')) {
+    if (user.isAway()) {
         string reply = (RPL_NOWAWAY STR_NOWAWAY);
         LOG(DEBUG) << user.server_mode;
         return DataToUser(fd, reply, NUMERIC_REPLY);

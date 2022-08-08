@@ -165,14 +165,6 @@ bool charIsInString(const string &str, const char c) {
     return (str.find(c) != string::npos);
 }
 
-/* Check if a char is inside a string */
-string toUpper(string str) {
-    for (int i = 0; str[i]; i++) {
-        str[i] = toupper(str[i]);
-    }
-    return str;
-}
-
 /*
  * from https://stackoverflow.com/questions/440133
  * See https://cplusplus.com/reference/cstdlib/rand/

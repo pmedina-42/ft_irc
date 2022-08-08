@@ -38,15 +38,12 @@ class User {
     std::string full_name;
     std::string prefix;
     std::string mask;
-    std::string server_mode;
+    unsigned char server_mode;
     std::string afk_msg;
     std::string connection_pass;
 
     /* Channel Things */
-    ChannelModeMap channel_mode;
     ChannelMaskMap ch_name_mask_map;
-    void addChannelMask(std::string &name, std::string mode);
-    void deleteChannelMask(std::string &channel);
 
     char buffer[BUFF_MAX_SIZE];
     int buffer_size;
@@ -65,6 +62,12 @@ class User {
     void updatePingStatus(std::string &random);
 
     bool isResgistered(void);
+    bool isAway(void);
+    bool isOperator(void);
+    void addChannelMask(std::string &channel, int bits);
+    void deleteChannelMask(std::string &channel, int bits);
+    void addServerMask(int bits);
+    void deleteServerMask(int bits);
 
     bool on_pong_hold;
     time_t last_received;
