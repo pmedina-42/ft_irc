@@ -48,7 +48,7 @@ class IrcDataBase {
 
     /* interactors */
     void addNewUser(int new_fd);
-    void removeUser(int fd_idx);
+    void removeUser(int fd);
 
     void updateUserNick(int fd, std::string &new_nick,
                                 std::string &new_real_nick);

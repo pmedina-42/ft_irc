@@ -20,16 +20,31 @@ AIrcCommands::AIrcCommands(void)
     IrcDataBase()
 {}
 
+AIrcCommands::AIrcCommands(string &password)
+:
+    FdManager(),
+    IrcDataBase(),
+    password(password)
+{}
+
 AIrcCommands::AIrcCommands(string &hostname, string &port)
 :
     FdManager(hostname, port),
     IrcDataBase()
 {}
 
+AIrcCommands::AIrcCommands(string &hostname, string &port, string &password)
+:
+    FdManager(hostname, port),
+    IrcDataBase(),
+    password(password)
+{}
+
 AIrcCommands::AIrcCommands(const AIrcCommands& other)
 :
     FdManager(other),
-    IrcDataBase(other)
+    IrcDataBase(other),
+    password(other.password)
 {}
 
 AIrcCommands::~AIrcCommands()
@@ -83,12 +98,20 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     user.nick = nick;
     user.real_nick = real_nick;
     addNickFdPair(nick, fd);
-    /* case nickname is recieved after valid USER command */
-    if (!user.name.empty() && !user.full_name.empty()) {
+    /* case NICK is recieved before valid USER comand */
+    if (user.name.empty() || user.full_name.empty()) {
+        return ;
+    }
+    // register user if possible
+    if (user.last_password == password) {
         user.setPrefixFromHost(hostname);
         user.registered = true;
         user.addServerMask(OPER);
         return sendWelcome(user.name, user.prefix, fd);
+    } else {
+        sendPasswordMismatch(user.real_nick, fd);
+        removeUser(fd);
+        return closeConnection(fd);
     }
 }
 
@@ -124,12 +147,44 @@ void AIrcCommands::USER(Command &cmd, int fd) {
     if (user.nick.empty()) {
         return ;
     }
-    /* generic case (USER comand after NICK for registration) */
-    user.setPrefixFromHost(hostname);
-    user.registered = true;
-    user.addServerMask(OPER);
-    return sendWelcome(user.name, user.prefix, fd);
+    // register user if possible
+    if (user.last_password == password) {
+        user.setPrefixFromHost(hostname);
+        user.registered = true;
+        user.addServerMask(OPER);
+        return sendWelcome(user.name, user.prefix, fd);
+    } else {
+        sendPasswordMismatch(user.real_nick, fd);
+        removeUser(fd);
+        return closeConnection(fd);
+    }
 }
+
+/**
+ * Command: PASS
+ * Parameters: <password>
+ * If password is set on the server, users must provide it with
+ * this command to be registered. The password used for registration is
+ * the one correpsonding to the last valid PASS command recieved.
+ */
+void AIrcCommands::PASS(Command &cmd, int fd) {
+
+    User &user = getUserFromFd(fd);
+
+    /* case sending PASS command to server without password set, ignore */
+    if (!serverHasPassword()) {
+        return ;
+    }
+    if (user.registered) {
+        return sendAlreadyRegistered(user.real_nick, fd);
+    }
+    int size = cmd.args.size();
+    if (size < 2) {
+        return sendNeedMoreParams(cmd.Name(), fd);
+    }
+    user.last_password = cmd.args[1];
+}
+
 
 /*
  * Command: PING
@@ -199,7 +254,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     if (!user.isResgistered()) {
         return sendNotRegistered(cmd.Name(), fd);
     }
-    //LOG(DEBUG) << user.nick << " password is " << user.connection_pass;
+    //LOG(DEBUG) << user.nick << " password is " << user.last_pass;
     int size = cmd.args.size();
     //LOG(DEBUG) << "join: started";
     if (size < 2) {
@@ -567,25 +622,6 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             user.deleteServerMask(SV_AWAY);
         }
     }
-}
-
-/**
- * Command: PASS
- * Parameters: <password>
- * This command must be sent before user registration to set a connection password
- */
-void AIrcCommands::PASS(Command &cmd, int fd) {
-
-    User &user = getUserFromFd(fd);
-    
-    if (user.registered) {
-        return sendAlreadyRegistered(user.real_nick, fd);
-    }
-    int size = cmd.args.size();
-    if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd);
-    }
-    user.connection_pass = cmd.args[1];
 }
 
 /**

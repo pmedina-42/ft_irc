@@ -15,11 +15,17 @@ class Server : public AIrcCommands {
 
     public:
     Server(void);
+    Server(std::string &password);
     Server(std::string &ip, std::string &port);
+    Server(std::string &ip, std::string &port, std::string &password);
     Server(const Server &other);
     ~Server();
     
     private:
+
+    std::string password;
+    bool serverHasPassword();
+    //void registerUser(User &user);
 
     void DataFromUser(int fd);
     void DataToUser(int fd, std::string &data, int type);
@@ -37,7 +43,6 @@ class Server : public AIrcCommands {
     int srv_buff_size;
     std::string processLeftovers(int fd);
     void parseCommandBuffer(std::string &cmd_content, int fd);
-
 };
 
 /**

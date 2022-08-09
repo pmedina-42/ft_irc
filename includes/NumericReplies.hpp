@@ -142,6 +142,9 @@
 # define ERR_ALREADYREGISTERED " 462 "
 # define STR_ALREADYREGISTERED " :You may not reregister"
 
+# define ERR_PASSWDMISMATCH " 464 "
+# define STR_PASSWDMISMATCH " :Password incorrect"
+
 /**
  * Returned to indicate that a JOIN command failed because the channel is set to
  * invite channelMode and the client has not been invited

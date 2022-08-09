@@ -42,13 +42,17 @@ int main(int argc, char **argv) {
         if (argc == 1) {
             Server server;
             return 42;
+        } else if (argc == 2) { // only password set ! 
+        std::string password = argv[1];
+            Server server(password);
+            return 1;
         } else if (argc == 3) {
             std::string hostname(argv[1]);
             std::string port(argv[2]);
             Server(hostname, port);
             // connect to server using params
             return 1;
-        } else {
+        } else if (argc == 4) {
             return 42;
         }
     } catch (...) {

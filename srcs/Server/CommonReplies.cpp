@@ -57,5 +57,10 @@ void AIrcCommands::sendAlreadyRegistered(string &nick, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
+void AIrcCommands::sendPasswordMismatch(string &nick, int fd) {
+    string reply = (ERR_PASSWDMISMATCH+nick+STR_PASSWDMISMATCH);
+    DataToUser(fd, reply, NUMERIC_REPLY);
+}
+
 
 } /* namespace irc */

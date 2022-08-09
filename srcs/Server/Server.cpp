@@ -45,6 +45,16 @@ Server::Server(void)
     mainLoop();
 }
 
+Server::Server(string& password)
+:
+    AIrcCommands(password)
+{
+    ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
+    srv_buff_size = 0;
+    loadCommandMap();
+    mainLoop();
+}
+
 Server::Server(string &hostname, string &port)
 :
     AIrcCommands(hostname, port)
@@ -55,9 +65,20 @@ Server::Server(string &hostname, string &port)
     mainLoop();
 }
 
+Server::Server(string &hostname, string &port, string &password)
+:
+    AIrcCommands(hostname, port, password)
+{
+    ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
+    srv_buff_size = 0;
+    loadCommandMap();
+    mainLoop();
+}
+
 Server::Server(const Server& other)
 :
     AIrcCommands(other),
+    password(other.password),
     cmd_map(other.cmd_map),
     srv_buff_size(other.srv_buff_size)
 {
@@ -328,6 +349,11 @@ void Server::parseCommandBuffer(string &cmd_content, int fd) {
         (*this.*it->second)(command, fd);
     }
 }
+
+bool Server::serverHasPassword(void) {
+    return !password.empty();
+}
+
 
 } /* namespace irc */
 

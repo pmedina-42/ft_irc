@@ -21,11 +21,17 @@ class AIrcCommands : public FdManager,
 {
     public:
     AIrcCommands(void);
+    AIrcCommands(std::string &password);
     AIrcCommands(std::string &ip, std::string &port);
+    AIrcCommands(std::string &ip, std::string &port, std::string &password);
     AIrcCommands(const AIrcCommands &other);
     ~AIrcCommands();
-
+    
     /* Provided by Server */
+    std::string password; // = 0 is C++11 :(
+    virtual bool serverHasPassword(void) = 0;
+    //virtual void registerUser(User &user) = 0;
+
     virtual void DataFromUser(int fd) = 0;
     virtual void DataToUser(int fd, std::string &data, int type) = 0;
     virtual void loadCommandMap(void) = 0;
@@ -55,6 +61,8 @@ class AIrcCommands : public FdManager,
     void sendNoChannelModes(std::string &cmd_name, int fd);
     void sendChannelOperatorNeeded(std::string &cmd_name, int fd);
     void sendAlreadyRegistered(std::string &nick, int fd);
+    void sendPasswordMismatch(std::string &nick, int fd);
+
 };
 
 } // namespace

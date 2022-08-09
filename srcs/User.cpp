@@ -20,7 +20,7 @@ User::User(int fd)
         mask(),
         server_mode(),
         afk_msg(),
-        connection_pass(),
+        last_password(),
         ch_name_mask_map(),
         buffer_size(0),
         registered(false),
@@ -43,7 +43,7 @@ User::User(const User &other)
     mask(other.mask),
     server_mode(other.server_mode),
     afk_msg(other.afk_msg),
-    connection_pass(other.connection_pass),
+    last_password(other.last_password),
     ch_name_mask_map(other.ch_name_mask_map),
     buffer_size(other.buffer_size),
     registered(other.registered),
@@ -69,7 +69,7 @@ User& User::operator=(const User& other) {
         mask = other.mask;
         server_mode = other.server_mode;
         afk_msg = other.afk_msg;
-        connection_pass = other.connection_pass;
+        last_password = other.last_password;
         ch_name_mask_map = other.ch_name_mask_map;
         ft_memset(buffer, '\0', BUFF_MAX_SIZE);
         if (other.buffer_size > 0) {

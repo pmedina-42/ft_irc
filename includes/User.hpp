@@ -42,7 +42,7 @@ class User {
     std::string mask;
     unsigned char server_mode;
     std::string afk_msg;
-    std::string connection_pass;
+    std::string last_password; // only for password servers
 
     /* Channel Things */
     ChannelMaskMap ch_name_mask_map;
