@@ -66,6 +66,7 @@ class User {
     bool isResgistered(void);
     bool isAway(void);
     bool isOperator(void);
+    bool isChannelOperator(std::string name);
     bool isInChannel(std::string &channel); // nueva, carcebo
     void addChannelMask(std::string &channel, int bits);
     void deleteChannelMask(std::string &channel, int bits);

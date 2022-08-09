@@ -154,6 +154,10 @@ bool User::isOperator(void) {
     return ((server_mode & 0x80) >> 7);
 }
 
+bool User::isChannelOperator(string channel) {
+    return ((ch_name_mask_map.find(channel)->second & 0x80) >> 7);
+}
+
 bool User::isInChannel(std::string &channel_name) {
     return ch_name_mask_map.count(channel_name);
 }

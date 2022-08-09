@@ -53,6 +53,24 @@
 # define STR_NOWAWAY ":You have been marked as being away"
 
 /**
+ *  Sent as the first reply to the LIST command
+ */
+# define RPL_LISTSTART " 321 "
+# define STR_LISTSTART " Channel :Users Name"
+
+/**
+ *  Sent as the second reply to the LIST command
+ */
+# define RPL_LIST " 322 "
+
+/**
+ *  Sent as the last reply to the LIST command
+ */
+# define RPL_LISTEND " 323 "
+# define STR_LISTEND " :End of /LIST"
+
+
+/**
  * Sent to a client who recently joined a channel with no topic set
  */
 # define RPL_NOTOPIC " 331 "
@@ -69,6 +87,11 @@
  */
 # define RPL_INVITING " 341 "
 # define STR_INVITING ":<channel>"
+
+/**
+ * Sent as a response to NAMES command
+ */
+# define RPL_NAMREPLY " 353 "
 
 /**
  * Indicates that no client can be found for the supplied nickname
@@ -141,6 +164,12 @@
  */
 # define ERR_ALREADYREGISTERED " 462 "
 # define STR_ALREADYREGISTERED " :You may not reregister"
+
+/**
+ * Returned to indicate that a MODE argument is unrecognized
+ */
+# define ERR_UNKNOWNMODE " 472 "
+# define STR_UNKNOWNMODE " :is unknown mode char to me"
 
 /**
  * Returned to indicate that a JOIN command failed because the channel is set to
