@@ -94,6 +94,12 @@
 # define RPL_NAMREPLY " 353 "
 
 /**
+ * Sent as a response to NAMES command
+ */
+# define RPL_ENDOFNAMES " 366 "
+# define STR_ENDOFNAMES " :End of /NAMES list"
+
+/**
  * Indicates that no client can be found for the supplied nickname
  */
 # define ERR_NOSUCHNICK " 401 "

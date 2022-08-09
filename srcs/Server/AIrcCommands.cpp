@@ -220,6 +220,8 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
         }
         addNewChannel(channel);
         string namesReply = constructNamesReply(user.real_nick, channel);
+        DataToUser(fd, namesReply, NO_NUMERIC_REPLY);
+        namesReply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
         return (DataToUser(fd, namesReply, NO_NUMERIC_REPLY));
     /* case channel exists already */
     } else {
@@ -249,6 +251,8 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             DataToUser(fd, reply, NUMERIC_REPLY);
         }
         string namesReply = constructNamesReply(user.real_nick, channel);
+        DataToUser(fd, namesReply, NO_NUMERIC_REPLY);
+        namesReply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
         return (DataToUser(fd, namesReply, NO_NUMERIC_REPLY));
     }
 }
@@ -685,6 +689,8 @@ void AIrcCommands::NAMES(Command &cmd, int fd) {
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
         string reply = constructNamesReply(user.real_nick, channel);
+        DataToUser(fd, reply, NO_NUMERIC_REPLY);
+        reply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
         return (DataToUser(fd, reply, NO_NUMERIC_REPLY));
     }
 
@@ -703,6 +709,16 @@ void AIrcCommands::LIST(Command &cmd, int fd) {
         return sendNotRegistered(cmd.Name(), fd);
     }
     int size = cmd.args.size();
+    if (size == 1) {
+        string reply = (RPL_LISTSTART + user.real_nick + STR_LISTSTART);
+        DataToUser(fd, reply, NUMERIC_REPLY);
+        for (std::map<std::string, irc::Channel>::iterator it = channel_map.begin(); it != channel_map.end(); it++) {
+            reply = constructListReply(user.real_nick, it->second);
+            DataToUser(fd, reply, NUMERIC_REPLY);
+        }
+        reply = (RPL_LISTEND + user.real_nick + STR_LISTEND);
+        DataToUser(fd, reply, NUMERIC_REPLY);
+    }
     if (size == 2) {
         if (!channelExists(cmd.args[1])) {
             return sendNoSuchChannel(cmd.Name(), fd);
@@ -741,6 +757,7 @@ string AIrcCommands::constructListReply(string nick, Channel &channel) {
     mode += channel.topicModeOn() ? "t" : "";
     mode = mode.length() != 0 ? ("+" + mode) : mode;
     string reply = (RPL_LIST + nick + " " + channel.name + " " + std::to_string(channel.users.size()) + " [" + mode + "]");
+    reply += channel.topicModeOn() ? (" " + channel.topic) : "";
     return reply;
 }
 
