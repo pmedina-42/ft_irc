@@ -13,6 +13,10 @@ class User;
 /* TODO: comprobar y setear tamaño máximo de usuarios dentro de un canal? */
 
 class Channel {
+
+    typedef std::list<std::string> NickList;
+
+
     public:
     Channel(std::string name, User& user);
     ~Channel();

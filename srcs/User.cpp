@@ -154,24 +154,28 @@ bool User::isOperator(void) {
     return ((server_mode & 0x80) >> 7);
 }
 
+bool User::isInChannel(std::string &channel_name) {
+    return ch_name_mask_map.count(channel_name);
+}
+
+/* LLamar después de comprobar que un canal existe ! (importante) */
 void User::addChannelMask(string &channel, int bits) {
     unsigned char &mask = ch_name_mask_map.find(channel)->second;
     mask |= (0x01 << bits);
 }
 
+/* Lo mismo que arriba */
 void User::deleteChannelMask(string &channel, int bits) {
     unsigned char &mask = ch_name_mask_map.find(channel)->second;
     mask &= ~(0x01 << bits);
 }
 
 void User::addServerMask(int bits) {
-    unsigned char &mask = server_mode;
-    mask |= (0x01 << bits);
+    server_mode |= (0x01 << bits);
 }
 
 void User::deleteServerMask(int bits) {
-    unsigned char &mask = server_mode;
-    mask &= ~(0x01 << bits);
+    server_mode &= ~(0x01 << bits);
 }
 
 User::~User() {

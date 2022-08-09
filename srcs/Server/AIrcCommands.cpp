@@ -210,7 +210,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
         return sendBadChannelMask(cmd.Name(), fd);
     }
     /* case channel does not exist */
-    if (!channel_map.count(cmd.args[1])) {
+    if (!channelExists(cmd.args[1])) {
         Channel channel(ch_name, user);
         user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x80));
         if (size >= 3) {
@@ -238,7 +238,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             }
         }
         channel.addUser(user);
-        user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x0));
+        user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x00));
         if (channel.topicModeOn()) {
             string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
             DataToUser(fd, reply, NUMERIC_REPLY);
@@ -271,7 +271,7 @@ void AIrcCommands::PART(Command &cmd, int fd) {
     if (!tools::starts_with_mask(cmd.args[1])) {
         return sendBadChannelMask(cmd.Name(), fd);
     }
-    if (!channel_map.count(cmd.args[1])) {
+    if (!channelExists(cmd.args[1])) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
@@ -321,7 +321,7 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
     if (!tools::starts_with_mask(cmd.args[1])) {
         return sendBadChannelMask(cmd.Name(), fd);
     }
-    if (!channel_map.count(cmd.args[1])) {
+    if (!channelExists(cmd.args[1])) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
@@ -378,7 +378,7 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     if (!tools::starts_with_mask(cmd.args[1])) {
         return sendBadChannelMask(cmd.Name(), fd);
     }
-    if (!channel_map.count(cmd.args[1])) {
+    if (!channelExists(cmd.args[1])) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
@@ -422,7 +422,7 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
     if (size < 3) {
         return sendNeedMoreParams(cmd.Name(), fd);
     }
-    if (!channel_map.count(cmd.args[2])) {
+    if (!channelExists(cmd.args[2])) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[2])->second;
@@ -475,7 +475,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         if (size < 4) {
             return sendNeedMoreParams(cmd.Name(), fd);
         }
-        if (!channel_map.count(cmd.args[1])) {
+        if (!channelExists(cmd.args[1])) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;

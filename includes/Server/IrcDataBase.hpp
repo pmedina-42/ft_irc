@@ -20,6 +20,10 @@ namespace irc {
 
 class IrcDataBase {
 
+    typedef std::map<std::string, irc::Channel> ChannelMap;
+    typedef std::map<int, irc::User> FdUserMap;
+    typedef std::map<std::string, int> NickFdMap;
+
     public:
     IrcDataBase(void);
     IrcDataBase(const IrcDataBase& other);
@@ -34,6 +38,7 @@ class IrcDataBase {
     bool fdExists(int fd);
     bool nickExists(std::string& nick);
     bool nickFormatOk(std::string &nickname);
+    bool channelExists(std::string &channel_name);
     
     /* accessors */
     User& getUserFromFd(int fd);

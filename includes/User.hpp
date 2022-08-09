@@ -21,6 +21,8 @@ namespace irc {
 
 class User {
 
+    typedef std::map<std::string, unsigned char> ChannelMaskMap;
+
     public:
     User(int fd);
     User(const User &other);
@@ -64,6 +66,7 @@ class User {
     bool isResgistered(void);
     bool isAway(void);
     bool isOperator(void);
+    bool isInChannel(std::string &channel); // nueva, carcebo
     void addChannelMask(std::string &channel, int bits);
     void deleteChannelMask(std::string &channel, int bits);
     void addServerMask(int bits);

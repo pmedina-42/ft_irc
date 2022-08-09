@@ -27,7 +27,6 @@ Channel::Channel(string name, User& user) : name(name) {
 Channel::~Channel() {
 }
 
-
 /* CLASS FUNCTIONS */
 
 /* TODO: añadir controles con los demás modos de canal */

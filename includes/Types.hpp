@@ -38,23 +38,10 @@ typedef enum {
     SV_AWAY = 6
 } IRC_MODES;
 
-
 class Channel;
 class User;
 class Command;
 class AIrcCommands;
-
-typedef std::map<std::string, irc::Channel> ChannelMap;
-typedef std::map<std::string, irc::User> NickUserMap;
-typedef std::list<std::string> NickList;
-typedef std::map<std::string, unsigned char> ChannelMaskMap;
-typedef std::map<std::string, std::string> ChannelModeMap;
-
-typedef std::map<int, irc::User> FdUserMap;
-typedef std::map<std::string, int> NickFdMap;
-
-typedef void (irc::AIrcCommands::*CommandFnx)(Command &cmd, int fd);
-typedef std::map<std::string, CommandFnx> CommandMap;
 
 }
 

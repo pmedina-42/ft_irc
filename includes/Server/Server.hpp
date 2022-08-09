@@ -10,6 +10,9 @@ namespace irc {
 
 class Server : public AIrcCommands {
 
+    typedef void (irc::AIrcCommands::*CommandFnx)(Command &cmd, int fd);
+    typedef std::map<std::string, CommandFnx> CommandMap;
+
     public:
     Server(void);
     Server(std::string &ip, std::string &port);
