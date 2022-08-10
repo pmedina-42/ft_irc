@@ -26,8 +26,11 @@ namespace irc {
  * 
  * 
  * User modes que nos son utiles : 
- * +i / +o : Invitación / operador.
+ * 
+ * +i / +o : Invitación / operador == OK
+ * 
  * Por qué no usar el rresto :
+ * 
  * +0 : indica que el operador es local, de este servidor only. Nosotros
  *      no hacemos conexion servidor - servidor, por lo que no hay diferencia
  *      entre 'o' y '0'.
@@ -39,12 +42,15 @@ namespace irc {
  * +w : WALLOPS user mode. A no ser que se quiera investigar que mierda significa
  *      esto, mejor ni meterlo.
  * 
+ * 
+ * 
  * Channel modes que nos son utiles :
  * 
  * (Por cierto no he encontrado dónde un chanop setea otro chanop. En plan el comando de MODE que lo hace.
  *  Supongo que MODE &channelname +o <new_operator_nickname>)
  * 
- * +b / +i / +k : ban list, inivitation list, key protection.
+ * +b / +i / +k : ban list, inivitation list, key protection. == OK
+ * 
  * El resto de channel modes me parecen una patata. Porque son tonterías como
  *  +t : el topic solo puede cambiarlo el operator
  *  +s : el channel es secreto y no se ve en list
