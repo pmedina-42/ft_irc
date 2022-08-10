@@ -6,6 +6,7 @@
 #include "NumericReplies.hpp"
 #include "Log.hpp"
 #include "Channel.hpp"
+#include "Exceptions.hpp"
 
 #include "libft.h"
 
@@ -146,10 +147,11 @@ void AIrcCommands::USER(Command &cmd, int fd) {
 void AIrcCommands::PING(Command &cmd, int fd) {
     
     int size = cmd.args.size();
+    User& user = getUserFromFd(fd);
+
     if (size < 2) {
         return sendNeedMoreParams(cmd.Name(), fd);
     }
-    User& user = getUserFromFd(fd);
     if (!user.isResgistered()) {
         return sendNotRegistered(cmd.Name(), fd);
     }
@@ -164,8 +166,8 @@ void AIrcCommands::PING(Command &cmd, int fd) {
 void AIrcCommands::PONG(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
-
     int size = cmd.args.size();
+
     /* PONG has no replies */
     if (size < 2
         /* case pong is recieved wihtout previous PING */
@@ -197,12 +199,11 @@ void AIrcCommands::PONG(Command &cmd, int fd) {
 void AIrcCommands::JOIN(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
+    int size = cmd.args.size();
+
     if (!user.isResgistered()) {
         return sendNotRegistered(cmd.Name(), fd);
     }
-    //LOG(DEBUG) << user.nick << " password is " << user.connection_pass;
-    int size = cmd.args.size();
-    //LOG(DEBUG) << "join: started";
     if (size < 2) {
         return sendNeedMoreParams(cmd.Name(), fd);
     }
@@ -230,19 +231,20 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             string reply(ERR_USERONCHANNEL" "+user.nick+" "+channel.name+" "STR_USERONCHANNEL);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        if (channel.inviteModeOn()) {
-            if (!channel.isInvited(user.nick)) {
-                string reply(ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
-                return DataToUser(fd, reply, NUMERIC_REPLY);
-            }
-        } // TODO : tiene sentido tener modo invitacion y contraseña a la vez?
-        if (channel.keyModeOn()) {
-            if (size == 2
-                || channel.key.compare(cmd.args[2]))
-            {
-                string reply(ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
-                return DataToUser(fd, reply, NUMERIC_REPLY);
-            }
+        if (channel.inviteModeOn()
+            && !channel.isInvited(user.nick))
+        {
+            string reply(ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
+            return DataToUser(fd, reply, NUMERIC_REPLY);
+        }
+        if (channel.keyModeOn()
+            /* command has no key */
+            && (size == 2
+            /* key does not match */
+            || channel.key.compare(cmd.args[2]) != 0))
+        {
+            string reply(ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
+            return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         channel.addUser(user);
         user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x00));
@@ -346,7 +348,9 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
             string reply(RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
+        string reply(RPL_TOPIC + user.nick + " "
+                               + channel.name + " :"
+                               + channel.topic);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     if (size == 3) {
@@ -358,7 +362,9 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
             return ;
         }
         channel.topic = cmd.args[2].substr(1);
-        string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
+        string reply(RPL_TOPIC + user.nick + " "
+                               + channel.name + " :"
+                               + channel.topic);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     else {
@@ -754,10 +760,15 @@ string AIrcCommands::constructNamesReply(string nick, Channel &channel) {
 string AIrcCommands::constructListReply(string nick, Channel &channel) {
     string mode = channel.keyModeOn() ? "k" : "";
     mode += channel.inviteModeOn() ? "i" : "";
-    mode += channel.topicModeOn() ? "t" : "";
+    mode += channel.topicModeOn() ? "t" : ""; // ERSTOVA FUERA XDDD
     mode = mode.length() != 0 ? ("+" + mode) : mode;
-    string reply = (RPL_LIST + nick + " " + channel.name + " " + std::to_string(channel.users.size()) + " [" + mode + "]");
+    char* channel_size = ft_itoa((int)channel.users.size());
+    if (!channel_size) {
+        throw irc::exc::MallocError();   
+    }
+    string reply = (RPL_LIST + nick + " " + channel.name + " " + std::string(channel_size) + " [" + mode + "]");
     reply += channel.topicModeOn() ? (" " + channel.topic) : "";
+    free(channel_size);
     return reply;
 }
 

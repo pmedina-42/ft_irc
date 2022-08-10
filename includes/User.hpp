@@ -28,7 +28,7 @@ namespace irc {
  * 
  * User modes que nos son utiles : 
  * 
- * +i / +o : Invsibilidad / operador == OK
+ * +i / +o : Invisibilidad / operador == OK
  * 
  * Por qué no usar el rresto :
  * 
@@ -44,15 +44,16 @@ namespace irc {
  *      esto, mejor ni meterlo.
  * 
  * 
- * 
  * Channel modes que nos son utiles :
  * 
- * (Por cierto no he encontrado dónde un chanop setea otro chanop. En plan el comando de MODE que lo hace.
- *  Supongo que MODE &channelname +o <new_operator_nickname>)
+ * (Por cierto no he encontrado dónde un chanop setea otro chanop.
+ * En plan el comando de MODE que lo hace.
+ * Supongo que MODE &channelname +o <new_operator_nickname>)
  * 
  * +b / +i / +k : ban list, inivitation list, key protection. == OK
  * 
  * El resto de channel modes me parecen una patata. Porque son tonterías como
+ * 
  *  +t : el topic solo puede cambiarlo el operator
  *  +s : el channel es secreto y no se ve en list
  *  +n : controla si los usuarios pueden escribir al canal sin estar dentro 
