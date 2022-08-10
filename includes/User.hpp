@@ -19,6 +19,62 @@ namespace irc {
  *
  */
 
+
+/*
+ * Christian 10/08/2022 : 
+ * Toda esta info esta sacada de https://modern.ircdocs.horse/#user-modes
+ * 
+ * 
+ * User modes que nos son utiles : 
+ * +i / +o : Invitación / operador.
+ * Por qué no usar el rresto :
+ * +0 : indica que el operador es local, de este servidor only. Nosotros
+ *      no hacemos conexion servidor - servidor, por lo que no hay diferencia
+ *      entre 'o' y '0'.
+ * +r : Esto es para servidores que utilicen IRCv3, que guardan en base de datos
+ *      usuarios, credenciales, contraseñas de inicio de sesión, y toda la
+ *      parafernalia que hace que te puedas desconectar y el servidor luego siga
+ *      sabiendo quien eres con darle unas credenciales. Se va mucho más allá 
+ *      del objetivo del proyecto.
+ * +w : WALLOPS user mode. A no ser que se quiera investigar que mierda significa
+ *      esto, mejor ni meterlo.
+ * 
+ * Channel modes que nos son utiles :
+ * 
+ * (Por cierto no he encontrado dónde un chanop setea otro chanop. En plan el comando de MODE que lo hace.
+ *  Supongo que MODE &channelname +o <new_operator_nickname>)
+ * 
+ * +b / +i / +k : ban list, inivitation list, key protection.
+ * El resto de channel modes me parecen una patata. Porque son tonterías como
+ *  +t : el topic solo puede cambiarlo el operator
+ *  +s : el channel es secreto y no se ve en list
+ *  +n : controla si los usuarios pueden escribir al canal sin estar dentro 
+ *  +m : controla si puede hablar gente que no sea moderadora. 
+ *  +l : controla si el canal tiene limite de clientes o no.
+ *  +e : controla que pueda haber excepciones a los baneados.
+ *  +I : invite-exception channel mode. No quiero ni saber lo que es.
+ * 
+ * Razones por las que no son necesarias estas anteriores mascaras, una por una:
+ * +t : Se fijan unas normas. El topic lo cambia solo el operator desde siempre.
+ *      Y nunca podrá hacerlo alguien que no sea operator. Fasil rapido sencillo.
+ * +s : Se puede hacer que si un channel tiene key o invitación o las dos, no sea
+ *      visible. O pasar completamente del feature. Sobre este tengo dudas porque es 
+ *      una chorrada implementarlo. Pero cuanto menos metamos mejor.
+ * +n : Qué cojones. Se setea que para hablar en un canal has de estar dentro y punto.
+ *      Quieres decir solo una cosa a un canal ? Entras, lo dices, y te piras. Nada de
+ *      tener un modo para esto, que solo trae dolores de cabeza.
+ * +m : Si los operadores quieren hablar solo ellos con el resto de público, que se jodan.
+ *      Si han de hablar de algo importante, lo mismo da porque el resto de no-operadores les
+ *      leerían y aquello que es tan importante lo verían todos. Este modo, en mi opinión, 
+ *      no tiene sentido ni en el protocolo real.
+ * +l : Esto se setea en el server y será absoluto. Numero de clientes por canal ? Los que 
+ *      nos salgan de los huevos. Pero no se deja abierta la posibilidad de cambiarlo a un
+ *      usuario cualquiera.
+ * +e : excepciones a baneos ? Qué tal desbanear ? XD. Flag de principio a fin inútil.
+ * +I : solo el nombre ya da palo. 
+ * 
+ */
+
 class User {
 
     typedef std::map<std::string, unsigned char> ChannelMaskMap;
