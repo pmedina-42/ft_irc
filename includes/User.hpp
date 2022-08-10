@@ -23,7 +23,8 @@ namespace irc {
 /*
  * Christian 10/08/2022 : 
  * Toda esta info esta sacada de https://modern.ircdocs.horse/#user-modes
- * 
+ * Complementada con http://www.geekshed.net/commands/user-modes/
+ *  y http://www.geekshed.net/commands/channel-modes/
  * 
  * User modes que nos son utiles : 
  * 
