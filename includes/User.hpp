@@ -27,7 +27,7 @@ namespace irc {
  * 
  * User modes que nos son utiles : 
  * 
- * +i / +o : Invitación / operador == OK
+ * +i / +o : Invsibilidad / operador == OK
  * 
  * Por qué no usar el rresto :
  * 
