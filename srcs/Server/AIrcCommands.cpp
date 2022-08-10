@@ -275,10 +275,12 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             channel.addMode(CH_PAS);
         }
         addNewChannel(channel);
+        string join_rpl = ":" + user.prefix + " JOIN :" + ch_name;
+        DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
         string namesReply = constructNamesReply(user.real_nick, channel);
-        DataToUser(fd, namesReply, NO_NUMERIC_REPLY);
+        DataToUser(fd, namesReply, NUMERIC_REPLY);
         namesReply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
-        return (DataToUser(fd, namesReply, NO_NUMERIC_REPLY));
+        return (DataToUser(fd, namesReply, NUMERIC_REPLY));
     /* case channel exists already */
     } else {
         Channel &channel = getChannelFromName(ch_name);
