@@ -78,7 +78,7 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     tools::ToUpperCase(nick);
     /* case forbidden characters are found / incorrect length */
     if (nickFormatOk(real_nick) == false) {
-        string reply(ERR_ERRONEUSNICKNAME+real_nick+STR_ERRONEUSNICKNAME);
+        string reply(ERR_ERRONEUSNICKNAME + real_nick + STR_ERRONEUSNICKNAME);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     /* case nickname is equal to some other in the server
@@ -269,7 +269,8 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     /* case channel does not exist */
     if (!channelExists(cmd.args[1])) {
         Channel channel(ch_name, user);
-        user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x80));
+        user.ch_name_mask_map.insert(
+                    std::pair<string, unsigned char>(channel.name, 0x80));
         if (size >= 3) {
             channel.key = cmd.args[2];
             channel.addMode(CH_PAS);
@@ -279,19 +280,24 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
         DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
         string namesReply = constructNamesReply(user.real_nick, channel);
         DataToUser(fd, namesReply, NUMERIC_REPLY);
-        namesReply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
+        namesReply = (RPL_ENDOFNAMES + user.real_nick + " "
+                                     + channel.name
+                                     + STR_ENDOFNAMES);
         return (DataToUser(fd, namesReply, NUMERIC_REPLY));
     /* case channel exists already */
     } else {
         Channel &channel = getChannelFromName(ch_name);
         if (channel.userIsInChannel(user.nick)) {
-            string reply(ERR_USERONCHANNEL" "+user.nick+" "+channel.name+" "STR_USERONCHANNEL);
+            string reply(ERR_USERONCHANNEL" " + user.nick + " "
+                                              + channel.name
+                                              + " "STR_USERONCHANNEL);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         if (channel.inviteModeOn()
             && !channel.isInvited(user.nick))
         {
-            string reply(ERR_INVITEONLYCHAN+cmd.Name()+STR_INVITEONLYCHAN);
+            string reply(ERR_INVITEONLYCHAN + cmd.Name()
+                                            + STR_INVITEONLYCHAN);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         if (channel.keyModeOn()
@@ -300,7 +306,8 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             /* key does not match */
             || channel.key.compare(cmd.args[2]) != 0))
         {
-            string reply(ERR_BADCHANNELKEY+cmd.Name()+STR_BADCHANNELKEY);
+            string reply(ERR_BADCHANNELKEY + cmd.Name()
+                                           + STR_BADCHANNELKEY);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         channel.addUser(user);
