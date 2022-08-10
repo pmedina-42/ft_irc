@@ -50,6 +50,9 @@ class AIrcCommands : public FdManager,
     void PART(Command &cmd, int fd);
     void TOPIC(Command &cmd, int fd);
     void INVITE(Command &cmd, int fd);
+    void OPER(Command &cmd, int fd);
+    void NAMES(Command &cmd, int fd);
+    void LIST(Command &cmd, int fd);
 
     /* Common replies */
     void sendWelcome(std::string& name, std::string &prefix, int fd);
@@ -63,6 +66,10 @@ class AIrcCommands : public FdManager,
     void sendAlreadyRegistered(std::string &nick, int fd);
     void sendPasswordMismatch(std::string &nick, int fd);
 
+    private:
+
+    std::string constructNamesReply(std::string nick, Channel &channel);
+    std::string constructListReply(std::string nick, Channel &channel);
 };
 
 } // namespace

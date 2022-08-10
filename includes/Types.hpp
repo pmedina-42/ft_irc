@@ -33,8 +33,12 @@ typedef enum {
 } FLAG_NUMERIC;
 
 typedef enum {
-    OPER = 7,
-    CH_MOD = 6,
+    OP = 7,
+    CH_SEC = 5,
+    CH_PAS = 4,
+    CH_INV = 3,
+    CH_MOD = 2,
+    CH_TOP = 1,
     SV_AWAY = 6
 } IRC_MODES;
 

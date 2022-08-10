@@ -15,8 +15,7 @@ namespace irc {
  * Al crearse el canal se setea al usuario creador el rol 'o' 
  * el canal al principio no tiene ningún modo. Se setea después 
  */
-Channel::Channel(string name, User& user) : name(name) {
-    mode = "";
+Channel::Channel(string name, User& user) : name(name), mode(0) {
     users.push_back(user.nick);
 }
 
@@ -120,22 +119,37 @@ bool Channel::userInBlackList(string nick) {
  * Comprueba si el canal está en modo invitación
  */
 bool Channel::inviteModeOn() {
-    return (mode.find("i") != string::npos);
+    return ((mode & 0x08) >> CH_INV);
 }
 
 /**
  * Comprueba si el canal está en modo contraseña
  */
 bool Channel::keyModeOn() {
-    return (mode.find("k") != string::npos);
+        return (((mode & 0x10) >> CH_PAS));
+}
+
+/**
+ * Comprueba si el canal está en modo secreto
+ */
+bool Channel::secretModeOn() {
+    return (((mode & 0x20) >> CH_SEC));
 }
 
 /**
  * Comprueba si el canal está en modo topic
  */
 bool Channel::topicModeOn() {
-    return (mode.find("t") != string::npos);
+    return (((mode & 0x02) >> CH_TOP));
 }
+
+
+/**
+ * Comprueba si el canal está en modo moderado
+ */
+    bool Channel::moderatedModeOn() {
+        return (((mode & 0x04) >> CH_MOD));
+    }
 
 /**
  * Check if user has operator channel_mode
@@ -161,6 +175,14 @@ bool Channel::isInvited(std::string &nick) {
 
 bool Channel::userIsInChannel(string& nick) {
     return (std::find(users.begin(), users.end(), nick) != users.end());
+}
+
+void Channel::addMode(int bits) {
+    mode |= (0x01 << bits);
+}
+
+void Channel::deleteMode(int bits) {
+    mode &= ~(0x01 << bits);
 }
 
 

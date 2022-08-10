@@ -150,14 +150,29 @@ bool starts_with_mask(string const str) {
 
 /* Check if MODE passed as parameter has any unknown flag. 's' could be implemented but it's deprecated */
 bool hasUnknownFlag(const string &mode) {
-    return (mode.find("-") == string::npos
+    return ((mode.find("-") == string::npos
         && mode.find("+") == string::npos)
         || (mode.find("a") == string::npos
         && mode.find("o") == string::npos
         && mode.find("O") == string::npos
         && mode.find("r") == string::npos
         && mode.find("w") == string::npos
-        && mode.find("i") == string::npos);
+        && mode.find("i") == string::npos)
+        || (mode.find("-") != string::npos
+         && mode.find("+") != string::npos));
+}
+
+bool hasUnknownChannelFlag(const string &mode) {
+    return ((mode.find("-") == string::npos
+        && mode.find("+") == string::npos)
+       || (mode.find("o") == string::npos
+       && mode.find("i") == string::npos
+       && mode.find("k") == string::npos
+       && mode.find("m") == string::npos
+       && mode.find("s") == string::npos
+       && mode.find("t") == string::npos)
+       || (mode.find("-") != string::npos
+       && mode.find("+") != string::npos));
 }
 
 /* Check if a char is inside a string */
@@ -215,6 +230,19 @@ void cleanBuffer(char *buff, size_t size) {
 
 void printError(string error_str) {
     std::cerr << error_str << std::endl;
+}
+
+bool anyRepeatedChar(string &s) {
+    int len = s.length();
+
+    for (int i = 0; i <= len; ++i) {
+        for (int j = i+1; j <= len; ++j) {
+            if (s[j] == s[i]) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 } // tools 

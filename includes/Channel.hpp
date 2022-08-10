@@ -31,6 +31,8 @@ class Channel {
     bool inviteModeOn();
     bool keyModeOn();
     bool topicModeOn();
+    bool secretModeOn();
+    bool moderatedModeOn();
     bool isInvited(std::string &nick);
     void setUserMode(User& user, char mode);
     void addToWhitelist(std::string &nick);
@@ -38,6 +40,8 @@ class Channel {
     bool isUserOperator(User& user);
     void setUserMode(User &user, std::string mode);
     std::string getNextOpUser(std::string& nick);
+    void addMode(int bits);
+    void deleteMode(int bits);
 
     /* ATTRIBUTES */
     NickList users;
@@ -45,8 +49,7 @@ class Channel {
     NickList black_list;
 
     std::string name;
-    // TODO: change channel mode to bitmask
-    std::string mode;
+    unsigned char mode;
     unsigned int max_users;
     std::string key;
     /**

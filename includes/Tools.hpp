@@ -23,7 +23,9 @@ void ToUpperCase(std::string &str);
 bool isEqual(const std::string &str1, const std::string &str2);
 bool endsWith(std::string const &str, std::string const &suffix);
 bool hasUnknownFlag(const std::string &str);
+bool hasUnknownChannelFlag(const string &mode);
 bool charIsInString(const std::string &str, const char c);
+bool anyRepeatedChar(std::string &s);
 
 std::string& trimRepeatedChar(std::string& str, char c);
 void ReplaceAll(std::string& str, const std::string& from,
