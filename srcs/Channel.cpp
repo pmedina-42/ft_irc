@@ -130,10 +130,10 @@ bool Channel::keyModeOn() {
 }
 
 /**
- * Comprueba si el canal está en modo secreto
+ * Comprueba si el canal está en modo baneos
  */
-bool Channel::secretModeOn() {
-    return (((mode & 0x20) >> CH_SEC));
+bool Channel::banModeOn() {
+    return (((mode & 0x20) >> CH_BAN));
 }
 
 /**

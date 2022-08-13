@@ -31,7 +31,7 @@ class Channel {
     bool inviteModeOn();
     bool keyModeOn();
     bool topicModeOn();
-    bool secretModeOn();
+    bool banModeOn();
     bool moderatedModeOn();
     bool isInvited(std::string &nick);
     void setUserMode(User& user, char mode);

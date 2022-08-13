@@ -219,11 +219,14 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             channel.key = cmd.args[2];
             channel.addMode(CH_PAS);
         }
-        addNewChannel(channel);
+        string join_rpl = ":" + user.prefix + " JOIN :" + ch_name;
+        DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
         string namesReply = constructNamesReply(user.real_nick, channel);
-        DataToUser(fd, namesReply, NO_NUMERIC_REPLY);
-        namesReply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
-        return (DataToUser(fd, namesReply, NO_NUMERIC_REPLY));
+        DataToUser(fd, namesReply, NUMERIC_REPLY);
+        namesReply = (RPL_ENDOFNAMES + user.real_nick + " "
+                      + channel.name
+                      + STR_ENDOFNAMES);
+        return (DataToUser(fd, namesReply, NUMERIC_REPLY));
     /* case channel exists already */
     } else {
         Channel &channel = getChannelFromName(ch_name);
@@ -252,10 +255,14 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
             DataToUser(fd, reply, NUMERIC_REPLY);
         }
+        string join_rpl = ":" + user.prefix + " JOIN :" + ch_name;
+        DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
         string namesReply = constructNamesReply(user.real_nick, channel);
-        DataToUser(fd, namesReply, NO_NUMERIC_REPLY);
-        namesReply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
-        return (DataToUser(fd, namesReply, NO_NUMERIC_REPLY));
+        DataToUser(fd, namesReply, NUMERIC_REPLY);
+        namesReply = (RPL_ENDOFNAMES + user.real_nick + " "
+                      + channel.name
+                      + STR_ENDOFNAMES);
+        return (DataToUser(fd, namesReply, NUMERIC_REPLY));
     }
 }
 
@@ -510,9 +517,6 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             if (tools::charIsInString(cmd.args[2], 'i')) {
                 channel.addMode(CH_INV);
             }
-            if (tools::charIsInString(cmd.args[2], 't')) {
-                channel.addMode(CH_TOP);
-            }
             if (tools::charIsInString(cmd.args[2], 'm')) {
                 channel.addMode(CH_MOD);
             }
@@ -523,13 +527,13 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                 channel.addMode(CH_PAS);
                 channel.key = cmd.args[3];
             }
+            if (tools::charIsInString(cmd.args[2], 'b')) {
+                channel.addMode(CH_BAN);
+            }
         }
         if (tools::charIsInString(cmd.args[2], '-')) {
             if (tools::charIsInString(cmd.args[2], 'i')) {
                 channel.deleteMode(CH_INV);
-            }
-            if (tools::charIsInString(cmd.args[2], 't')) {
-                channel.deleteMode(CH_TOP);
             }
             if (tools::charIsInString(cmd.args[2], 'm')) {
                 channel.deleteMode(CH_MOD);
@@ -543,6 +547,10 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                     return DataToUser(fd, reply, NUMERIC_REPLY);
                 }
                 channel.deleteMode(CH_PAS);
+            }
+
+            if (tools::charIsInString(cmd.args[2], 'b')) {
+                channel.deleteMode(CH_BAN);
             }
         }
     // CHANGE USER MODE
@@ -743,9 +751,8 @@ void AIrcCommands::LIST(Command &cmd, int fd) {
 // PRIVATE METHODS
 
 string AIrcCommands::constructNamesReply(string nick, Channel &channel) {
-    char symbol = channel.secretModeOn() ? '@' : '=';
     unsigned long i = 0;
-    string reply = (RPL_NAMREPLY + nick + " " + symbol + " " + channel.name + " " + ":");
+    string reply = (RPL_NAMREPLY + nick + " = " + channel.name + " " + ":");
     for (std::list<string>::iterator it = channel.users.begin(); it != channel.users.end(); it++) {
         User user = getUserFromNick(*it);
         if (user.isChannelOperator(channel.name)) {
