@@ -47,6 +47,7 @@ class AIrcCommands : public FdManager,
     void OPER(Command &cmd, int fd);
     void NAMES(Command &cmd, int fd);
     void LIST(Command &cmd, int fd);
+    void PRIVMSG(Command &cmd, int fd);
 
     /* Common replies */
     void sendWelcome(std::string& name, std::string &prefix, int fd);
@@ -61,6 +62,7 @@ class AIrcCommands : public FdManager,
 
     private:
 
+    void sendMessageToChannel(Channel &channel, std::string &message, std::string &nick);
     std::string constructNamesReply(std::string nick, Channel &channel);
     std::string constructListReply(std::string nick, Channel &channel);
 };

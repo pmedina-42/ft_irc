@@ -87,6 +87,7 @@ void Server::loadCommandMap(void) {
     cmd_map.insert(std::pair<string, CommandFnx>(string("OPER"), &AIrcCommands::OPER));
     cmd_map.insert(std::pair<string, CommandFnx>(string("NAMES"), &AIrcCommands::NAMES));
     cmd_map.insert(std::pair<string, CommandFnx>(string("LIST"), &AIrcCommands::LIST));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("PRIVMSG"), &AIrcCommands::PRIVMSG));
 }
 
 // this might have to manage signals at some point ?? 

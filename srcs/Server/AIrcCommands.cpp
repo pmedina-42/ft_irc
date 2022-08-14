@@ -219,6 +219,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             channel.key = cmd.args[2];
             channel.addMode(CH_PAS);
         }
+        addNewChannel(channel);
         string join_rpl = ":" + user.prefix + " JOIN :" + ch_name;
         DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
         string namesReply = constructNamesReply(user.real_nick, channel);
@@ -256,6 +257,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             DataToUser(fd, reply, NUMERIC_REPLY);
         }
         string join_rpl = ":" + user.prefix + " JOIN :" + ch_name;
+        sendMessageToChannel(channel, join_rpl, user.nick);
         DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
         string namesReply = constructNamesReply(user.real_nick, channel);
         DataToUser(fd, namesReply, NUMERIC_REPLY);
@@ -308,11 +310,11 @@ void AIrcCommands::PART(Command &cmd, int fd) {
         LOG(DEBUG) << "part: deleting empty channel";
         removeChannel(channel);
     }
-    if (size == 3) {
-        // TODO: mandar mensaje en los canales a los usuarios
-    } else {
-
-    }
+    // TODO: part message en weechat no funciona iual que me devuelve irchispano
+    string part_message = size == 3 ? " :\"" + cmd.args[2].substr(1) + "\"" : "";
+    string part_rpl = ":" + user.prefix + " PART :" + channel.name + part_message;
+    sendMessageToChannel(channel, part_rpl, user.nick);
+    return (DataToUser(fd, part_rpl, NO_NUMERIC_REPLY));
 }
 
 /**
@@ -702,6 +704,9 @@ void AIrcCommands::NAMES(Command &cmd, int fd) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
+        if (!channel.userIsInChannel(user.nick)) {
+            return sendNotOnChannel(cmd.Name(), fd);
+        }
         string reply = constructNamesReply(user.real_nick, channel);
         DataToUser(fd, reply, NO_NUMERIC_REPLY);
         reply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
@@ -748,7 +753,47 @@ void AIrcCommands::LIST(Command &cmd, int fd) {
 
 }
 
+/**
+ * Command: PRIVMSG
+ * Parameters: [<channel/user>] <message>
+ * Lists channel size & modes
+ * */
+void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
+
+    User &user = getUserFromFd(fd);
+    int size = cmd.args.size();
+
+    if (!user.isResgistered()) {
+        return sendNotRegistered(cmd.Name(), fd);
+    }
+    if (size < 2 || (size != 3 && tools::starts_with_mask(cmd.args[1]))) {
+        return sendNeedMoreParams(cmd.Name(), fd);
+    }
+    string ch_name = cmd.args[1];
+    if (!tools::starts_with_mask(ch_name)) {
+        return sendBadChannelMask(cmd.Name(), fd);
+    }
+    if (size == 3) {
+        if (!channelExists(cmd.args[1])) {
+            return sendNoSuchChannel(cmd.Name(), fd);
+        }
+        Channel &channel = channel_map.find(cmd.args[1])->second;
+        string reply = ":" + user.prefix + " PRIVMSG " + channel.name + " " + cmd.args[2];
+        sendMessageToChannel(channel, reply, user.nick);
+    }
+
+}
+
 // PRIVATE METHODS
+
+void AIrcCommands::sendMessageToChannel(Channel &channel, string &message, string &nick) {
+    for (std::list<string>::iterator it = channel.users.begin(); it != channel.users.end(); it++) {
+        User &receiver = getUserFromNick(*it);
+        if (receiver.nick.compare(nick)) {
+            DataToUser(receiver.fd, message, NO_NUMERIC_REPLY);
+        }
+    }
+}
 
 string AIrcCommands::constructNamesReply(string nick, Channel &channel) {
     unsigned long i = 0;
