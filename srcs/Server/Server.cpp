@@ -82,7 +82,6 @@ void Server::loadCommandMap(void) {
     cmd_map.insert(std::pair<string, CommandFnx>(string("INVITE"), &AIrcCommands::INVITE));
     cmd_map.insert(std::pair<string, CommandFnx>(string("MODE"), &AIrcCommands::MODE));
     cmd_map.insert(std::pair<string, CommandFnx>(string("PASS"), &AIrcCommands::PASS));
-    cmd_map.insert(std::pair<string, CommandFnx>(string("AWAY"), &AIrcCommands::AWAY));
     cmd_map.insert(std::pair<string, CommandFnx>(string("QUIT"), &AIrcCommands::QUIT));
     cmd_map.insert(std::pair<string, CommandFnx>(string("NAMES"), &AIrcCommands::NAMES));
     cmd_map.insert(std::pair<string, CommandFnx>(string("LIST"), &AIrcCommands::LIST));

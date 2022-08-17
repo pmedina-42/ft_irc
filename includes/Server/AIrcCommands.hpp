@@ -37,7 +37,6 @@ class AIrcCommands : public FdManager,
     void PONG(Command &cmd, int fd);
     void MODE(Command &cmd, int fd);
     void PASS(Command &cmd, int fd);
-    void AWAY(Command &cmd, int fd);
     void QUIT(Command &cmd, int fd);
     void JOIN(Command &cmd, int fd);
     void KICK(Command &cmd, int fd);

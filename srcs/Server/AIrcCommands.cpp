@@ -485,9 +485,6 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
     }
     // CHANGE CHANNEL MODE. COMPLEX PATH
     if (tools::starts_with_mask(cmd.args[1])) {
-        if (size < 3) {
-            return sendNeedMoreParams(cmd.Name(), fd);
-        }
         if (!channelExists(cmd.args[1])) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
@@ -544,51 +541,57 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         }
     // CHANGE USER MODE
     } else {
+        string nick = cmd.args[1];
+        tools::ToUpperCase(nick);
+        bool isUserChannelMode = false;
+        if (size == 4) {
+            isUserChannelMode = tools::starts_with_mask(cmd.args[3]);
+        }
+        if (size == 3 && isUserChannelMode) {
+            return sendNeedMoreParams(cmd.Name(), fd);
+        }
         string mode = cmd.args[2];
-        if (tools::hasUnknownFlag(mode)) {
+        if (tools::hasUnknownChannelFlag(mode) && tools::hasUnknownFlag(mode)) {
             string reply = (ERR_UMODEUNKNOWNFLAG""STR_UMODEUNKNOWNFLAG);
             LOG(DEBUG) << reply;
             return DataToUser(fd, reply, NUMERIC_REPLY);
 
         }
-        if (tools::charIsInString(mode, 'o')
-            || tools::charIsInString(mode, 'O')) {
+        if ((tools::charIsInString(mode, 'o')
+            || tools::charIsInString(mode, 'O'))
+            && size == 3) {
             if (tools::isEqual(cmd.args[1], user.nick)) {
                 string reply = (ERR_USERSDONTMATCH + cmd.Name() + STR_USERSDONTMATCH);
                 LOG(DEBUG) << reply;
                 return DataToUser(fd, reply, NUMERIC_REPLY);
             }
         }
-        // Check if user is trying to give itself an operator mode
-        // Check if serverUser is operator
-        /*if (user.server_mode.find("o") == string::npos
-            || user.server_mode.find("O") == string::npos) {
-            string reply = (ERR_CHANOPRIVSNEEDED + cmd.Name() + STR_CHANOPRIVSNEEDED);
-            LOG(DEBUG) << reply;
-            return DataToUser(fd, reply, NUMERIC_REPLY);
-        }*/
-        // Check if serverUser is sending a different nickname
-        if (!tools::isEqual(cmd.args[1], user.nick)) {
-            string reply = (ERR_USERSDONTMATCH + cmd.Name() + STR_USERSDONTMATCH);
-            LOG(DEBUG) << reply;
-            return DataToUser(fd, reply, NUMERIC_REPLY);
+        if (size == 3) {
+            if (!tools::isEqual(cmd.args[1], user.nick)) {
+                string reply = (ERR_USERSDONTMATCH + cmd.Name() + STR_USERSDONTMATCH);
+                LOG(DEBUG) << reply;
+                return DataToUser(fd, reply, NUMERIC_REPLY);
+            }
         }
-        // TODO : mirar como asignar modo moderador a un usuario dentro de un canal
-        if (tools::charIsInString(mode, '+')
-            && tools::charIsInString(mode, 'a')) {
-            user.addServerMask(SV_AWAY);
-        }
-        if (tools::charIsInString(mode, '-')
-            && tools::charIsInString(mode, 'a')) {
-            user.deleteServerMask(SV_AWAY);
+        if (size == 4) {
+            if (!tools::starts_with_mask(cmd.args[3])) {
+                // RETURN BAD CHANNEL MASK
+            }
+            if (!user.isChannelOperator(cmd.args[3])) {
+                // RETURN NOT CHANNEL OPERATOR
+            }
         }
         if (tools::charIsInString(mode, '+')
             && tools::charIsInString(mode, 'm')) {
-            user.addServerMask(CH_MOD);
+            User &other = getUserFromNick(nick);
+            other.addChannelMask(cmd.args[3], CH_MOD);
+            LOG(DEBUG) << other.nick << " Is moderator " << other.isChannelModerator(cmd.args[3]);
         }
         if (tools::charIsInString(mode, '-')
             && tools::charIsInString(mode, 'm')) {
-            user.deleteChannelMask(CH_MOD);
+            User &other = getUserFromNick(nick);
+            other.deleteChannelMask(cmd.args[3], CH_MOD);
+            LOG(DEBUG) << other.nick << " Is moderator " << other.isChannelModerator(cmd.args[3]);
         }
     }
 }
@@ -629,37 +632,6 @@ void AIrcCommands::QUIT(Command &cmd, int fd) {
     reply = size == 2 ? user.nick.append(": ").append(cmd.args[1]) : reply;
     DataToUser(fd, reply, NO_NUMERIC_REPLY);
     // TODO : find the most effective way to erase the fd & mantain user data for possible reconnection
-}
-
-/**
- * Command: AWAY
- * Parameters: [<awayMessage>]
- * With parameter, sets afk_msg. Without, unsets it.
- * Always return if user is away or not
- */
-void AIrcCommands::AWAY(Command &cmd, int fd) {
-
-    User &user = getUserFromFd(fd);
-    
-    if (!user.isResgistered()) {
-        return sendNotRegistered(cmd.Name(), fd);
-    }
-    int size = cmd.args.size();
-    if (size == 2) {
-        user.afk_msg = cmd.args[3];
-        LOG(DEBUG) << user.afk_msg;
-    } else {
-        user.afk_msg = "";
-        LOG(DEBUG) << user.afk_msg;
-    }
-    if (user.isAway()) {
-        string reply = (RPL_NOWAWAY STR_NOWAWAY);
-        LOG(DEBUG) << user.server_mode;
-        return DataToUser(fd, reply, NUMERIC_REPLY);
-    }
-    string reply = (RPL_UNAWAY STR_UNAWAY);
-    LOG(DEBUG) << user.server_mode;
-    return DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 /**
@@ -738,6 +710,8 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
+        LOG(DEBUG) << user.nick << " Is moderator " << user.isChannelModerator(ch_name);
+        LOG(DEBUG) << user.nick << " Is operator " << user.isChannelOperator(ch_name);
         if (channel.moderatedModeOn() && !user.isChannelOperator(ch_name) && !user.isChannelModerator(ch_name)) {
             string reply = "no eres moderador"; // TODO : poner la respuesta bien
             return (DataToUser(fd, reply, NUMERIC_REPLY));
