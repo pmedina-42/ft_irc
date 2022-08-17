@@ -150,12 +150,16 @@ bool User::isAway(void) {
     return ((server_mode & 0x40) >> 6);
 }
 
+bool User::isChannelModerator(string name) {
+    return ((ch_name_mask_map.find(name)->second & 0x04) >> CH_MOD);
+}
+
 bool User::isOperator(void) {
     return ((server_mode & 0x80) >> 7);
 }
 
-bool User::isChannelOperator(string channel) {
-    return ((ch_name_mask_map.find(channel)->second & 0x80) >> 7);
+bool User::isChannelOperator(string name) {
+    return ((ch_name_mask_map.find(name)->second & 0x80) >> 7);
 }
 
 bool User::isInChannel(std::string &channel_name) {

@@ -6,7 +6,6 @@
 #include "NumericReplies.hpp"
 #include "Log.hpp"
 #include "Channel.hpp"
-#include "Exceptions.hpp"
 
 #include "libft.h"
 
@@ -220,15 +219,8 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             channel.addMode(CH_PAS);
         }
         addNewChannel(channel);
-        string join_rpl = ":" + user.prefix + " JOIN :" + ch_name;
-        DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
-        string namesReply = constructNamesReply(user.real_nick, channel);
-        DataToUser(fd, namesReply, NUMERIC_REPLY);
-        namesReply = (RPL_ENDOFNAMES + user.real_nick + " "
-                      + channel.name
-                      + STR_ENDOFNAMES);
-        return (DataToUser(fd, namesReply, NUMERIC_REPLY));
-    /* case channel exists already */
+        return (sendJoinReply(fd, user, channel, false));
+        /* case channel exists already */
     } else {
         Channel &channel = getChannelFromName(ch_name);
         if (channel.userIsInChannel(user.nick)) {
@@ -256,15 +248,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
             string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
             DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        string join_rpl = ":" + user.prefix + " JOIN :" + ch_name;
-        sendMessageToChannel(channel, join_rpl, user.nick);
-        DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
-        string namesReply = constructNamesReply(user.real_nick, channel);
-        DataToUser(fd, namesReply, NUMERIC_REPLY);
-        namesReply = (RPL_ENDOFNAMES + user.real_nick + " "
-                      + channel.name
-                      + STR_ENDOFNAMES);
-        return (DataToUser(fd, namesReply, NUMERIC_REPLY));
+        sendJoinReply(fd, user, channel, true);
     }
 }
 
@@ -440,11 +424,11 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
 void AIrcCommands::INVITE(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
+        int size = cmd.args.size();
 
     if (!user.isResgistered()) {
         return sendNotRegistered(cmd.Name(), fd);
     }
-    int size = cmd.args.size();
     if (size < 3) {
         return sendNeedMoreParams(cmd.Name(), fd);
     }
@@ -473,7 +457,10 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     channel.addToWhitelist(nick);
-    // TODO: mandar mensajes por defecto y por parametro a los Users
+    string invite_msg = ":" + user.prefix + " INVITE " + cmd.args[1]  + " :" + channel.name;
+    DataToUser(getUserFromNick(nick).fd, invite_msg, NO_NUMERIC_REPLY);
+    string invite_rpl = RPL_INVITING + user.real_nick + " " + cmd.args[1] + " :" + channel.name;
+    DataToUser(fd, invite_rpl, NUMERIC_REPLY);
 }
 
 /**
@@ -586,6 +573,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             LOG(DEBUG) << reply;
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
+        // TODO : mirar como asignar modo moderador a un usuario dentro de un canal
         if (tools::charIsInString(mode, '+')
             && tools::charIsInString(mode, 'a')) {
             user.addServerMask(SV_AWAY);
@@ -593,6 +581,14 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         if (tools::charIsInString(mode, '-')
             && tools::charIsInString(mode, 'a')) {
             user.deleteServerMask(SV_AWAY);
+        }
+        if (tools::charIsInString(mode, '+')
+            && tools::charIsInString(mode, 'm')) {
+            user.addServerMask(CH_MOD);
+        }
+        if (tools::charIsInString(mode, '-')
+            && tools::charIsInString(mode, 'm')) {
+            user.deleteChannelMask(CH_MOD);
         }
     }
 }
@@ -667,26 +663,6 @@ void AIrcCommands::AWAY(Command &cmd, int fd) {
 }
 
 /**
- * Command: OPER
- * Parameters: <user> <pass>
- * Used by a client to gain operator privileges in server
- * TODO preguntar a CYA si se recibe ya la pass y coomo, que ahora prefiero seguir avanzando con otras cosas
- */
-void AIrcCommands::OPER(Command &cmd, int fd) {
-
-    User &user = getUserFromFd(fd);
-
-    if (!user.isResgistered()) {
-        return sendNotRegistered(cmd.Name(), fd);
-    }
-    int size = cmd.args.size();
-    if (size < 3) {
-        return sendNeedMoreParams(cmd.Name(), fd);
-    }
-
-}
-
-/**
  * Command: NAMES
  * Parameters: [<channel>]
  * Lists users visible to client or users in a channel
@@ -707,10 +683,7 @@ void AIrcCommands::NAMES(Command &cmd, int fd) {
         if (!channel.userIsInChannel(user.nick)) {
             return sendNotOnChannel(cmd.Name(), fd);
         }
-        string reply = constructNamesReply(user.real_nick, channel);
-        DataToUser(fd, reply, NO_NUMERIC_REPLY);
-        reply = (RPL_ENDOFNAMES + user.real_nick + " " + channel.name + STR_ENDOFNAMES);
-        return (DataToUser(fd, reply, NO_NUMERIC_REPLY));
+        sendNamesReply(fd, user, channel);
     }
 
 }
@@ -729,26 +702,13 @@ void AIrcCommands::LIST(Command &cmd, int fd) {
     }
     int size = cmd.args.size();
     if (size == 1) {
-        string reply = (RPL_LISTSTART + user.real_nick + STR_LISTSTART);
-        DataToUser(fd, reply, NUMERIC_REPLY);
-        for (std::map<std::string, irc::Channel>::iterator it = channel_map.begin(); it != channel_map.end(); it++) {
-            reply = constructListReply(user.real_nick, it->second);
-            DataToUser(fd, reply, NUMERIC_REPLY);
-        }
-        reply = (RPL_LISTEND + user.real_nick + STR_LISTEND);
-        DataToUser(fd, reply, NUMERIC_REPLY);
+        sendListReply(fd, user, "");
     }
     if (size == 2) {
         if (!channelExists(cmd.args[1])) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
-        Channel &channel = channel_map.find(cmd.args[1])->second;
-        string reply = (RPL_LISTSTART + user.real_nick + STR_LISTSTART);
-        DataToUser(fd, reply, NUMERIC_REPLY);
-        reply = constructListReply(user.real_nick, channel);
-        DataToUser(fd, reply, NUMERIC_REPLY);
-        reply = (RPL_LISTEND + user.real_nick + STR_LISTEND);
-        DataToUser(fd, reply, NUMERIC_REPLY);
+        sendListReply(fd, user, cmd.args[1]);
     }
 
 }
@@ -778,50 +738,15 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
+        if (channel.moderatedModeOn() && !user.isChannelOperator(ch_name) && !user.isChannelModerator(ch_name)) {
+            string reply = "no eres moderador"; // TODO : poner la respuesta bien
+            return (DataToUser(fd, reply, NUMERIC_REPLY));
+        }
         string reply = ":" + user.prefix + " PRIVMSG " + channel.name + " " + cmd.args[2];
         sendMessageToChannel(channel, reply, user.nick);
     }
 
 }
 
-// PRIVATE METHODS
-
-void AIrcCommands::sendMessageToChannel(Channel &channel, string &message, string &nick) {
-    for (std::list<string>::iterator it = channel.users.begin(); it != channel.users.end(); it++) {
-        User &receiver = getUserFromNick(*it);
-        if (receiver.nick.compare(nick)) {
-            DataToUser(receiver.fd, message, NO_NUMERIC_REPLY);
-        }
-    }
-}
-
-string AIrcCommands::constructNamesReply(string nick, Channel &channel) {
-    unsigned long i = 0;
-    string reply = (RPL_NAMREPLY + nick + " = " + channel.name + " " + ":");
-    for (std::list<string>::iterator it = channel.users.begin(); it != channel.users.end(); it++) {
-        User user = getUserFromNick(*it);
-        if (user.isChannelOperator(channel.name)) {
-            reply += "@";
-        }
-        reply += user.real_nick;
-        reply += (++i < channel.users.size()) ? " " : "";
-    }
-    return reply;
-}
-
-string AIrcCommands::constructListReply(string nick, Channel &channel) {
-    string mode = channel.keyModeOn() ? "k" : "";
-    mode += channel.inviteModeOn() ? "i" : "";
-    mode += channel.topicModeOn() ? "t" : ""; // ERSTOVA FUERA XDDD
-    mode = mode.length() != 0 ? ("+" + mode) : mode;
-    char* channel_size = ft_itoa((int)channel.users.size());
-    if (!channel_size) {
-        throw irc::exc::MallocError();   
-    }
-    string reply = (RPL_LIST + nick + " " + channel.name + " " + std::string(channel_size) + " [" + mode + "]");
-    reply += channel.topicModeOn() ? (" " + channel.topic) : "";
-    free(channel_size);
-    return reply;
-}
 
 } // namespace irc

@@ -44,12 +44,11 @@ class AIrcCommands : public FdManager,
     void PART(Command &cmd, int fd);
     void TOPIC(Command &cmd, int fd);
     void INVITE(Command &cmd, int fd);
-    void OPER(Command &cmd, int fd);
     void NAMES(Command &cmd, int fd);
     void LIST(Command &cmd, int fd);
     void PRIVMSG(Command &cmd, int fd);
 
-    /* Common replies */
+    /* Common replies  ? todas privadas ?*/
     void sendWelcome(std::string& name, std::string &prefix, int fd);
     void sendNeedMoreParams(std::string& cmd_name, int fd);
     void sendNotRegistered(std::string &cmd_name, int fd);
@@ -59,8 +58,11 @@ class AIrcCommands : public FdManager,
     void sendNoChannelModes(std::string &cmd_name, int fd);
     void sendChannelOperatorNeeded(std::string &cmd_name, int fd);
     void sendAlreadyRegistered(std::string &nick, int fd);
+    void sendJoinReply(int fd, User &user, Channel &channel, bool send_all);
+    void sendNamesReply(int fd, User &user, Channel &channel);
+    void sendListReply(int fd, User &user, std::string ch_name);
 
-    private:
+private:
 
     void sendMessageToChannel(Channel &channel, std::string &message, std::string &nick);
     std::string constructNamesReply(std::string nick, Channel &channel);

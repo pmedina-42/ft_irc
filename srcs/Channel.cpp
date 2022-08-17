@@ -17,6 +17,7 @@ namespace irc {
  */
 Channel::Channel(string name, User& user) : name(name), mode(0) {
     users.push_back(user.nick);
+    addMode(CH_TOP);
 }
 
 /**
