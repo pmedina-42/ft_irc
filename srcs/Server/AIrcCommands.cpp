@@ -574,23 +574,32 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             }
         }
         if (size == 4) {
-            if (!tools::starts_with_mask(cmd.args[3])) {
-                // RETURN BAD CHANNEL MASK
+            string ch_name = cmd.args[3];
+            if (!tools::starts_with_mask(ch_name)) {
+                return sendBadChannelMask(cmd.Name(), fd);
             }
-            if (!user.isChannelOperator(cmd.args[3])) {
-                // RETURN NOT CHANNEL OPERATOR
+            if (!user.isChannelOperator(ch_name)) {
+                return sendChannelOperatorNeeded(cmd.Name(), fd);
+            }
+            if (!channelExists(ch_name)) {
+                return sendNoSuchChannel(cmd.Name(), fd);
+            }
+            Channel &channel = getChannelFromName(ch_name);
+            if (!channel.userIsInChannel(nick) || !channel.userIsInChannel(user.nick)) {
+                return sendNotOnChannel(cmd.Name(), fd);
+            }
+            if (tools::charIsInString(mode, '+')
+                && tools::charIsInString(mode, 'm')) {
+                User &other = getUserFromNick(nick);
+                other.addChannelMask(ch_name, CH_MOD);
+            }
+            if (tools::charIsInString(mode, '-')
+                && tools::charIsInString(mode, 'm')) {
+                User &other = getUserFromNick(nick);
+                other.deleteChannelMask(ch_name, CH_MOD);
             }
         }
-        if (tools::charIsInString(mode, '+')
-            && tools::charIsInString(mode, 'm')) {
-            User &other = getUserFromNick(nick);
-            other.addChannelMask(cmd.args[3], CH_MOD);
-        }
-        if (tools::charIsInString(mode, '-')
-            && tools::charIsInString(mode, 'm')) {
-            User &other = getUserFromNick(nick);
-            other.deleteChannelMask(cmd.args[3], CH_MOD);
-        }
+
     }
 }
 
