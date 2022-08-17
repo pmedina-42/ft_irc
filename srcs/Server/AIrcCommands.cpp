@@ -585,13 +585,11 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             && tools::charIsInString(mode, 'm')) {
             User &other = getUserFromNick(nick);
             other.addChannelMask(cmd.args[3], CH_MOD);
-            LOG(DEBUG) << other.nick << " Is moderator " << other.isChannelModerator(cmd.args[3]);
         }
         if (tools::charIsInString(mode, '-')
             && tools::charIsInString(mode, 'm')) {
             User &other = getUserFromNick(nick);
             other.deleteChannelMask(cmd.args[3], CH_MOD);
-            LOG(DEBUG) << other.nick << " Is moderator " << other.isChannelModerator(cmd.args[3]);
         }
     }
 }
@@ -710,8 +708,6 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
-        LOG(DEBUG) << user.nick << " Is moderator " << user.isChannelModerator(ch_name);
-        LOG(DEBUG) << user.nick << " Is operator " << user.isChannelOperator(ch_name);
         if (channel.moderatedModeOn() && !user.isChannelOperator(ch_name) && !user.isChannelModerator(ch_name)) {
             string reply = "no eres moderador"; // TODO : poner la respuesta bien
             return (DataToUser(fd, reply, NUMERIC_REPLY));
