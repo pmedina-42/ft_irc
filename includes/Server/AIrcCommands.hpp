@@ -60,12 +60,14 @@ class AIrcCommands : public FdManager,
     void sendJoinReply(int fd, User &user, Channel &channel, bool send_all);
     void sendNamesReply(int fd, User &user, Channel &channel);
     void sendListReply(int fd, User &user, std::string ch_name);
+    void sendPartMessage(std::string &message, int fd, User &user, Channel &channel);
 
 private:
 
     void sendMessageToChannel(Channel &channel, std::string &message, std::string &nick);
     std::string constructNamesReply(std::string nick, Channel &channel);
     std::string constructListReply(std::string nick, Channel &channel);
+
 };
 
 } // namespace

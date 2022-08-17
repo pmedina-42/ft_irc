@@ -103,6 +103,14 @@ void AIrcCommands::sendListReply(int fd, User &user, string ch_name) {
     DataToUser(fd, end_reply, NUMERIC_REPLY);
 }
 
+// TODO: part message en weechat no funciona igual que me devuelve irchispano
+void AIrcCommands::sendPartMessage(string &message,  int fd, User &user, Channel &channel) {
+    string part_message = message.compare("") ? " :\"" + message.substr(1) + "\"" : "";
+    string part_rpl = ":" + user.prefix + " PART :" + channel.name + part_message;
+    sendMessageToChannel(channel, part_rpl, user.nick);
+    return (DataToUser(fd, part_rpl, NO_NUMERIC_REPLY));
+}
+
 
 // PRIVATE METHODS
 

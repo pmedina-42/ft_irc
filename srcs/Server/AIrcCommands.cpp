@@ -291,14 +291,13 @@ void AIrcCommands::PART(Command &cmd, int fd) {
     channel.deleteUser(user);
     user.ch_name_mask_map.erase(channel.name);
     if (channel.users.size() == 0) {
-        LOG(DEBUG) << "part: deleting empty channel";
         removeChannel(channel);
     }
-    // TODO: part message en weechat no funciona iual que me devuelve irchispano
-    string part_message = size == 3 ? " :\"" + cmd.args[2].substr(1) + "\"" : "";
-    string part_rpl = ":" + user.prefix + " PART :" + channel.name + part_message;
-    sendMessageToChannel(channel, part_rpl, user.nick);
-    return (DataToUser(fd, part_rpl, NO_NUMERIC_REPLY));
+    if (size == 3) {
+        return sendPartMessage(cmd.args[2], fd, user, channel);
+    }
+    string no_message = "";
+    sendPartMessage(no_message, fd, user, channel);
 }
 
 /**
@@ -372,6 +371,7 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
  * 1. Check if user has the correct permissions to do kick another user
  * 2. Find the user to kick in the channel, if it exists
  * 3. Reuse the PART method passing the comment as the part message
+ * TODO : terminar este comando, sin baneo
  */
 void AIrcCommands::KICK(Command &cmd, int fd) {
 
@@ -403,14 +403,9 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     User& user_to_kick = getUserFromNick(nick);
-    channel.banUser(user_to_kick); // Ban this user??
+    string no_message = "";
+    sendPartMessage(no_message, fd, user, channel);
     channel.deleteUser(user_to_kick);
-
-    if (size == 3) {
-        // TODO: mandar mensajes por defecto y por parametro a los Users
-    } else {
-
-    }
 }
 
 /**
