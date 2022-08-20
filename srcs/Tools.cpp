@@ -151,13 +151,8 @@ bool starts_with_mask(string const str) {
 /* Check if MODE passed as parameter has any unknown flag. 's' could be implemented but it's deprecated */
 bool hasUnknownFlag(const string &mode) {
     return ((mode.find("-") == string::npos
-        && mode.find("+") == string::npos)
-        || (mode.find("a") == string::npos
-        && mode.find("o") == string::npos
-        && mode.find("O") == string::npos
-        && mode.find("r") == string::npos
-        && mode.find("w") == string::npos
-        && mode.find("i") == string::npos)
+        && mode.find("+") == string::npos
+        && mode.find("o") == string::npos)
         || (mode.find("-") != string::npos
          && mode.find("+") != string::npos));
 }
@@ -169,7 +164,6 @@ bool hasUnknownChannelFlag(const string &mode) {
        && mode.find("i") == string::npos
        && mode.find("k") == string::npos
        && mode.find("m") == string::npos
-       && mode.find("s") == string::npos
        && mode.find("t") == string::npos)
        || (mode.find("-") != string::npos
        && mode.find("+") != string::npos));

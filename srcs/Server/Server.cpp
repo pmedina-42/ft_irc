@@ -103,11 +103,10 @@ void Server::loadCommandMap(void) {
     cmd_map.insert(std::pair<string, CommandFnx>(string("INVITE"), &AIrcCommands::INVITE));
     cmd_map.insert(std::pair<string, CommandFnx>(string("MODE"), &AIrcCommands::MODE));
     cmd_map.insert(std::pair<string, CommandFnx>(string("PASS"), &AIrcCommands::PASS));
-    cmd_map.insert(std::pair<string, CommandFnx>(string("AWAY"), &AIrcCommands::AWAY));
     cmd_map.insert(std::pair<string, CommandFnx>(string("QUIT"), &AIrcCommands::QUIT));
-    cmd_map.insert(std::pair<string, CommandFnx>(string("OPER"), &AIrcCommands::OPER));
     cmd_map.insert(std::pair<string, CommandFnx>(string("NAMES"), &AIrcCommands::NAMES));
     cmd_map.insert(std::pair<string, CommandFnx>(string("LIST"), &AIrcCommands::LIST));
+    cmd_map.insert(std::pair<string, CommandFnx>(string("PRIVMSG"), &AIrcCommands::PRIVMSG));
 }
 
 // this might have to manage signals at some point ?? 

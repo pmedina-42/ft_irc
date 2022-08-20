@@ -86,7 +86,6 @@
  * successful and the client with the user has been invited to the channel.
  */
 # define RPL_INVITING " 341 "
-# define STR_INVITING ":<channel>"
 
 /**
  * Sent as a response to NAMES command

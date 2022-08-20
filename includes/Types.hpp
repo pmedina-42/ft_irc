@@ -34,7 +34,7 @@ typedef enum {
 
 typedef enum {
     OP = 7,
-    CH_SEC = 5,
+    CH_BAN = 5,
     CH_PAS = 4,
     CH_INV = 3,
     CH_MOD = 2,

@@ -43,18 +43,17 @@ class AIrcCommands : public FdManager,
     void PONG(Command &cmd, int fd);
     void MODE(Command &cmd, int fd);
     void PASS(Command &cmd, int fd);
-    void AWAY(Command &cmd, int fd);
     void QUIT(Command &cmd, int fd);
     void JOIN(Command &cmd, int fd);
     void KICK(Command &cmd, int fd);
     void PART(Command &cmd, int fd);
     void TOPIC(Command &cmd, int fd);
     void INVITE(Command &cmd, int fd);
-    void OPER(Command &cmd, int fd);
     void NAMES(Command &cmd, int fd);
     void LIST(Command &cmd, int fd);
+    void PRIVMSG(Command &cmd, int fd);
 
-    /* Common replies */
+    /* Common replies  ? todas privadas ?*/
     void sendWelcome(std::string& name, std::string &prefix, int fd);
     void sendNeedMoreParams(std::string& cmd_name, int fd);
     void sendNotRegistered(std::string &cmd_name, int fd);
@@ -65,11 +64,17 @@ class AIrcCommands : public FdManager,
     void sendChannelOperatorNeeded(std::string &cmd_name, int fd);
     void sendAlreadyRegistered(std::string &nick, int fd);
     void sendPasswordMismatch(std::string &nick, int fd);
+    void sendJoinReply(int fd, User &user, Channel &channel, bool send_all);
+    void sendNamesReply(int fd, User &user, Channel &channel);
+    void sendListReply(int fd, User &user, std::string ch_name);
+    void sendPartMessage(std::string &message, int fd, User &user, Channel &channel);
 
-    private:
+private:
 
+    void sendMessageToChannel(Channel &channel, std::string &message, std::string &nick);
     std::string constructNamesReply(std::string nick, Channel &channel);
     std::string constructListReply(std::string nick, Channel &channel);
+
 };
 
 } // namespace
