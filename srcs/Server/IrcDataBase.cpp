@@ -26,7 +26,6 @@ void IrcDataBase::addNewUser(int new_fd) {
     if (new_fd == -1) {
         return ;
     }
-    LOG(DEBUG) << "new instance of user HOPEFULLY EMPTY created";
     User user(new_fd);
     addFdUserPair(new_fd, user);
 }
