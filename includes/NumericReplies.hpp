@@ -53,6 +53,12 @@
 # define STR_NOWAWAY ":You have been marked as being away"
 
 /**
+ *  Sent as the final reply of WHOIS command
+ */
+# define RPL_ENDOFWHOIS " 318 "
+# define STR_ENDOFWHOIS " :End of /WHOIS list"
+
+/**
  *  Sent as the first reply to the LIST command
  */
 # define RPL_LISTSTART " 321 "
@@ -62,6 +68,12 @@
  *  Sent as the second reply to the LIST command
  */
 # define RPL_LIST " 322 "
+
+
+/**
+ *  Sent as the second reply to the MODE command with one parameter
+ */
+# define RPL_CHANNELMODEIS " 324 "
 
 /**
  *  Sent as the last reply to the LIST command
@@ -99,16 +111,33 @@
 # define STR_ENDOFNAMES " :End of /NAMES list"
 
 /**
+ * Sent as a response to MODE <channel> +b command if blacklist is not empty
+ */
+# define RPL_BANLIST " 366 "
+
+/**
+ * Sent as the final response to MODE <channel> +b command
+ */
+# define RPL_ENDOFBANLIST " 368 "
+# define STR_ENDOFBANLIST " :End of channel ban list"
+
+/**
  * Indicates that no client can be found for the supplied nickname
  */
 # define ERR_NOSUCHNICK " 401 "
-# define STR_NOSUCHNICK ":No such nick/channel"
+# define STR_NOSUCHNICK ":No such nick"
 
 /**
  * Indicates that no channel can be found for the supplied channel name
  */
 # define ERR_NOSUCHCHANNEL " 403 "
 # define STR_NOSUCHCHANNEL ":No such channel"
+
+/**
+ * Sent as a response to user trying to send a message to a moderated channel without being moderator
+ */
+# define ERR_CANNOTSENDTOCHAN " 404 "
+# define STR_CANNOTSENDTOCHAN " :You cannot send messages to this channel whilst the +m (moderated) mode is set"
 
 /**
  * JOIN failed because the client has joined their maximum number of channels
@@ -185,6 +214,13 @@
  */
 # define ERR_INVITEONLYCHAN " 473 "
 # define STR_INVITEONLYCHAN " :Cannot join channel (+i)"
+
+/**
+ * Returned to indicate that a JOIN command failed because the channel is set to
+ * invite channelMode and the client has not been invited
+ */
+# define ERR_BANNEDFROMCHAN " 474 "
+# define STR_BANNEDFROMCHAN " :Cannot join channel (you're banned)"
 
 /**
  * Returned to indicate that a JOIN command failed because the channel requires

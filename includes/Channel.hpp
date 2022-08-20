@@ -10,7 +10,6 @@
 namespace irc {
 
 class User;
-/* TODO: comprobar y setear tamaño máximo de usuarios dentro de un canal? */
 
 class Channel {
 
@@ -34,14 +33,13 @@ class Channel {
     bool banModeOn();
     bool moderatedModeOn();
     bool isInvited(std::string &nick);
-    void setUserMode(User& user, char mode);
     void addToWhitelist(std::string &nick);
     bool userIsInChannel(std::string& nick);
     bool isUserOperator(User& user);
-    void setUserMode(User &user, std::string mode);
     std::string getNextOpUser(std::string& nick);
     void addMode(int bits);
     void deleteMode(int bits);
+    std::string getModeStr();
 
     /* ATTRIBUTES */
     NickList users;

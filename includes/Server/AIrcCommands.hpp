@@ -52,6 +52,7 @@ class AIrcCommands : public FdManager,
     void NAMES(Command &cmd, int fd);
     void LIST(Command &cmd, int fd);
     void PRIVMSG(Command &cmd, int fd);
+    void WHOIS(Command &cmd, int fd);
 
     /* Common replies  ? todas privadas ?*/
     void sendWelcome(std::string& name, std::string &prefix, int fd);
@@ -67,7 +68,9 @@ class AIrcCommands : public FdManager,
     void sendJoinReply(int fd, User &user, Channel &channel, bool send_all);
     void sendNamesReply(int fd, User &user, Channel &channel);
     void sendListReply(int fd, User &user, std::string ch_name);
-    void sendPartMessage(std::string &message, int fd, User &user, Channel &channel);
+    void sendPartMessage(std::string &cmd_name, int fd, User &user, Channel &channel);
+    void sendNoSuchNick(int fd, std::string nick, std::string notFoundNick);
+    void sendChannelModes(int fd, std::string nick, Channel &channel);
 
 private:
 

@@ -29,7 +29,6 @@ Channel::~Channel() {
 
 /* CLASS FUNCTIONS */
 
-/* TODO: añadir controles con los demás modos de canal */
 /**
  * Añadir un usuario a un canal:
  * 1. Se comprueba la disponibilidad del canal a nivel de comando, antes de llamar esta funcion
@@ -39,7 +38,9 @@ void Channel::addUser(User &user) {
     users.push_back(user.nick);
 }
 
-/** TODO : 
+/** TODO : probablemente convenga cambiar la lista de usuarios por lista de fds de usuario para no tener que actualizar
+ * el nick dentro del canal cuando se lo actualicen
+ *
  *  funcion que gestione asignar un nuevo operador :
  *  busque primero algun otro usuario con 'o', y en caso de
  *  que no que itere la lista hasta que de con el heredero correcto. 
@@ -184,6 +185,14 @@ void Channel::addMode(int bits) {
 
 void Channel::deleteMode(int bits) {
     mode &= ~(0x01 << bits);
+}
+
+string Channel::getModeStr() {
+    string mode = keyModeOn() ? "k" : "";
+    mode += inviteModeOn() ? "i" : "";
+    mode += moderatedModeOn() ? "m" : "";
+    mode += banModeOn() ? "b" : "";
+    return mode;
 }
 
 

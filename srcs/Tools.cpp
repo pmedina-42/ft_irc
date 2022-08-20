@@ -164,6 +164,7 @@ bool hasUnknownChannelFlag(const string &mode) {
        && mode.find("i") == string::npos
        && mode.find("k") == string::npos
        && mode.find("m") == string::npos
+       && mode.find("b") == string::npos
        && mode.find("t") == string::npos)
        || (mode.find("-") != string::npos
        && mode.find("+") != string::npos));
