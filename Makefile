@@ -12,7 +12,7 @@
 
 # 'dir' is used in here to increase readibity, the current usage has no other effect.
 
-NAME		=	ft_irc
+NAME		=	ircserv
 SRCS		=	srcs/main.cpp\
 				srcs/Server/Server.cpp \
 				srcs/Server/AIrcCommands.cpp \

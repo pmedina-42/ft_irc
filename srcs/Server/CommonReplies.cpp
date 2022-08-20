@@ -47,13 +47,6 @@ void AIrcCommands::sendChannelOperatorNeeded(string &cmd_name, int fd) {
 void AIrcCommands::sendWelcome(string& nick, string &prefix, int fd) {
     string welcome_msg(RPL_WELCOME+nick+RPL_WELCOME_STR_1+prefix);
     DataToUser(fd, welcome_msg, NUMERIC_REPLY);
-    // TODO fix these common replies
-    string welcome_msg2(RPL_YOURHOST""STR_YOURHOST);
-    DataToUser(fd, welcome_msg2, NUMERIC_REPLY);
-    string welcome_msg3(RPL_CREATED""STR_CREATED);
-    DataToUser(fd, welcome_msg3, NUMERIC_REPLY);
-    string welcome_msg4(RPL_MYINFO""STR_MYINFO);
-    DataToUser(fd, welcome_msg4, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendAlreadyRegistered(string &nick, int fd) {
@@ -61,20 +54,25 @@ void AIrcCommands::sendAlreadyRegistered(string &nick, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
+void AIrcCommands::sendNoSuchNick(int fd, std::string nick, std::string notFoundNick) {
+    string reply = (ERR_NOSUCHNICK + nick + " " + notFoundNick + " " + STR_NOSUCHNICK);
+    return DataToUser(fd, reply, NUMERIC_REPLY);
+}
+
 void AIrcCommands::sendJoinReply(int fd, User &user, Channel &channel, bool send_all) {
     string join_rpl = ":" + user.prefix + " JOIN :" + channel.name;
     if (send_all) {
         sendMessageToChannel(channel, join_rpl, user.nick);
-    }
-    if (!channel.topic.empty()) {
-        string topic_rpl = ":" + user.prefix + " " + channel.name + " :" + channel.topic;
-        DataToUser(fd, topic_rpl, NO_NUMERIC_REPLY);
     }
     DataToUser(fd, join_rpl, NO_NUMERIC_REPLY);
     sendNamesReply(fd, user, channel);
 }
 
 void AIrcCommands::sendNamesReply(int fd, User &user, Channel &channel) {
+    if (!channel.topic.empty()) {
+        string top_rpl = RPL_TOPIC + user.real_nick + " " + channel.name + " :" + channel.topic;
+        DataToUser(fd, top_rpl, NUMERIC_REPLY);
+    }
     string namesReply = constructNamesReply(user.real_nick, channel);
     DataToUser(fd, namesReply, NUMERIC_REPLY);
     namesReply = (RPL_ENDOFNAMES + user.real_nick + " "
@@ -87,13 +85,10 @@ void AIrcCommands::sendListReply(int fd, User &user, string ch_name) {
     string start_rpl = (RPL_LISTSTART + user.real_nick + STR_LISTSTART);
     DataToUser(fd, start_rpl, NUMERIC_REPLY);
     if (ch_name.compare("")) {
-        LOG(DEBUG) << ch_name;
-        LOG(DEBUG) << "2";
         Channel &channel = channel_map.find(ch_name)->second;
         string reply = constructListReply(user.real_nick, channel);
         DataToUser(fd, reply, NUMERIC_REPLY);
     } else if (channel_map.size() > 0) {
-        LOG(DEBUG) << "3";
         for (std::map<std::string, Channel>::iterator it = channel_map.begin(); it != channel_map.end(); it++) {
             string reply = constructListReply(user.real_nick, it->second);
             DataToUser(fd, reply, NUMERIC_REPLY);
@@ -103,12 +98,18 @@ void AIrcCommands::sendListReply(int fd, User &user, string ch_name) {
     DataToUser(fd, end_reply, NUMERIC_REPLY);
 }
 
-// TODO: part message en weechat no funciona igual que me devuelve irchispano
-void AIrcCommands::sendPartMessage(string &message,  int fd, User &user, Channel &channel) {
-    string part_message = message.compare("") ? " :\"" + message.substr(1) + "\"" : "";
+// TODO: part cmd_name en weechat no funciona igual que me devuelve irchispano
+void AIrcCommands::sendPartMessage(string &cmd_name, int fd, User &user, Channel &channel) {
+    string part_message = cmd_name.compare("") ? " :\"" + cmd_name.substr(1) + "\"" : "";
     string part_rpl = ":" + user.prefix + " PART :" + channel.name + part_message;
     sendMessageToChannel(channel, part_rpl, user.nick);
     return (DataToUser(fd, part_rpl, NO_NUMERIC_REPLY));
+}
+
+void AIrcCommands::sendChannelModes(int fd, std::string nick, Channel &channel) {
+    string mode = channel.getModeStr();
+    string mode_rpl = (RPL_CHANNELMODEIS + nick + " " + channel.name + " :+" + mode + "t");
+    DataToUser(fd, mode_rpl, NUMERIC_REPLY);
 }
 
 
@@ -116,6 +117,9 @@ void AIrcCommands::sendPartMessage(string &message,  int fd, User &user, Channel
 
 void AIrcCommands::sendMessageToChannel(Channel &channel, string &message, string &nick) {
     for (std::list<string>::iterator it = channel.users.begin(); it != channel.users.end(); it++) {
+        if (!nickExists(*it)) {
+            continue;
+        }
         User &receiver = getUserFromNick(*it);
         if (receiver.nick.compare(nick)) {
             DataToUser(receiver.fd, message, NO_NUMERIC_REPLY);
@@ -127,7 +131,10 @@ string AIrcCommands::constructNamesReply(string nick, Channel &channel) {
     unsigned long i = 0;
     string reply = (RPL_NAMREPLY + nick + " = " + channel.name + " " + ":");
     for (std::list<string>::iterator it = channel.users.begin(); it != channel.users.end(); it++) {
-        User user = getUserFromNick(*it);
+        if (!nickExists(*it)) {
+            continue;
+        }
+        User &user = getUserFromNick(*it);
         if (user.isChannelOperator(channel.name)) {
             reply += "@";
         }
@@ -138,15 +145,12 @@ string AIrcCommands::constructNamesReply(string nick, Channel &channel) {
 }
 
 string AIrcCommands::constructListReply(string nick, Channel &channel) {
-    string mode = channel.keyModeOn() ? "k" : "";
-    mode += channel.inviteModeOn() ? "i" : "";
-    mode += channel.moderatedModeOn() ? "m" : "";
-    mode = mode.length() != 0 ? ("+" + mode) : mode;
+    string mode = channel.getModeStr();
     char* channel_size = ft_itoa((int)channel.users.size());
     if (!channel_size) {
         throw irc::exc::MallocError();
     }
-    string reply = (RPL_LIST + nick + " " + channel.name + " " + std::string(channel_size) + " [" + mode + (mode == "" ? "+t]" : "t]"));
+    string reply = (RPL_LIST + nick + " " + channel.name + " " + std::string(channel_size) + " :[+" + mode + "t]");
     reply += channel.topicModeOn() ? (" " + channel.topic) : "";
     free(channel_size);
     return reply;
