@@ -776,7 +776,7 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
             return sendNotRegistered(cmd.Name(), fd);
         }
         string reply = ":" + user.prefix + " PRIVMSG " + cmd.args[1] + " " + cmd.args[2];
-        return DataToUser(receiver.fd, reply, NUMERIC_REPLY);
+        return DataToUser(receiver.fd, reply, NO_NUMERIC_REPLY);
     }
     if (tools::starts_with_mask(name) && size == 3) {
         if (!channelExists(cmd.args[1])) {
