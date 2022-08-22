@@ -804,7 +804,11 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
 
 }
 
-// TODO : acabar comando
+/**
+ * Command: WHOIS
+ * Parameters: <user>
+ *
+ */
 void AIrcCommands::WHOIS(Command &cmd, int fd) {
     User &user = getUserFromFd(fd);
     int size = cmd.args.size();
@@ -824,6 +828,7 @@ void AIrcCommands::WHOIS(Command &cmd, int fd) {
     string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+whois.real_nick
             +" "+whois.name+" "+hostname+STR_WHOISUSER+whois.full_name);
     DataToUser(fd, info_rpl, NUMERIC_REPLY);
+    // TODO : falta la respuesta 312 (ver lo que es) y extraer la respuesta entera
     string end_rpl = (RPL_ENDOFWHOIS + user.real_nick + " " + cmd.args[1] + STR_ENDOFWHOIS);
     DataToUser(fd, end_rpl, NUMERIC_REPLY);
 }
