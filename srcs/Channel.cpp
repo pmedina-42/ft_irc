@@ -38,7 +38,6 @@ void Channel::addUser(User &user) {
     users.push_back(user.nick);
 }
 
-/** TODO : probablemente convenga cambiar la lista de usuarios por lista de fds de usuario para no tener que actualizar
  * el nick dentro del canal cuando se lo actualicen
  *
  *  funcion que gestione asignar un nuevo operador :
@@ -195,10 +194,10 @@ string Channel::getModeStr() {
     return mode;
 }
 
-void Channel::updateUserNick(std::string &nick) {
-    list<string>::iterator it = std::find(users.begin(), users.end(), nick);
+void Channel::updateUserNick(string &old_nick, string &new_nick) {
+    list<string>::iterator it = std::find(users.begin(), users.end(), old_nick);
     if (it != users.end()) {
-        *it = nick;
+        *it = new_nick;
     }
 }
 

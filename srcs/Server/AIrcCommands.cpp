@@ -54,7 +54,7 @@ AIrcCommands::~AIrcCommands()
 /**
  * Command: NICK
  * Parameters: <nickname>
- * TODO: si un usuario ya registrado se cambia el nick hay que resetearlo en todos lados/mapas
+ *
  */
 void AIrcCommands::NICK(Command &cmd, int fd) {
 
@@ -716,9 +716,6 @@ void AIrcCommands::NAMES(Command &cmd, int fd) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
-        if (!channel.userIsInChannel(user.nick)) {
-            return sendNotOnChannel(cmd.Name(), fd);
-        }
         sendNamesReply(fd, user, channel);
     }
 

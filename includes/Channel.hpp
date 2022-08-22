@@ -40,7 +40,7 @@ class Channel {
     void addMode(int bits);
     void deleteMode(int bits);
     std::string getModeStr();
-    void updateUserNick(std::string &nick);
+    void updateUserNick(std::string &old_nick, std::string &new_nick);
 
     /* ATTRIBUTES */
     NickList users;
