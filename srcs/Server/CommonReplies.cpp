@@ -112,7 +112,7 @@ void AIrcCommands::sendPartMessage(string &cmd_name, int fd, User &user, Channel
 }
 
     void AIrcCommands::sendKickMessage(int fd, User &user, Channel &channel, string &kicked) {
-        string kick_rpl = ":" + user.prefix + " KICK " + channel.name + " " + user.real_nick + " :" +  kicked;
+        string kick_rpl = ":" + user.prefix + " KICK " + channel.name + " " + kicked + " :" +  kicked;
         sendMessageToChannel(channel, kick_rpl, user.nick);
         return (DataToUser(fd, kick_rpl, NO_NUMERIC_REPLY));
     }
