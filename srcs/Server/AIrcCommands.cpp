@@ -583,7 +583,6 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                     if (!channel.banModeOn()) {
                         channel.addMode(CH_BAN);
                     }
-                    // TODO : comprobar si ya existe para no añadirlo mas veces de la cuenta
                     if (!channel.userInBlackList(cmd.args[3])) {
                         channel.black_list.push_back(cmd.args[3]);
                     }
@@ -786,7 +785,9 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
         Channel &channel = channel_map.find(name)->second;
         if (!channel.userIsInChannel(user.nick)) {
             // TODO arreglar la respuesta
-            return sendNotOnChannel(cmd.Name(), fd);
+            string reply = (STR_CANNOTSENDTOCHAN+user.real_nick+" "+channel.name
+                    +" :"+ERR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
+            return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         if (channel.banModeOn() && channel.userInBlackList(user.real_nick)) {
             string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
