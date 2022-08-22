@@ -584,7 +584,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                         channel.addMode(CH_BAN);
                     }
                     // TODO : comprobar si ya existe para no añadirlo mas veces de la cuenta
-                    if (channel.userInBlackList(cmd.args[3])) {
+                    if (!channel.userInBlackList(cmd.args[3])) {
                         channel.black_list.push_back(cmd.args[3]);
                     }
                 }
