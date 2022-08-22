@@ -820,8 +820,9 @@ void AIrcCommands::WHOIS(Command &cmd, int fd) {
     if (!nickExists(nick)) {
         return sendNoSuchNick(fd, user.real_nick, cmd.args[1]);
     }
-    string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+user.real_nick
-            +" "+user.name+" "+hostname+STR_WHOISUSER+user.full_name);
+    User &whois = getUserFromNick(nick);
+    string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+whois.real_nick
+            +" "+whois.name+" "+hostname+STR_WHOISUSER+whois.full_name);
     DataToUser(fd, info_rpl, NUMERIC_REPLY);
     string end_rpl = (RPL_ENDOFWHOIS + user.real_nick + " " + cmd.args[1] + STR_ENDOFWHOIS);
     DataToUser(fd, end_rpl, NUMERIC_REPLY);
