@@ -119,7 +119,7 @@ void AIrcCommands::sendPartMessage(string &cmd_name, int fd, User &user, Channel
 
 void AIrcCommands::sendChannelModes(int fd, std::string nick, Channel &channel) {
     string mode = channel.getModeStr();
-    string mode_rpl = (RPL_CHANNELMODEIS + nick + " " + channel.name + " :+" + mode + "t");
+    string mode_rpl = (RPL_CHANNELMODEIS + nick + " " + channel.name + " :+" + mode + "nt");
     DataToUser(fd, mode_rpl, NUMERIC_REPLY);
 }
 
@@ -161,7 +161,7 @@ string AIrcCommands::constructListReply(string nick, Channel &channel) {
     if (!channel_size) {
         throw irc::exc::MallocError();
     }
-    string reply = (RPL_LIST + nick + " " + channel.name + " " + std::string(channel_size) + " :[+" + mode + "t]");
+    string reply = (RPL_LIST + nick + " " + channel.name + " " + std::string(channel_size) + " :[+" + mode + "nt]");
     reply += channel.topicModeOn() ? (" " + channel.topic) : "";
     free(channel_size);
     return reply;
