@@ -469,6 +469,7 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     string reply = (user.prefix + " KICK " + channel.name + " "
             + user_to_kick.real_nick + " :" + user.real_nick);
     sendMessageToChannel(channel, reply, user.real_nick);
+    DataToUser(fd, reply, NO_NUMERIC_REPLY);
     channel.deleteUser(user_to_kick);
 }
 
@@ -785,6 +786,7 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
         }
         Channel &channel = channel_map.find(name)->second;
         if (!channel.userIsInChannel(user.nick)) {
+            // TODO arreglar la respuesta
             return sendNotOnChannel(cmd.Name(), fd);
         }
         if (channel.banModeOn() && channel.userInBlackList(user.real_nick)) {
