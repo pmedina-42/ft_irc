@@ -435,7 +435,6 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
  * 1. Check if user has the correct permissions to do kick another user
  * 2. Find the user to kick in the channel, if it exists
  * 3. Reuse the PART method passing the comment as the part message
- * TODO : arreglar la respuesta cuando echas a alguien del canal (prefix, a quien se le manda)
  */
 void AIrcCommands::KICK(Command &cmd, int fd) {
 
@@ -467,8 +466,9 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     User& user_to_kick = getUserFromNick(nick);
-    string no_message = "";
-    sendPartMessage(no_message, fd, user, channel);
+    string reply = (user.prefix + " KICK " + channel.name + " "
+            + user_to_kick.real_nick + " :" + user.real_nick);
+    sendMessageToChannel(channel, reply, user.real_nick);
     channel.deleteUser(user_to_kick);
 }
 
