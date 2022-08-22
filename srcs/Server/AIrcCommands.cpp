@@ -524,6 +524,7 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
  * Command: MODE
  * Parameters: <channel>/<user> <channel/userMode> [<modeParams>]
  * TODO reorganizarlo todo que es un disaster
+ * TODO meter el gettimeofday para guardar la hora de creacion del server y pasarlo en varias respuestas (topic, mode +b...)
  */
 void AIrcCommands::MODE(Command &cmd, int fd) {
 
@@ -787,13 +788,15 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
             return sendNotOnChannel(cmd.Name(), fd);
         }
         if (channel.banModeOn() && channel.userInBlackList(user.real_nick)) {
-            string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
+            string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
+                    + STR_CANNOTSENDTOCHAN + "banned");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         LOG(DEBUG) << "user operator " << user.isChannelOperator(name);
         LOG(DEBUG) << "user moderator " << user.isChannelModerator(name);
         if (channel.moderatedModeOn() && !user.isChannelOperator(name) && !user.isChannelModerator(name)) {
-            string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name + STR_CANNOTSENDTOCHAN);
+            string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
+                    + STR_CANNOTSENDTOCHAN + "the +m (moderated) mode is set");
             return (DataToUser(fd, reply, NUMERIC_REPLY));
         }
         string reply = ":" + user.prefix + " PRIVMSG " + channel.name + " " + cmd.args[2];

@@ -137,7 +137,7 @@
  * Sent as a response to user trying to send a message to a moderated channel without being moderator
  */
 # define ERR_CANNOTSENDTOCHAN " 404 "
-# define STR_CANNOTSENDTOCHAN " :You cannot send messages to this channel whilst the +m (moderated) mode is set"
+# define STR_CANNOTSENDTOCHAN " :You cannot send messages to this channel whilst "
 
 /**
  * JOIN failed because the client has joined their maximum number of channels
