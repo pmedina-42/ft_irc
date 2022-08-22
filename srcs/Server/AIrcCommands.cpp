@@ -470,8 +470,8 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
             + user_to_kick.real_nick + " :" + user.real_nick);
     //sendMessageToChannel(channel, reply, user.real_nick);
     string no_message = "";
-    sendPartMessage(no_message, fd, user, channel);
-    //DataToUser(fd, reply, NO_NUMERIC_REPLY);
+    sendPartMessage(no_message, fd, user_to_kick, channel);
+    DataToUser(fd, reply, NO_NUMERIC_REPLY);
     channel.deleteUser(user_to_kick);
 }
 
