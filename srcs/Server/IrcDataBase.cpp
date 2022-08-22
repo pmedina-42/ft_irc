@@ -49,6 +49,7 @@ void IrcDataBase::updateUserNick(int fd, string &new_nick,
     User& user = getUserFromFd(fd);
     removeNickFdPair(user.nick);
     addNickFdPair(new_nick, fd);
+    updateUserInChannels(user, new_nick);
     user.nick = new_nick;
     user.real_nick = new_real_nick;
 }
@@ -127,6 +128,14 @@ User& IrcDataBase::getUserFromNick(string& nickname) {
 Channel& IrcDataBase::getChannelFromName(string& name) {
     ChannelMap::iterator it = channel_map.find(name);
     return it->second;
+}
+
+void IrcDataBase::updateUserInChannels(irc::User &user, string new_nick) {
+    for (std::map<string, unsigned char>::iterator it = user.ch_name_mask_map.begin(); it != user.ch_name_mask_map.end(); it++) {
+        string ch_name = it->first;
+        Channel &channel = getChannelFromName(ch_name);
+        channel.updateUserNick(new_nick);
+    }
 }
 
 void IrcDataBase::debugFdUserMap(void) {

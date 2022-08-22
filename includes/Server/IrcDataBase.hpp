@@ -62,6 +62,8 @@ class IrcDataBase {
     void addNewChannel(Channel& new_channel);
     void removeChannel(Channel& channel);
 
+    void updateUserInChannels(User &user, std::string new_nick);
+
     void debugNickFdMap();
     void debugFdUserMap();
     //void debugChannelMap();

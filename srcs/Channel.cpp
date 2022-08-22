@@ -195,5 +195,12 @@ string Channel::getModeStr() {
     return mode;
 }
 
+void Channel::updateUserNick(std::string &nick) {
+    list<string>::iterator it = std::find(users.begin(), users.end(), nick);
+    if (it != users.end()) {
+        *it = nick;
+    }
+}
+
 
 } // namespace
