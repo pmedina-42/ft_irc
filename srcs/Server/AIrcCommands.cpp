@@ -784,7 +784,6 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
         }
         Channel &channel = channel_map.find(name)->second;
         if (!channel.userIsInChannel(user.nick)) {
-            // TODO arreglar la respuesta
             string reply = (STR_CANNOTSENDTOCHAN+user.real_nick+" "+channel.name
                     +" :"+ERR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
@@ -794,8 +793,6 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     + STR_CANNOTSENDTOCHAN + "banned");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        LOG(DEBUG) << "user operator " << user.isChannelOperator(name);
-        LOG(DEBUG) << "user moderator " << user.isChannelModerator(name);
         if (channel.moderatedModeOn() && !user.isChannelOperator(name) && !user.isChannelModerator(name)) {
             string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
                     + STR_CANNOTSENDTOCHAN + "the +m (moderated) mode is set");
@@ -821,10 +818,11 @@ void AIrcCommands::WHOIS(Command &cmd, int fd) {
     string nick = cmd.args[1];
     tools::ToUpperCase(nick);
     if (!nickExists(nick)) {
-        sendNoSuchNick(fd, user.real_nick, cmd.args[1]);
-    } else {
-
+        return sendNoSuchNick(fd, user.real_nick, cmd.args[1]);
     }
+    string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+user.real_nick
+            +" "+user.name+" "+hostname+STR_WHOISUSER+user.full_name);
+    DataToUser(fd, info_rpl, NUMERIC_REPLY);
     string end_rpl = (RPL_ENDOFWHOIS + user.real_nick + " " + cmd.args[1] + STR_ENDOFWHOIS);
     DataToUser(fd, end_rpl, NUMERIC_REPLY);
 }

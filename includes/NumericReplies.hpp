@@ -53,6 +53,12 @@
 # define STR_NOWAWAY ":You have been marked as being away"
 
 /**
+ *  Sent as the first reply of WHOIS command
+ */
+# define RPL_WHOISUSER " 311 "
+# define STR_WHOISUSER " * :"
+
+/**
  *  Sent as the final reply of WHOIS command
  */
 # define RPL_ENDOFWHOIS " 318 "
