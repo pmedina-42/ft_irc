@@ -466,12 +466,11 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     User& user_to_kick = getUserFromNick(nick);
-    string reply = (user.prefix + " KICK " + channel.name + " "
-            + user_to_kick.real_nick + " :" + user.real_nick);
+    //string reply = (user.prefix + " KICK " + channel.name + " "
+    //        + user_to_kick.real_nick + " :" + user.real_nick);
     //sendMessageToChannel(channel, reply, user.real_nick);
-    string no_message = "";
-    sendPartMessage(no_message, fd, user, channel);
-    DataToUser(fd, reply, NO_NUMERIC_REPLY);
+    sendKickMessage(fd, user, channel, user_to_kick.real_nick);
+    //DataToUser(fd, reply, NO_NUMERIC_REPLY);
     channel.deleteUser(user_to_kick);
 }
 

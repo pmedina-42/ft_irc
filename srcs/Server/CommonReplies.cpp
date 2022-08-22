@@ -111,6 +111,12 @@ void AIrcCommands::sendPartMessage(string &cmd_name, int fd, User &user, Channel
     return (DataToUser(fd, part_rpl, NO_NUMERIC_REPLY));
 }
 
+    void AIrcCommands::sendKickMessage(int fd, User &user, Channel &channel, string &kicked) {
+        string kick_rpl = ":" + user.prefix + " KICK " + channel.name + " " + user.real_nick + " :" +  kicked;
+        sendMessageToChannel(channel, kick_rpl, user.nick);
+        return (DataToUser(fd, kick_rpl, NO_NUMERIC_REPLY));
+    }
+
 void AIrcCommands::sendChannelModes(int fd, std::string nick, Channel &channel) {
     string mode = channel.getModeStr();
     string mode_rpl = (RPL_CHANNELMODEIS + nick + " " + channel.name + " :+" + mode + "t");

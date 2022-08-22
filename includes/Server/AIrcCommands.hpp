@@ -71,6 +71,7 @@ class AIrcCommands : public FdManager,
     void sendPartMessage(std::string &cmd_name, int fd, User &user, Channel &channel);
     void sendNoSuchNick(int fd, std::string nick, std::string notFoundNick);
     void sendChannelModes(int fd, std::string nick, Channel &channel);
+    void sendKickMessage(int fd, User &user, Channel &channel, std::string &kicked);
 
 private:
 
