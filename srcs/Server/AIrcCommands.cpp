@@ -581,7 +581,14 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                     return DataToUser(fd, blacklist_end_rpl, NUMERIC_REPLY);
                 }
                 if (size == 4) {
-                    string ban_nick = cmd.args[3]+"!*@*";
+                    string ban_nick = cmd.args[3];
+                    if (ft_isdigit(ban_nick[0])) {
+                        ban_nick = "*!*@" + ban_nick;
+                    } else {
+                        if (ban_nick.find('@') == string::npos) {
+                            ban_nick += "!*@*";
+                        }
+                    }
                     if (!channel.banModeOn()) {
                         channel.addMode(CH_BAN);
                     }
