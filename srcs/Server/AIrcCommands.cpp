@@ -805,8 +805,9 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         // TODO probar a banear por ip en el irc hispano desde dos ordenadores distintos
-        if (channel.banModeOn() && (channel.userInBlackList(user.real_nick) ||
-                    (channel.all_banned && !channel.isUserOperator(user)))) {
+        if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
+                || channel.userInBlackList(user.prefix)||
+                (channel.all_banned && !channel.isUserOperator(user)))) {
             string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
                     + STR_CANNOTSENDTOCHAN + "banned");
             return DataToUser(fd, reply, NUMERIC_REPLY);
