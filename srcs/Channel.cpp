@@ -38,6 +38,7 @@ void Channel::addUser(User &user) {
     users.push_back(user.nick);
 }
 
+/*
  * el nick dentro del canal cuando se lo actualicen
  *
  *  funcion que gestione asignar un nuevo operador :
@@ -93,27 +94,33 @@ string Channel::getNextOpUser(string &nick) {
 /**
  * Banea a un usuario
  */
-void Channel::banUser(User &user) {
-    black_list.push_back(user.nick);
+void Channel::banUser(string &user, int fd) {
+    if (!user.compare("*!*@*")) {
+        all_banned = true;
+    }
+    black_list.insert(std::pair<string, int>(user, fd));
 }
 
 /**
  * Desbanea a un usuario
  */
-void Channel::unbanUser(User &user) {
-    list<string>::iterator end = black_list.end();
-    list<string>::iterator it = std::find(black_list.begin(), end, user.nick);
-    if (it != end)
-        black_list.erase(it);
+bool Channel::unbanUser(string &user) {
+    if (black_list.count(user)) {
+        std::map<string, int>::iterator it = black_list.find(user);
+        if (!user.compare("*!*@*")) {
+            all_banned = false;
+        }
+        black_list.erase(it->first);
+        return true;
+    }
+    return false;
 }
 
 /**
  * Comprueba si el usuario está en la lista de baneados
  */
 bool Channel::userInBlackList(string nick) {
-    list<string>::iterator end = black_list.end();
-    list<string>::iterator it = std::find(black_list.begin(), end, nick);
-    return (it != end);
+    return (black_list.count(nick));
 }
 
 /**

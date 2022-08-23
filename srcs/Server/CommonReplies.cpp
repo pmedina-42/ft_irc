@@ -103,9 +103,9 @@ void AIrcCommands::sendListReply(int fd, User &user, string ch_name) {
     DataToUser(fd, end_reply, NUMERIC_REPLY);
 }
 
-// TODO: part cmd_name en weechat no funciona igual que me devuelve irchispano
-void AIrcCommands::sendPartMessage(string &cmd_name, int fd, User &user, Channel &channel) {
-    string part_message = cmd_name.compare("") ? " :\"" + cmd_name.substr(1) + "\"" : "";
+// TODO: part extra_msg en weechat no funciona igual que me devuelve irchispano
+void AIrcCommands::sendPartMessage(string &extra_msg, int fd, User &user, Channel &channel) {
+    string part_message = extra_msg.compare("") ? " :\"" + extra_msg.substr(1) + "\"" : "";
     string part_rpl = ":" + user.prefix + " PART :" + channel.name + part_message;
     sendMessageToChannel(channel, part_rpl, user.nick);
     return (DataToUser(fd, part_rpl, NO_NUMERIC_REPLY));

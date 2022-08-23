@@ -285,7 +285,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
                                               + " "STR_USERONCHANNEL);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        if (channel.banModeOn() && channel.userInBlackList(user.real_nick)) {
+        if (channel.banModeOn() && (channel.userInBlackList(user.real_nick) || channel.all_banned)) {
             string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
@@ -571,8 +571,9 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             if (tools::charIsInString(cmd.args[2], 'b')) {
                 if (size == 3) {
                     if (!channel.black_list.empty()) {
-                        for (std::list<string>::iterator it = channel.black_list.begin(); it != channel.black_list.end(); it++) {
-                            string blacklist_rpl = (RPL_BANLIST + user.real_nick + " " + channel.name + " " + *it);
+                        for (std::map<string, int>::iterator it = channel.black_list.begin(); it != channel.black_list.end(); it++) {
+                            string blacklist_rpl = (RPL_BANLIST + user.real_nick + " " + channel.name + " "
+                                            + it->first + " " + getUserFromFd(it->second).real_nick);
                             DataToUser(fd, blacklist_rpl, NUMERIC_REPLY);
                         }
                     }
@@ -580,11 +581,14 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                     return DataToUser(fd, blacklist_end_rpl, NUMERIC_REPLY);
                 }
                 if (size == 4) {
+                    string ban_nick = cmd.args[3]+"!*@*";
                     if (!channel.banModeOn()) {
                         channel.addMode(CH_BAN);
                     }
-                    if (!channel.userInBlackList(cmd.args[3])) {
-                        channel.black_list.push_back(cmd.args[3]);
+                    if (!channel.userInBlackList(ban_nick)) {
+                        channel.banUser(ban_nick, user.fd);
+                        string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " +b " + cmd.args[3];
+                        return sendMessageToChannel(channel, mode_rpl, user.real_nick);
                     }
                 }
             }
@@ -608,7 +612,13 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             }
             if (tools::charIsInString(cmd.args[2], 'b')) {
                 if (size == 4) {
-                    channel.black_list.remove(cmd.args[3]);
+                    string user_to_unban = cmd.args[3];
+                    if (!channel.unbanUser(user_to_unban)) {
+                        string ban_rpl = (ERR_NOSUCHBAN+user.real_nick+" "+channel.name+STR_NOSUCHBAN+user_to_unban);
+                        return DataToUser(fd, ban_rpl, NUMERIC_REPLY);
+                    }
+                    string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " -b " + cmd.args[3];
+                    return sendMessageToChannel(channel, mode_rpl, user.real_nick);
                 }
                 if (channel.black_list.empty()) {
                     channel.deleteMode(CH_BAN);
@@ -716,9 +726,11 @@ void AIrcCommands::NAMES(Command &cmd, int fd) {
             return sendNoSuchChannel(cmd.Name(), fd);
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
-        sendNamesReply(fd, user, channel);
+        return sendNamesReply(fd, user, channel);
     }
-
+    string namesReply = (RPL_ENDOFNAMES+ user.real_nick +
+                        " *"+ STR_ENDOFNAMES);
+    DataToUser(fd, namesReply, NUMERIC_REPLY);
 }
 
 /**
@@ -785,7 +797,9 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     +" :"+ERR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        if (channel.banModeOn() && channel.userInBlackList(user.real_nick)) {
+        // TODO probar a banear por ip en el irc hispano desde dos ordenadores distintos
+        if (channel.banModeOn() && (channel.userInBlackList(user.real_nick) ||
+                    (channel.all_banned && !channel.isUserOperator(user)))) {
             string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
                     + STR_CANNOTSENDTOCHAN + "banned");
             return DataToUser(fd, reply, NUMERIC_REPLY);
@@ -825,7 +839,9 @@ void AIrcCommands::WHOIS(Command &cmd, int fd) {
     string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+whois.real_nick
             +" "+whois.name+" "+hostname+STR_WHOISUSER+whois.full_name);
     DataToUser(fd, info_rpl, NUMERIC_REPLY);
-    // TODO : falta la respuesta 312 (ver lo que es) y extraer la respuesta entera
+    string mid_rpl = (RPL_WHOISSERVER+user.real_nick+" "+whois.real_nick
+            +" "+hostname+" :WhatsApp 2");
+        DataToUser(fd, mid_rpl, NUMERIC_REPLY);
     string end_rpl = (RPL_ENDOFWHOIS + user.real_nick + " " + cmd.args[1] + STR_ENDOFWHOIS);
     DataToUser(fd, end_rpl, NUMERIC_REPLY);
 }

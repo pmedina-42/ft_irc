@@ -59,6 +59,11 @@
 # define STR_WHOISUSER " * :"
 
 /**
+ *  Sent as the second reply of WHOIS command
+ */
+# define RPL_WHOISSERVER " 312 "
+
+/**
  *  Sent as the final reply of WHOIS command
  */
 # define RPL_ENDOFWHOIS " 318 "
@@ -119,7 +124,7 @@
 /**
  * Sent as a response to MODE <channel> +b command if blacklist is not empty
  */
-# define RPL_BANLIST " 366 "
+# define RPL_BANLIST " 367 "
 
 /**
  * Sent as the final response to MODE <channel> +b command
@@ -270,5 +275,12 @@
  */
 # define ERR_USERSDONTMATCH " 502 "
 # define STR_USERSDONTMATCH ":Cant change mode for other users"
+
+/**
+ * Sent as reply to a user trying to unban a user that's not on the blacklist
+ */
+# define ERR_NOSUCHBAN " 698 "
+# define STR_NOSUCHBAN " :Channel ban list does not contain "
+
 
 #endif /* IRC42_NUMERICREPLIES_H */

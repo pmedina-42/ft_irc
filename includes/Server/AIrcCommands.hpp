@@ -68,7 +68,7 @@ class AIrcCommands : public FdManager,
     void sendJoinReply(int fd, User &user, Channel &channel, bool send_all);
     void sendNamesReply(int fd, User &user, Channel &channel);
     void sendListReply(int fd, User &user, std::string ch_name);
-    void sendPartMessage(std::string &cmd_name, int fd, User &user, Channel &channel);
+    void sendPartMessage(std::string &extra_msg, int fd, User &user, Channel &channel);
     void sendNoSuchNick(int fd, std::string nick, std::string notFoundNick);
     void sendChannelModes(int fd, std::string nick, Channel &channel);
     void sendKickMessage(int fd, User &user, Channel &channel, std::string &kicked);

@@ -14,6 +14,7 @@ class User;
 class Channel {
 
     typedef std::list<std::string> NickList;
+    typedef std::map<std::string, int> BlackListOpMap;
 
 
     public:
@@ -23,10 +24,9 @@ class Channel {
     /* Class functions */
     void addUser(User& user);
     void deleteUser(User& user);
-    void banUser(User& user);
-    void unbanUser(User& user);
+    void banUser(std::string &user, int fd);
+    bool unbanUser(std::string &user);
     bool userInBlackList(std::string nick);
-    /* Esta función devuelve true si el canal está en modo invitación */
     bool inviteModeOn();
     bool keyModeOn();
     bool topicModeOn();
@@ -45,12 +45,12 @@ class Channel {
     /* ATTRIBUTES */
     NickList users;
     NickList white_list;
-    NickList black_list;
+    BlackListOpMap black_list;
 
     std::string name;
     unsigned char mode;
-    unsigned int max_users;
     std::string key;
+    bool all_banned;
     /**
      * Channel topic
      */
