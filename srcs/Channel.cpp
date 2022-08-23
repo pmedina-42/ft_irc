@@ -118,9 +118,15 @@ bool Channel::unbanUser(string &user) {
 
 /**
  * Comprueba si el usuario está en la lista de baneados
+ * TODO a esto hay que darle un repaso por el tema de baneos por ip
  */
 bool Channel::userInBlackList(string nick) {
-    return (black_list.count(nick));
+    for (std::map<string, int>::iterator it = black_list.begin(); it != black_list.end(); it++) {
+        if (it->first.find(nick) != string::npos) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
