@@ -285,7 +285,11 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
                                               + " "STR_USERONCHANNEL);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        if (channel.banModeOn() && (channel.userInBlackList(user.real_nick) || channel.all_banned)) {
+        string ip = user.prefix.substr(user.prefix.find('@') + 1);
+
+        if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
+                || channel.userInBlackList(ip) ||
+                channel.all_banned) && !channel.isUserOperator(user)) {
             string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
@@ -804,9 +808,10 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     +" :"+ERR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
+        string ip = user.prefix.substr(user.prefix.find('@') + 1);
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
-                || channel.userInBlackList(user.prefix)||
-                (channel.all_banned && !channel.isUserOperator(user)))) {
+                || channel.userInBlackList(ip) ||
+                channel.all_banned) && !channel.isUserOperator(user)) {
             string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
                     + STR_CANNOTSENDTOCHAN + "banned");
             return DataToUser(fd, reply, NUMERIC_REPLY);
