@@ -804,7 +804,6 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     +" :"+ERR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        // TODO probar a banear por ip en el irc hispano desde dos ordenadores distintos
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
                 || channel.userInBlackList(user.prefix)||
                 (channel.all_banned && !channel.isUserOperator(user)))) {

@@ -13,27 +13,6 @@
 # define RPL_WELCOME " 001 "
 # define RPL_WELCOME_STR_1 " :Welcome to the Internet Relay Network, "
 
-
-/**
- * The first message sent after client registration
- */
-# define RPL_YOURHOST " 002 "
-# define STR_YOURHOST " :Your host is <servername>, running version <ver>"
-
-
-/**
- * The first message sent after client registration
- */
-# define RPL_CREATED " 003 "
-# define STR_CREATED " :This server was created <date>"
-
-
-/**
- * The first message sent after client registration
- */
-# define RPL_MYINFO " 004 "
-# define STR_MYINFO " :<servername> <version> <available user modes><available channel modes>"
-
 /**
  *  Sent as a reply to the AWAY command, this lets the client know that they are no longer set as being away
  */
