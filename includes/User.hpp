@@ -142,6 +142,7 @@ class User {
     time_t last_received;
     time_t ping_send_time;
     std::string ping_str;
+    string ip;
 
 };
 
