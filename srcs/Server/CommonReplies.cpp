@@ -167,4 +167,17 @@ string AIrcCommands::constructListReply(string nick, Channel &channel) {
     return reply;
 }
 
+string AIrcCommands::constructWhoisChannelRpl(User &user, string &nick) {
+    string rpl = (RPL_WHOISCHANNELS+nick+" "+user.real_nick+" :");
+    unsigned long i = 0;
+    unsigned long size = user.ch_name_mask_map.size();
+    for (std::map<string, unsigned char> ::iterator it = user.ch_name_mask_map.begin(); i < size; i++) {
+        string at = user.isChannelOperator(it->first) ? "@" : "";
+        rpl += at + it->first;
+        rpl += i < (size - 1) ? " " : "";
+        it++;
+    }
+    return rpl;
+}
+
 } /* namespace irc */

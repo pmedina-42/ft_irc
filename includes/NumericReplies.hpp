@@ -49,6 +49,11 @@
 # define STR_ENDOFWHOIS " :End of /WHOIS list"
 
 /**
+ *  Sent as the channel info reply of WHOIS command
+ */
+# define RPL_WHOISCHANNELS " 319 "
+
+/**
  *  Sent as the first reply to the LIST command
  */
 # define RPL_LISTSTART " 321 "
@@ -76,12 +81,18 @@
  * Sent to a client who recently joined a channel with no topic set
  */
 # define RPL_NOTOPIC " 331 "
-# define STR_NOTOPIC ":No topic is set"
+# define STR_NOTOPIC ": No topic is set"
 
 /**
  * Sent to a client who recently joined a channel with the topic, if set
  */
 # define RPL_TOPIC " 332 "
+
+/**
+ * Sent to a client who recently joined a channel with the topic set time, if set
+ * and as a response to topic <channel> command, if set
+ */
+# define RPL_TOPICWHOTIME " 333 "
 
 /**
  * Sent as a reply to the INVITE command to indicate that the attempt was

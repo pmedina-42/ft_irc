@@ -78,6 +78,7 @@ private:
     void sendMessageToChannel(Channel &channel, std::string &message, std::string &nick);
     std::string constructNamesReply(std::string nick, Channel &channel);
     std::string constructListReply(std::string nick, Channel &channel);
+    std::string constructWhoisChannelRpl(User &user, std::string &real_nick);
 
 };
 

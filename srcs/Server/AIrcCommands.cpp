@@ -405,13 +405,13 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
     }
     if (size == 2) {
         if (channel.topic.empty()) {
-            string reply(RPL_NOTOPIC+cmd.Name()+STR_NOTOPIC);
+            string reply(RPL_NOTOPIC+user.real_nick+" "+channel.name+STR_NOTOPIC);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        string reply(cmd.Name() + " "
+        string reply(RPL_TOPIC+ user.real_nick + " "
                      + channel.name + " :"
                      + channel.topic);
-        return DataToUser(fd, reply, NO_NUMERIC_REPLY);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     if (size == 3) {
         if (!channel.isUserOperator(user)) {
@@ -851,6 +851,11 @@ void AIrcCommands::WHOIS(Command &cmd, int fd) {
     string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+whois.real_nick
             +" "+whois.name+" "+hostname+STR_WHOISUSER+whois.full_name);
     DataToUser(fd, info_rpl, NUMERIC_REPLY);
+    if (!whois.ch_name_mask_map.empty()) {
+        string channel_rpl = constructWhoisChannelRpl(whois, user.real_nick);
+        DataToUser(fd, channel_rpl, NUMERIC_REPLY);
+    }
+    // TODO cambiar aqui hostname por ip del cliente ?
     string mid_rpl = (RPL_WHOISSERVER+user.real_nick+" "+whois.real_nick
             +" "+hostname+" :WhatsApp 2");
         DataToUser(fd, mid_rpl, NUMERIC_REPLY);

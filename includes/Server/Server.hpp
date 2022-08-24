@@ -23,6 +23,7 @@ class Server : public AIrcCommands {
     
     private:
 
+    time_t creation_time;
     std::string password;
     bool serverHasPassword();
     //void registerUser(User &user);
