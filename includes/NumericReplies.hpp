@@ -17,19 +17,6 @@
  *  Sent as a reply to the AWAY command, this lets the client know that they are no longer set as being away
  */
 # define RPL_UMODEIS " 221 "
-# define STR_UMODEIS " <user modes>"
-
-/**
- *  Sent to a client to inform that client of their currently-set user modes
- */
-# define RPL_UNAWAY " 305 "
-# define STR_UNAWAY ":You are no longer marked as being away"
-
-/**
- *  Sent as a reply to the AWAY command, this lets the client know that they are set as being away
- */
-# define RPL_NOWAWAY " 306 "
-# define STR_NOWAWAY ":You have been marked as being away"
 
 /**
  *  Sent as the first reply of WHOIS command
@@ -64,7 +51,6 @@
  */
 # define RPL_LIST " 322 "
 
-
 /**
  *  Sent as the second reply to the MODE command with one parameter
  */
@@ -87,12 +73,6 @@
  * Sent to a client who recently joined a channel with the topic, if set
  */
 # define RPL_TOPIC " 332 "
-
-/**
- * Sent to a client who recently joined a channel with the topic set time, if set
- * and as a response to topic <channel> command, if set
- */
-# define RPL_TOPICWHOTIME " 333 "
 
 /**
  * Sent as a reply to the INVITE command to indicate that the attempt was
@@ -139,12 +119,6 @@
  */
 # define ERR_CANNOTSENDTOCHAN " 404 "
 # define STR_CANNOTSENDTOCHAN " :You cannot send messages to this channel whilst "
-
-/**
- * JOIN failed because the client has joined their maximum number of channels
- */
-# define ERR_TOOMANYCHANNELS " 405 "
-# define STR_TOOMANYCHANNELS " :You have joined too many channels"
 
 # define ERR_INPUTTOOLONG " 417 "
 # define STR_INPUTTOOLONG " :Input line was too long"

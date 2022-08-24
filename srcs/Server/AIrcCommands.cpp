@@ -808,6 +808,7 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     +" :"+ERR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
+        // TODO cambiar por la ip del usuario cuando esté recogida en la variable
         string ip = user.prefix.substr(user.prefix.find('@') + 1);
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
                 || channel.userInBlackList(ip) ||
