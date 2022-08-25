@@ -118,7 +118,6 @@ bool Channel::unbanUser(string &user) {
 
 /**
  * Comprueba si el usuario está en la lista de baneados
- * TODO a esto hay que darle un repaso por el tema de baneos por ip. no esta funcionando por el prefix, hacer pruebas con privmsg y join
  */
 bool Channel::userInBlackList(string nick) {
     for (std::map<string, int>::iterator it = black_list.begin(); it != black_list.end(); it++) {

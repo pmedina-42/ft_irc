@@ -267,28 +267,16 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     }
     /* case channel does not exist */
     if (!channelExists(cmd.args[1])) {
-        Channel channel(ch_name, user);
-        user.ch_name_mask_map.insert(
-                    std::pair<string, unsigned char>(channel.name, 0x80));
-        if (size >= 3) {
-            channel.key = cmd.args[2];
-            channel.addMode(CH_PAS);
-        }
-        addNewChannel(channel);
-        return (sendJoinReply(fd, user, channel, false));
-        /* case channel exists already */
+        return (createNewChannel(cmd, size, user, fd));
+    /* case channel exists already */
     } else {
         Channel &channel = getChannelFromName(ch_name);
         if (channel.userIsInChannel(user.nick)) {
-            string reply(ERR_USERONCHANNEL" " + user.nick + " "
-                                              + channel.name
-                                              + " "STR_USERONCHANNEL);
-            return DataToUser(fd, reply, NUMERIC_REPLY);
+            return ;
         }
-        string ip = user.prefix.substr(user.prefix.find('@') + 1);
-
+        // TODO no funciona correctamente hasta que la variable de usuario ip recoja el valor de la ip con la que se conecta
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
-                || channel.userInBlackList(ip) ||
+                || channel.userInBlackList(user.ip) ||
                 channel.all_banned) && !channel.isUserOperator(user)) {
             string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
             return DataToUser(fd, reply, NUMERIC_REPLY);
@@ -296,18 +284,15 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
         if (channel.inviteModeOn()
             && !channel.isInvited(user.nick))
         {
-            string reply(ERR_INVITEONLYCHAN + cmd.Name()
-                                            + STR_INVITEONLYCHAN);
+            string reply(ERR_INVITEONLYCHAN + user.real_nick + " "
+                        + channel.name + STR_INVITEONLYCHAN);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        if (channel.keyModeOn()
-            /* command has no key */
-            && (size == 2
-            /* key does not match */
-            || channel.key.compare(cmd.args[2]) != 0))
+        if ((size == 2 || channel.key.compare(cmd.args[2]) != 0)
+            && channel.keyModeOn())
         {
-            string reply(ERR_BADCHANNELKEY + cmd.Name()
-                                           + STR_BADCHANNELKEY);
+            string reply(ERR_BADCHANNELKEY + user.real_nick + " "
+                        + channel.name + STR_BADCHANNELKEY);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         channel.addUser(user);
@@ -808,10 +793,10 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     +" :"+ERR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        // TODO cambiar por la ip del usuario cuando esté recogida en la variable
-        string ip = user.prefix.substr(user.prefix.find('@') + 1);
+        // TODO esto va a dejar de funcionar hasta que se recoja el valor de la ip de cada usuario en user.ip
+        // TODO revisar el parseo de lo que le llega al +b
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
-                || channel.userInBlackList(ip) ||
+                || channel.userInBlackList(user.ip) ||
                 channel.all_banned) && !channel.isUserOperator(user)) {
             string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
                     + STR_CANNOTSENDTOCHAN + "banned");
@@ -850,13 +835,12 @@ void AIrcCommands::WHOIS(Command &cmd, int fd) {
     }
     User &whois = getUserFromNick(nick);
     string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+whois.real_nick
-            +" "+whois.name+" "+hostname+STR_WHOISUSER+whois.full_name);
+            +" "+whois.name+" "+whois.ip+STR_WHOISUSER+whois.full_name);
     DataToUser(fd, info_rpl, NUMERIC_REPLY);
     if (!whois.ch_name_mask_map.empty()) {
         string channel_rpl = constructWhoisChannelRpl(whois, user.real_nick);
         DataToUser(fd, channel_rpl, NUMERIC_REPLY);
     }
-    // TODO cambiar aqui hostname por ip del cliente ?
     string mid_rpl = (RPL_WHOISSERVER+user.real_nick+" "+whois.real_nick
             +" "+hostname+" :WhatsApp 2");
         DataToUser(fd, mid_rpl, NUMERIC_REPLY);

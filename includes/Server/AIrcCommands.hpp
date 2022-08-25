@@ -79,7 +79,7 @@ private:
     std::string constructNamesReply(std::string nick, Channel &channel);
     std::string constructListReply(std::string nick, Channel &channel);
     std::string constructWhoisChannelRpl(User &user, std::string &real_nick);
-
+    void createNewChannel(const Command &cmd, int size, User &user, int fd);
 };
 
 } // namespace
