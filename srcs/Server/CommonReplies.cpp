@@ -105,8 +105,9 @@ void AIrcCommands::sendListReply(int fd, User &user, string ch_name) {
 
 // TODO: part extra_msg en weechat no funciona igual que me devuelve irchispano. ademas en weechat ya no me devuelve el part al mismo usuario
 void AIrcCommands::sendPartMessage(string &extra_msg, int fd, User &user, Channel &channel) {
-    string part_message = extra_msg.compare("") ? " :\"" + extra_msg.substr(1) + "\"" : "";
-    string part_rpl = ":" + user.prefix + " PART :" + channel.name + part_message;
+    bool msg = extra_msg.compare("");
+    string part_message = msg ? " :\"" + extra_msg.substr(1) + "\"" : "";
+    string part_rpl = ":" + user.prefix + " PART " + (msg ? "" : ":") + channel.name + part_message;
     sendMessageToChannel(channel, part_rpl, user.nick);
     return (DataToUser(fd, part_rpl, NO_NUMERIC_REPLY));
 }
