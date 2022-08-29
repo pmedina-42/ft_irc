@@ -124,7 +124,7 @@ int Server::mainLoop(void) {
             }
             /* listener is always at first entry */
             if (fd_idx == 0) {
-                int new_fd = acceptConnection();
+                 = acceptConnection();
                 addNewUser(new_fd);
                 continue;
             }

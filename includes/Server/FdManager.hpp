@@ -35,6 +35,7 @@ class FdManager {
     /* main utils */
     void Poll(void);
     int acceptConnection(void);
+    const char* acceptConnection(int *fd) ;
     void closeConnection(int fd_idx);
 
     /* accessors */
@@ -48,6 +49,12 @@ class FdManager {
     /* fd from clients manager. This includes
     * the listener, at entry 0.
     */
+
+    typedef struct UserData {
+        int fd;
+        char* ip_address[20];
+    } UserData;
+    
     struct pollfd fds[MAX_FDS];
     int fds_size;
     struct addrinfo *servinfo;

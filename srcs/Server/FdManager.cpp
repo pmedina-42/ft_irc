@@ -284,17 +284,15 @@ int FdManager::acceptConnection(void) {
     fds[fd_new_idx].revents = 0;
 
     /* debug information */
+    char ip_address[20];
     if (client.ss_family == AF_INET)  {
-        char str[14];
         struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
-        inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
-        LOG(INFO) << "connected to " << str;
+        inet_ntop(AF_INET, &(ptr->sin_addr), ip_address, sizeof(ip_address));
     } else {
-        char str[20];
         struct sockaddr_in6 *ptr = (struct sockaddr_in6 *)&client;
-        inet_ntop(AF_INET6, &(ptr->sin6_addr), str, sizeof(str));
-        LOG(INFO) << "connected to " << str;
+        inet_ntop(AF_INET6, &(ptr->sin6_addr), ip_address, sizeof(ip_address));
     }
+    LOG(INFO) << "connected to " << ip_address;
     return fd_new;
 }
 
