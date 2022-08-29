@@ -9,7 +9,7 @@ using std::string;
 
 namespace irc {
 
-User::User(int fd)
+User::User(int fd, const char* ip_address)
 :
 		fd(fd),
         real_nick(),
@@ -30,6 +30,7 @@ User::User(int fd)
         ping_str()
 {
     ft_memset(buffer, '\0', BUFF_MAX_SIZE);
+    memcpy(this->ip_address, ip_address, ft_strlen(ip_address));
 }
 
 User::User(const User &other)
@@ -53,6 +54,7 @@ User::User(const User &other)
     ping_str(other.ping_str)
 {
     ft_memset(buffer, '\0', BUFF_MAX_SIZE);
+    memcpy(this->ip_address, other.ip_address, ft_strlen(other.ip_address));
     if (other.buffer_size > 0) {
         ft_memcpy(buffer, other.buffer, other.buffer_size);
     }
@@ -61,6 +63,8 @@ User::User(const User &other)
 User& User::operator=(const User& other) {
     if (this != &other) {
         fd = other.fd;
+        memcpy(this->ip_address, other.ip_address,
+               ft_strlen(other.ip_address));
         real_nick = other.real_nick;
         nick = other.nick;
         name = other.name;

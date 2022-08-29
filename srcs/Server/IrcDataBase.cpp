@@ -21,12 +21,13 @@ IrcDataBase::IrcDataBase(const IrcDataBase& other)
     fd_user_map(other.fd_user_map)
 {}
 
-void IrcDataBase::addNewUser(int new_fd) {
+void IrcDataBase::addNewUser(int new_fd, const char *ip_address) {
     /* case server is full of users */
-    if (new_fd == -1) {
+    if (new_fd == -1
+        || ip_address == NULL) {
         return ;
     }
-    User user(new_fd);
+    User user(new_fd, ip_address);
     addFdUserPair(new_fd, user);
 }
 

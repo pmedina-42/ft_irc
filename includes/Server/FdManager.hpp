@@ -34,6 +34,7 @@ class FdManager {
 
     /* main utils */
     void Poll(void);
+
     int acceptConnection(void);
     const char* acceptConnection(int *fd) ;
     void closeConnection(int fd_idx);
@@ -47,14 +48,21 @@ class FdManager {
     bool socketErrorIsNotFatal(int fd);
     int getSocketError(int);
     /* fd from clients manager. This includes
-    * the listener, at entry 0.
-    */
+    * the listener, at entry 0. */
 
-    typedef struct UserData {
-        int fd;
-        char* ip_address[20];
-    } UserData;
-    
+   
+    /* Temporarily saves information about the
+     * most recently accepted connection. */
+    typedef struct ConnInfo {
+        int new_fd;
+        char ip_address[20];
+    } ConnInfo;
+
+    // gets the ip_address stored in lastConnection.
+    const char* getSocketAddress(int fd);
+
+    ConnInfo lastConnection;
+
     struct pollfd fds[MAX_FDS];
     int fds_size;
     struct addrinfo *servinfo;

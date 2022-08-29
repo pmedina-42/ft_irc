@@ -124,8 +124,9 @@ int Server::mainLoop(void) {
             }
             /* listener is always at first entry */
             if (fd_idx == 0) {
-                 = acceptConnection();
-                addNewUser(new_fd);
+                int new_fd = acceptConnection();
+                const char* ip_address = getSocketAddress(new_fd);
+                addNewUser(new_fd, ip_address);
                 continue;
             }
             int fd = getFdFromIndex(fd_idx);

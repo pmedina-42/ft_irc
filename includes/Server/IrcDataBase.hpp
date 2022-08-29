@@ -47,7 +47,7 @@ class IrcDataBase {
     Channel& getChannelFromName(std::string& name);
 
     /* interactors */
-    void addNewUser(int new_fd);
+    void addNewUser(int new_fd, const char *ip_address);
     void removeUser(int fd);
 
     void updateUserNick(int fd, std::string &new_nick,

@@ -88,7 +88,7 @@ class User {
     typedef std::map<std::string, unsigned char> ChannelMaskMap;
 
     public:
-    User(int fd);
+    User(int fd, const char* ip_address);
     User(const User &other);
     ~User();
 
