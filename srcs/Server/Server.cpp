@@ -41,7 +41,6 @@ Server::Server(void)
 {
     ft_memset(srv_buff, '\0', BUFF_MAX_SIZE);
     srv_buff_size = 0;
-    creation_time = time(0);
     loadCommandMap();
     mainLoop();
 }

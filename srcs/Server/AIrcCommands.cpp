@@ -508,7 +508,6 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
  * Command: MODE
  * Parameters: <channel>/<user> <channel/userMode> [<modeParams>]
  * TODO reorganizarlo todo que es un disaster
- * TODO meter el gettimeofday para guardar la hora de creacion del server y pasarlo en varias respuestas (topic, mode +b...)
  */
 void AIrcCommands::MODE(Command &cmd, int fd) {
 
