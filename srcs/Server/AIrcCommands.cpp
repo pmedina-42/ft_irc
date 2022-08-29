@@ -267,7 +267,6 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     if (!channelExists(cmd.args[1])) {
         return (createNewChannel(cmd, size, user, fd));
     }
-    // TODO extraer metodo joinExistingChannel(...)
     Channel &channel = getChannelFromName(ch_name);
     if (channel.userIsInChannel(user.nick)) {
         return ;
@@ -293,13 +292,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
                     + channel.name + STR_BADCHANNELKEY);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
-    channel.addUser(user);
-    user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x00));
-    if (channel.topicModeOn() && !channel.topic.empty()) {
-        string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
-        DataToUser(fd, reply, NUMERIC_REPLY);
-    }
-    sendJoinReply(fd, user, channel, true);
+    joinExistingChannel(fd, user, channel);
 }
 
 /**
@@ -602,9 +595,6 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                 }
                 channel.deleteMode(CH_PAS);
             }
-            // TODO : siendo operador, banear usuario y luego desbanearlo hace que salga de la
-            // lista de baneos pero el usuario sigue sin poder hacer join, el servidor responde
-            // que ese usuario esta baneado pero la lista de baneos no lo indica.
             if (tools::charIsInString(cmd.args[2], 'b')) {
                 if (size == 4) {
                     string user_to_unban = cmd.args[3];

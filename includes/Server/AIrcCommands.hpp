@@ -78,6 +78,7 @@ class AIrcCommands : public FdManager,
     std::string constructWhoisChannelRpl(User &user, std::string &real_nick);
     void createNewChannel(const Command &cmd, int size, User &user, int fd);
     void sendWhoisReply(const Command &cmd, int fd, User &user, std::string &nick);
+    void joinExistingChannel(int fd, User &user, Channel &channel);
 };
 
 } // namespace

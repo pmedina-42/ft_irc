@@ -33,4 +33,15 @@ void AIrcCommands::sendWhoisReply(const Command &cmd, int fd, User &user, std::s
     std::string end_rpl = (RPL_ENDOFWHOIS + user.real_nick + " " + cmd.args[1] + STR_ENDOFWHOIS);
     DataToUser(fd, end_rpl, NUMERIC_REPLY);
 }
+
+void AIrcCommands::joinExistingChannel(int fd, User &user, Channel &channel) {
+    channel.addUser(user);
+    user.ch_name_mask_map.insert(std::pair<std::string, unsigned char>(channel.name, 0x00));
+    if (channel.topicModeOn() && !channel.topic.empty()) {
+        std::string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
+        DataToUser(fd, reply, NUMERIC_REPLY);
+    }
+    sendJoinReply(fd, user, channel, true);
+}
+
 }
