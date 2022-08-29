@@ -10,7 +10,6 @@
 #include "libft.h"
 
 #include <map>
-#include <iostream>
 
 namespace irc {
 
@@ -265,44 +264,46 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     if (!tools::starts_with_mask(ch_name)) {
         return sendBadChannelMask(cmd.Name(), fd);
     }
-    /* case channel does not exist */
     if (!channelExists(cmd.args[1])) {
         return (createNewChannel(cmd, size, user, fd));
-    /* case channel exists already */
-    } else {
-        Channel &channel = getChannelFromName(ch_name);
-        if (channel.userIsInChannel(user.nick)) {
-            return ;
-        }
-        // TODO no funciona correctamente hasta que la variable de usuario ip recoja el valor de la ip con la que se conecta
-        if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
-                || channel.userInBlackList(user.ip) ||
-                channel.all_banned) && !channel.isUserOperator(user)) {
-            string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
-            return DataToUser(fd, reply, NUMERIC_REPLY);
-        }
-        if (channel.inviteModeOn()
-            && !channel.isInvited(user.nick))
-        {
-            string reply(ERR_INVITEONLYCHAN + user.real_nick + " "
-                        + channel.name + STR_INVITEONLYCHAN);
-            return DataToUser(fd, reply, NUMERIC_REPLY);
-        }
-        if ((size == 2 || channel.key.compare(cmd.args[2]) != 0)
-            && channel.keyModeOn())
-        {
-            string reply(ERR_BADCHANNELKEY + user.real_nick + " "
-                        + channel.name + STR_BADCHANNELKEY);
-            return DataToUser(fd, reply, NUMERIC_REPLY);
-        }
-        channel.addUser(user);
-        user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x00));
-        if (channel.topicModeOn() && !channel.topic.empty()) {
-            string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
-            DataToUser(fd, reply, NUMERIC_REPLY);
-        }
-        sendJoinReply(fd, user, channel, true);
     }
+    // TODO extraer metodo joinExistingChannel(...)
+    Channel &channel = getChannelFromName(ch_name);
+    if (channel.userIsInChannel(user.nick)) {
+        return ;
+    }
+    // TODO no funciona correctamente hasta que la variable de usuario ip recoja el valor de la ip con la que se conecta
+    string ip = user.prefix.substr(user.prefix.find("@") + 1);
+    if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
+            || channel.userInBlackList(ip) ||
+            channel.all_banned) && !channel.isUserOperator(user)) {
+        LOG(DEBUG) << "blacklist nick " << user.real_nick << ": " << channel.userInBlackList(user.real_nick);
+        LOG(DEBUG) << "blacklist ip " << ip << ": " << channel.userInBlackList(ip);
+        LOG(DEBUG) << "all banned " << channel.all_banned;
+        string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
+    }
+    if (channel.inviteModeOn()
+        && !channel.isInvited(user.nick))
+    {
+        string reply(ERR_INVITEONLYCHAN + user.real_nick + " "
+                    + channel.name + STR_INVITEONLYCHAN);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
+    }
+    if ((size == 2 || channel.key.compare(cmd.args[2]) != 0)
+        && channel.keyModeOn())
+    {
+        string reply(ERR_BADCHANNELKEY + user.real_nick + " "
+                    + channel.name + STR_BADCHANNELKEY);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
+    }
+    channel.addUser(user);
+    user.ch_name_mask_map.insert(std::pair<string, unsigned char>(channel.name, 0x00));
+    if (channel.topicModeOn() && !channel.topic.empty()) {
+        string reply(RPL_TOPIC+user.nick+" "+channel.name+" :"+channel.topic);
+        DataToUser(fd, reply, NUMERIC_REPLY);
+    }
+    sendJoinReply(fd, user, channel, true);
 }
 
 /**
@@ -606,6 +607,9 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                 }
                 channel.deleteMode(CH_PAS);
             }
+            // TODO : siendo operador, banear usuario y luego desbanearlo hace que salga de la
+            // lista de baneos pero el usuario sigue sin poder hacer join, el servidor responde
+            // que ese usuario esta baneado pero la lista de baneos no lo indica.
             if (tools::charIsInString(cmd.args[2], 'b')) {
                 if (size == 4) {
                     string user_to_unban = cmd.args[3];
@@ -833,19 +837,8 @@ void AIrcCommands::WHOIS(Command &cmd, int fd) {
     if (!nickExists(nick)) {
         return sendNoSuchNick(fd, user.real_nick, cmd.args[1]);
     }
-    User &whois = getUserFromNick(nick);
-    string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+whois.real_nick
-            +" "+whois.name+" "+whois.ip+STR_WHOISUSER+whois.full_name);
-    DataToUser(fd, info_rpl, NUMERIC_REPLY);
-    if (!whois.ch_name_mask_map.empty()) {
-        string channel_rpl = constructWhoisChannelRpl(whois, user.real_nick);
-        DataToUser(fd, channel_rpl, NUMERIC_REPLY);
-    }
-    string mid_rpl = (RPL_WHOISSERVER+user.real_nick+" "+whois.real_nick
-            +" "+hostname+" :WhatsApp 2");
-        DataToUser(fd, mid_rpl, NUMERIC_REPLY);
-    string end_rpl = (RPL_ENDOFWHOIS + user.real_nick + " " + cmd.args[1] + STR_ENDOFWHOIS);
-    DataToUser(fd, end_rpl, NUMERIC_REPLY);
+    sendWhoisReply(cmd, fd, user, nick);
 }
+
 
 } // namespace irc

@@ -72,14 +72,12 @@ class AIrcCommands : public FdManager,
     void sendNoSuchNick(int fd, std::string nick, std::string notFoundNick);
     void sendChannelModes(int fd, std::string nick, Channel &channel);
     void sendKickMessage(int fd, User &user, Channel &channel, std::string &kicked);
-
-private:
-
     void sendMessageToChannel(Channel &channel, std::string &message, std::string &nick);
     std::string constructNamesReply(std::string nick, Channel &channel);
     std::string constructListReply(std::string nick, Channel &channel);
     std::string constructWhoisChannelRpl(User &user, std::string &real_nick);
     void createNewChannel(const Command &cmd, int size, User &user, int fd);
+    void sendWhoisReply(const Command &cmd, int fd, User &user, std::string &nick);
 };
 
 } // namespace
