@@ -273,13 +273,9 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
         return ;
     }
     // TODO no funciona correctamente hasta que la variable de usuario ip recoja el valor de la ip con la que se conecta
-    string ip = user.prefix.substr(user.prefix.find("@") + 1);
     if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
-            || channel.userInBlackList(ip) ||
+            || channel.userInBlackList(user.ip) ||
             channel.all_banned) && !channel.isUserOperator(user)) {
-        LOG(DEBUG) << "blacklist nick " << user.real_nick << ": " << channel.userInBlackList(user.real_nick);
-        LOG(DEBUG) << "blacklist ip " << ip << ": " << channel.userInBlackList(ip);
-        LOG(DEBUG) << "all banned " << channel.all_banned;
         string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
@@ -793,8 +789,8 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
         }
         Channel &channel = channel_map.find(name)->second;
         if (!channel.userIsInChannel(user.nick)) {
-            string reply = (STR_CANNOTSENDTOCHAN+user.real_nick+" "+channel.name
-                    +" :"+ERR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
+            string reply = (ERR_CANNOTSENDTOCHAN+user.real_nick+" "+channel.name
+                    +STR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
         // TODO esto va a dejar de funcionar hasta que se recoja el valor de la ip de cada usuario en user.ip

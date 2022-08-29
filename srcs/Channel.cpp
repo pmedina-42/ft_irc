@@ -16,6 +16,7 @@ namespace irc {
  * el canal al principio no tiene ningún modo. Se setea después 
  */
 Channel::Channel(string name, User& user) : name(name), mode(0) {
+    all_banned = false;
     users.push_back(user.nick);
     addMode(CH_TOP);
 }
@@ -111,6 +112,9 @@ bool Channel::unbanUser(string &user) {
             all_banned = false;
         }
         black_list.erase(it->first);
+        if (black_list.size() == 0) {
+            deleteMode(CH_BAN);
+        }
         return true;
     }
     return false;
