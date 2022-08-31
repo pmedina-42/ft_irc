@@ -45,3 +45,4 @@ void AIrcCommands::joinExistingChannel(int fd, User &user, Channel &channel) {
 }
 
 }
+
