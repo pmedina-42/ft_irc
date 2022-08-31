@@ -57,6 +57,7 @@ AIrcCommands::~AIrcCommands()
  */
 void AIrcCommands::NICK(Command &cmd, int fd) {
 
+    User &user = getUserFromFd(fd);
     int size = cmd.args.size();
     
     /* case too many params */
@@ -65,8 +66,8 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     }
     /* case no nickname */
     if (size < 2) {
-        string reply(ERR_NONICKNAMEGIVEN "*" STR_NONICKNAMEGIVEN);
-        return DataToUser(fd, reply, NUMERIC_REPLY);
+        string unknown_user = "*";
+        return sendNeedMoreParams(user.isResgistered() ? user.real_nick : unknown_user, cmd.Name(), fd);
     }
     string real_nick = cmd.args[1];
     if (real_nick[0] == ':') {
@@ -85,11 +86,8 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
         string reply(ERR_NICKNAMEINUSE+real_nick+STR_NICKNAMEINUSE);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
-    User& user = getUserFromFd(fd);
     /* case nickname change */
     if (user.isResgistered()) {
-        LOG(DEBUG) << "user with nick" << user.real_nick
-                   << " changing nick to " << real_nick;
         updateUserNick(fd, nick, real_nick);
         // THIS SHOULD NOTIFY CHANNELS OF THE NICKNAME CHANGE CYA
         return ;
@@ -130,7 +128,8 @@ void AIrcCommands::USER(Command &cmd, int fd) {
     }
     /* case arguments unsufficient */
     if (size < 5) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        string unknown_user = "*";
+        return sendNeedMoreParams(user.isResgistered() ? user.real_nick : unknown_user, cmd.Name(), fd);
     }
     /* case user already sent a valid USER comand */
     if (user.isResgistered()) {
@@ -180,7 +179,8 @@ void AIrcCommands::PASS(Command &cmd, int fd) {
     }
     int size = cmd.args.size();
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        string unknown_user = "*";
+        return sendNeedMoreParams(unknown_user, cmd.Name(), fd);
     }
     user.last_password = cmd.args[1];
 }
@@ -203,7 +203,7 @@ void AIrcCommands::PING(Command &cmd, int fd) {
     User& user = getUserFromFd(fd);
 
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     if (!user.isResgistered()) {
         return sendNotRegistered(cmd.Name(), fd);
@@ -226,7 +226,7 @@ void AIrcCommands::PONG(Command &cmd, int fd) {
         /* case pong is recieved wihtout previous PING */
         || user.ping_str.empty())
     {
-        return ;
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     if (user.ping_str.compare(cmd.args[1]) == 0) {
         user.resetPingStatus();
@@ -258,11 +258,11 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
         return sendNotRegistered(cmd.Name(), fd);
     }
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     string ch_name = cmd.args[1];
     if (!tools::starts_with_mask(ch_name)) {
-        return sendBadChannelMask(cmd.Name(), fd);
+        return sendBadChannelMask(user.real_nick,ch_name, fd);
     }
     if (!channelExists(cmd.args[1])) {
         return (createNewChannel(cmd, size, user, fd));
@@ -314,11 +314,10 @@ void AIrcCommands::PART(Command &cmd, int fd) {
         return sendNotRegistered(cmd.Name(), fd);
     }
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
-    // TODO arreglar esta respuesta
     if (!tools::starts_with_mask(cmd.args[1])) {
-        return sendBadChannelMask(cmd.Name(), fd);
+        return sendBadChannelMask(user.real_nick, cmd.args[1], fd);
     }
     if (!channelExists(cmd.args[1])) {
         return sendNoSuchChannel(user.real_nick, cmd.args[1], fd);
@@ -364,10 +363,10 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
         return sendNotRegistered(cmd.Name(), fd);
     }
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     if (!tools::starts_with_mask(cmd.args[1])) {
-        return sendBadChannelMask(cmd.Name(), fd);
+        return sendBadChannelMask(user.real_nick, cmd.args[1], fd);
     }
     if (!channelExists(cmd.args[1])) {
         return sendNoSuchChannel(user.real_nick, cmd.args[1], fd);
@@ -421,10 +420,10 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     }
     int size = cmd.args.size();
     if (size < 3) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     if (!tools::starts_with_mask(cmd.args[1])) {
-        return sendBadChannelMask(cmd.Name(), fd);
+        return sendBadChannelMask(user.real_nick, cmd.args[1], fd);
     }
     if (!channelExists(cmd.args[1])) {
         return sendNoSuchChannel(user.real_nick, cmd.args[1], fd);
@@ -467,7 +466,7 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
         return sendNotRegistered(cmd.Name(), fd);
     }
     if (size < 3) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     if (!channelExists(cmd.args[2])) {
         return sendNoSuchChannel(user.real_nick, cmd.args[2], fd);
@@ -499,6 +498,7 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
  * Command: MODE
  * Parameters: <channel>/<user> <channel/userMode> [<modeParams>]
  * TODO reorganizarlo todo que es un disaster
+ * TODO añadir respuestas a mode +k y +i
  */
 void AIrcCommands::MODE(Command &cmd, int fd) {
 
@@ -509,7 +509,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
     }
     int size = cmd.args.size();
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     // CHANGE CHANNEL MODE. COMPLEX PATH
     if (tools::starts_with_mask(cmd.args[1])) {
@@ -539,7 +539,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             }
             if (tools::charIsInString(cmd.args[2], 'k')) {
                 if (size < 4) {
-                    return sendNeedMoreParams(cmd.Name(), fd);
+                    return sendKeyNeeded(user.real_nick, channel.name, fd);
                 }
                 channel.addMode(CH_PAS);
                 channel.key = cmd.args[3];
@@ -585,7 +585,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             }
             if (tools::charIsInString(cmd.args[2], 'k')) {
                 if (size < 4) {
-                    return sendNeedMoreParams(cmd.Name(), fd);
+                    return sendKeyNeeded(user.real_nick, channel.name, fd);
                 }
                 if (cmd.args[3].compare(channel.key)) {
                     string reply = (ERR_BADCHANNELKEY + cmd.Name() + STR_BADCHANNELKEY);
@@ -617,7 +617,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             isUserChannelMode = tools::starts_with_mask(cmd.args[3]);
         }
         if (size == 3 && isUserChannelMode) {
-            return sendNeedMoreParams(cmd.Name(), fd);
+            return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
         }
         string mode = cmd.args[2];
         if (tools::hasUnknownChannelFlag(mode) && tools::hasUnknownFlag(mode)) {
@@ -645,7 +645,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         if (size == 4) {
             string ch_name = cmd.args[3];
             if (!tools::starts_with_mask(ch_name)) {
-                return sendBadChannelMask(cmd.Name(), fd);
+                return sendBadChannelMask(user.real_nick, ch_name, fd);
             }
             if (!nickExists(nick)) {
                 return sendNoSuchNick(fd, user.real_nick, cmd.args[1]);
@@ -760,7 +760,7 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
         return sendNotRegistered(cmd.Name(), fd);
     }
     if (size < 3) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     string name = cmd.args[1];
     if (!tools::starts_with_mask(name) && size == 3) {
@@ -818,7 +818,7 @@ void AIrcCommands::WHOIS(Command &cmd, int fd) {
         return sendNotRegistered(cmd.Name(), fd);
     }
     if (size < 2) {
-        return sendNeedMoreParams(cmd.Name(), fd);
+        return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     string nick = cmd.args[1];
     tools::ToUpperCase(nick);

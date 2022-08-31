@@ -9,8 +9,13 @@ using std::string;
 
 namespace irc {
 
-void AIrcCommands::sendNeedMoreParams(string& cmd_name, int fd) {
-    string reply(ERR_NEEDMOREPARAMS+cmd_name+STR_NEEDMOREPARAMS);
+void AIrcCommands::sendNeedMoreParams(string &nick, string& cmd_name, int fd) {
+    string reply(ERR_NEEDMOREPARAMS+nick+" "+cmd_name+STR_NEEDMOREPARAMS);
+    DataToUser(fd, reply, NUMERIC_REPLY);
+}
+
+void AIrcCommands::sendKeyNeeded(string &nick, string &ch_name, int fd) {
+    string reply(ERR_KEYNEEDED+nick+" "+ch_name+" k *"+STR_KEYNEEDED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
@@ -29,8 +34,8 @@ void AIrcCommands::sendNotOnChannel(string &nick, string &ch_name, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendBadChannelMask(string &cmd_name, int fd) {
-    string reply = (ERR_BADCHANMASK+cmd_name+STR_BADCHANMASK);
+void AIrcCommands::sendBadChannelMask(string &nick, string &ch_name, int fd) {
+    string reply = (ERR_BADCHANMASK+nick+" "+ch_name+STR_BADCHANMASK);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 

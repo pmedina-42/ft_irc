@@ -126,6 +126,7 @@
 # define ERR_UNKNOWNCOMMAND " 421 "
 # define STR_UNKNOWNCOMMAND " :Unknown command"
 
+// TODO meter esta respuesta donde haya que meterla
 # define ERR_NONICKNAMEGIVEN " 431 "
 # define STR_NONICKNAMEGIVEN " :No nickname given"
 
@@ -160,11 +161,14 @@
 # define STR_USERONCHANNEL " :is already on channel"
 
 /**
- * Not enough parameters were supplied
+ * User must register first
  */
 # define ERR_NOTREGISTERED " 451 "
 # define STR_NOTREGISTERED " :You have not registered" 
 
+/**
+ * Not enough parameters passed
+ */
 # define ERR_NEEDMOREPARAMS " 461 "
 # define STR_NEEDMOREPARAMS " :Not enough parameters"
 
@@ -208,7 +212,7 @@
  * Similar to, but stronger than, ERR_NOSUCHCHANNEL (403)
  */
 # define ERR_BADCHANMASK " 476 "
-# define STR_BADCHANMASK ":Bad Channel Mask"
+# define STR_BADCHANMASK " :Bad Channel Mask"
 
 /**
  * Returned when a channel doesn't support modes
@@ -233,6 +237,12 @@
  */
 # define ERR_USERSDONTMATCH " 502 "
 # define STR_USERSDONTMATCH ":Cant change mode for other users"
+
+/**
+ * Key parameter must be passed to MODE <channel> +/-k
+ */
+# define ERR_KEYNEEDED " 696 "
+# define STR_KEYNEEDED " :You must specify a parameter for the key mode. Syntax <key>"
 
 /**
  * Sent as reply to a user trying to unban a user that's not on the blacklist
