@@ -67,7 +67,7 @@
  * Sent to a client who recently joined a channel with no topic set
  */
 # define RPL_NOTOPIC " 331 "
-# define STR_NOTOPIC ": No topic is set"
+# define STR_NOTOPIC " :No topic is set"
 
 /**
  * Sent to a client who recently joined a channel with the topic, if set

@@ -388,13 +388,9 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
                      + channel.topic);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
-    if (size == 3) {
+    if (size >= 3) {
         if (!channel.isUserOperator(user)) {
             return sendChannelOperatorNeeded(cmd.Name(), fd);
-        }
-        if (cmd.args[2].empty()) {
-            channel.topic = "";
-            return ;
         }
         channel.topic = cmd.args[2].substr(1);
         string reply(user.prefix + " " + cmd.Name()+ " "
@@ -403,7 +399,7 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
         return DataToUser(fd, reply, NO_NUMERIC_REPLY);
     }
     else {
-        return ; // size > 3 
+        return ; // size > 3
     }
 }
 
