@@ -62,7 +62,7 @@ class AIrcCommands : public FdManager,
     void sendNotOnChannel(std::string &cmd_name, int fd);
     void sendBadChannelMask(std::string &cmd_name, int fd);
     void sendNoChannelModes(std::string &cmd_name, int fd);
-    void sendChannelOperatorNeeded(std::string &cmd_name, int fd);
+    void sendChannelOperatorNeeded(std::string &nick, std::string &ch_name, int fd);
     void sendAlreadyRegistered(std::string &nick, int fd);
     void sendPasswordMismatch(std::string &nick, int fd);
     void sendJoinReply(int fd, User &user, Channel &channel, bool send_all);

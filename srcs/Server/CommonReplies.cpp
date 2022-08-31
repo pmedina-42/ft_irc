@@ -39,8 +39,8 @@ void AIrcCommands::sendNoChannelModes(string &cmd_name, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendChannelOperatorNeeded(string &cmd_name, int fd) {
-    string reply = (ERR_CHANOPRIVSNEEDED+cmd_name+STR_CHANOPRIVSNEEDED);
+void AIrcCommands::sendChannelOperatorNeeded(string &nick, string &ch_name, int fd) {
+    string reply = (ERR_CHANOPRIVSNEEDED+nick+" "+ch_name+STR_CHANOPRIVSNEEDED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 

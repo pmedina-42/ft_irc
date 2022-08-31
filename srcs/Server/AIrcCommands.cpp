@@ -390,7 +390,7 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
     }
     if (size >= 3) {
         if (!channel.isUserOperator(user)) {
-            return sendChannelOperatorNeeded(cmd.Name(), fd);
+            return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
         }
         channel.topic = cmd.args[2].substr(1);
         string reply(user.prefix + " " + cmd.Name()+ " "
@@ -433,7 +433,7 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     if (!channel.isUserOperator(user)) {
-        return sendChannelOperatorNeeded(cmd.Name(), fd);
+        return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
     }
     string nick = cmd.args[2];
     tools::ToUpperCase(nick);
@@ -475,7 +475,7 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
         return sendNotOnChannel(cmd.Name(), fd);
     }
     if (!channel.isUserOperator(user)) {
-        return sendChannelOperatorNeeded(cmd.Name(), fd);
+        return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
     }
     string nick = cmd.args[1];
     tools::ToUpperCase(nick);
@@ -519,7 +519,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             return sendNotOnChannel(cmd.Name(), fd);
         }
         if (!channel.isUserOperator(user) && size == 3) {
-            return sendChannelOperatorNeeded(cmd.Name(), fd);
+            return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
         }
         if (size == 2) {
             return sendChannelModes(fd, user.real_nick, channel);
@@ -646,7 +646,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                 return sendBadChannelMask(cmd.Name(), fd);
             }
             if (!user.isChannelOperator(ch_name)) {
-                return sendChannelOperatorNeeded(cmd.Name(), fd);
+                return sendChannelOperatorNeeded(user.real_nick, ch_name, fd);
             }
             if (!channelExists(ch_name)) {
                 return sendNoSuchChannel(cmd.Name(), fd);
