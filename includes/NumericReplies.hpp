@@ -112,7 +112,7 @@
  * Indicates that no channel can be found for the supplied channel name
  */
 # define ERR_NOSUCHCHANNEL " 403 "
-# define STR_NOSUCHCHANNEL ":No such channel"
+# define STR_NOSUCHCHANNEL " :No such channel"
 
 /**
  * Sent as a response to user trying to send a message to a moderated channel without being moderator
@@ -181,7 +181,7 @@
  * Returned to indicate that a MODE argument is unrecognized
  */
 # define ERR_UNKNOWNMODE " 472 "
-# define STR_UNKNOWNMODE " :is unknown mode char to me"
+# define STR_UNKNOWNMODE " :is not a recognised channel mode"
 
 /**
  * Returned to indicate that a JOIN command failed because the channel is set to

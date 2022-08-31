@@ -19,8 +19,8 @@ void AIrcCommands::sendNotRegistered(string &cmd_name, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendNoSuchChannel(string &cmd_name, int fd) {
-    string reply = (ERR_NOSUCHCHANNEL+cmd_name+STR_NOSUCHCHANNEL);
+void AIrcCommands::sendNoSuchChannel(string &nick, string &ch_name, int fd) {
+    string reply = (ERR_NOSUCHCHANNEL+nick+" "+ch_name+STR_NOSUCHCHANNEL);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
