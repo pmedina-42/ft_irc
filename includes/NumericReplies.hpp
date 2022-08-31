@@ -214,7 +214,7 @@
  * Returned when user tries to join more than once in a channel
  */
 # define ERR_USERONCHANNEL " 443 "
-# define STR_USERONCHANNEL ":is already on channel"
+# define STR_USERONCHANNEL " :is already on channel"
 
 /**
  * Returned when a channel doesn't support modes

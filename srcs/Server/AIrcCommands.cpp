@@ -483,7 +483,7 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
         return sendNoSuchNick(fd, user.real_nick, cmd.args[1]);
     }
     if (channel.userIsInChannel(nick)) {
-        string reply(ERR_USERONCHANNEL" "+user.nick+" "+nick+" "+channel.name+" "STR_USERONCHANNEL);
+        string reply(ERR_USERONCHANNEL+user.real_nick+" "+channel.name+STR_USERONCHANNEL);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     channel.addToWhitelist(nick);
