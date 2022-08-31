@@ -226,7 +226,7 @@
  * The client doesn't have the appropiate channel privileges
  */
 # define ERR_CHANOPRIVSNEEDED " 482 "
-# define STR_CHANOPRIVSNEEDED ":You're not channel operator"
+# define STR_CHANOPRIVSNEEDED " :You're not channel operator"
 
 /**
  * A MODE command affecting a user failed because it's trying to set or view modes for other users.
