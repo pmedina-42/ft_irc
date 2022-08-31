@@ -24,8 +24,8 @@ void AIrcCommands::sendNoSuchChannel(string &cmd_name, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendNotOnChannel(string &cmd_name, int fd) {
-    string reply = (ERR_NOTONCHANNEL+cmd_name+STR_NOTONCHANNEL);
+void AIrcCommands::sendNotOnChannel(string &nick, string &ch_name, int fd) {
+    string reply = (ERR_NOTONCHANNEL+nick+" "+ch_name+STR_NOTONCHANNEL);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 

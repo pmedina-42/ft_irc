@@ -316,15 +316,17 @@ void AIrcCommands::PART(Command &cmd, int fd) {
     if (size < 2) {
         return sendNeedMoreParams(cmd.Name(), fd);
     }
+    // TODO arreglar esta respuesta
     if (!tools::starts_with_mask(cmd.args[1])) {
         return sendBadChannelMask(cmd.Name(), fd);
     }
+    // TODO revisar respuesta con irc hispano
     if (!channelExists(cmd.args[1])) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
     if (!channel.userIsInChannel(user.nick)) {
-        return sendNotOnChannel(cmd.Name(), fd);
+        return sendNotOnChannel(user.real_nick, channel.name, fd);
     }
     string next =  channel.getNextOpUser(user.nick);
     if (next.compare("")) {
@@ -373,7 +375,7 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
     if (!channel.userIsInChannel(user.nick)) {
-        return sendNotOnChannel(cmd.Name(), fd);
+        return sendNotOnChannel(user.real_nick, channel.name, fd);
     }
     if (!channel.topicModeOn()) {
         return sendNoChannelModes(cmd.Name(), fd);
@@ -430,7 +432,7 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     }
     Channel &channel = channel_map.find(cmd.args[1])->second;
     if (!channel.userIsInChannel(user.nick)) {
-        return sendNotOnChannel(cmd.Name(), fd);
+        return sendNotOnChannel(user.real_nick, channel.name, fd);
     }
     if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
@@ -438,7 +440,8 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     string nick = cmd.args[2];
     tools::ToUpperCase(nick);
     if (!channel.userIsInChannel(nick)) {
-        return sendNotOnChannel(cmd.Name(), fd);
+        string reply = (ERR_USERNOTINCHANNEL+user.real_nick+" "+cmd.args[2]+" "+channel.name+STR_USERNOTINCHANNEL);
+        return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     User& user_to_kick = getUserFromNick(nick);
     sendKickMessage(fd, user, channel, user_to_kick.real_nick);
@@ -468,11 +471,8 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
         return sendNoSuchChannel(cmd.Name(), fd);
     }
     Channel &channel = channel_map.find(cmd.args[2])->second;
-    if (!channel.inviteModeOn()) {
-        return sendNoChannelModes(cmd.Name(), fd);
-    }
     if (!channel.userIsInChannel(user.nick)) {
-        return sendNotOnChannel(cmd.Name(), fd);
+        return sendNotOnChannel(user.real_nick, channel.name, fd);
     }
     if (!channel.isUserOperator(user)) {
         return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
@@ -516,7 +516,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         }
         Channel &channel = channel_map.find(cmd.args[1])->second;
         if (!channel.userIsInChannel(user.nick)) {
-            return sendNotOnChannel(cmd.Name(), fd);
+            return sendNotOnChannel(user.real_nick, channel.name, fd);
         }
         if (!channel.isUserOperator(user) && size == 3) {
             return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
@@ -652,8 +652,12 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                 return sendNoSuchChannel(cmd.Name(), fd);
             }
             Channel &channel = getChannelFromName(ch_name);
-            if (!channel.userIsInChannel(nick) || !channel.userIsInChannel(user.nick)) {
-                return sendNotOnChannel(cmd.Name(), fd);
+            if (!channel.userIsInChannel(user.nick)) {
+                return sendNotOnChannel(user.real_nick, channel.name, fd);
+            }
+            if (!channel.userIsInChannel(nick)) {
+                string reply = (ERR_USERNOTINCHANNEL+user.real_nick+" "+cmd.args[2]+" "+channel.name+STR_USERNOTINCHANNEL);
+                return DataToUser(fd, reply, NUMERIC_REPLY);
             }
             if (tools::charIsInString(mode, '+')
                 && tools::charIsInString(mode, 'm')) {

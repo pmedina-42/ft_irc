@@ -146,7 +146,7 @@
  * when the nick isn’t joined to the channel
  */
 # define ERR_USERNOTINCHANNEL " 441 "
-# define STR_USERNOTINCHANNEL ":They aren't on that channel"
+# define STR_USERNOTINCHANNEL " :They are not on that channel"
 /**
  * The client isn't part of the channel it's trying to operate
  */

@@ -59,7 +59,7 @@ class AIrcCommands : public FdManager,
     void sendNeedMoreParams(std::string& cmd_name, int fd);
     void sendNotRegistered(std::string &cmd_name, int fd);
     void sendNoSuchChannel(std::string &cmd_name, int fd);
-    void sendNotOnChannel(std::string &cmd_name, int fd);
+    void sendNotOnChannel(std::string &nick, std::string &ch_name, int fd);
     void sendBadChannelMask(std::string &cmd_name, int fd);
     void sendNoChannelModes(std::string &cmd_name, int fd);
     void sendChannelOperatorNeeded(std::string &nick, std::string &ch_name, int fd);
