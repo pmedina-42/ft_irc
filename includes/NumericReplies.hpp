@@ -154,10 +154,10 @@
 # define STR_NOTONCHANNEL ":You're not on that channel"
 
 /**
- * When a client tries to invite <nick> to a channel they’re already joined to
+ * Returned when user tries to join more than once in a channel
  */
 # define ERR_USERONCHANNEL " 443 "
-# define STR_USERONCHANNEL ":is already on channel"
+# define STR_USERONCHANNEL " :is already on channel"
 
 /**
  * Not enough parameters were supplied
@@ -209,12 +209,6 @@
  */
 # define ERR_BADCHANMASK " 476 "
 # define STR_BADCHANMASK ":Bad Channel Mask"
-
-/**
- * Returned when user tries to join more than once in a channel
- */
-# define ERR_USERONCHANNEL " 443 "
-# define STR_USERONCHANNEL " :is already on channel"
 
 /**
  * Returned when a channel doesn't support modes
