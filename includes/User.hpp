@@ -88,7 +88,7 @@ class User {
     typedef std::map<std::string, unsigned char> ChannelMaskMap;
 
     public:
-    User(int fd);
+    User(int fd, const char* ip_address);
     User(const User &other);
     ~User();
 
@@ -98,6 +98,7 @@ class User {
     void setPrefixFromHost(std::string &host);
     /* ATTRIBUTES */
     int fd;
+    char ip_address[20];
     std::string real_nick; // caRCe-b042 
     std::string nick;      // CARCE-B042 (for lookups)
     std::string name;

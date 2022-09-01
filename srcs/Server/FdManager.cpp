@@ -25,6 +25,8 @@ FdManager::FdManager(void)
 :
     fds_size(0)
 {
+    memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
+    lastConnection.new_fd = 0;
     if (setUpAddress() == -1
         || setUpListener() == -1)
     {
@@ -36,6 +38,8 @@ FdManager::FdManager(string &hostname, string &port)
 :
     fds_size(0)
 {
+    memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
+    lastConnection.new_fd = 0;
     if (setUpAddress(hostname, port) == -1
         || setUpListener() == -1)
     {
@@ -49,6 +53,8 @@ FdManager::FdManager(const FdManager& other)
     servinfo(other.servinfo),
     listener(other.listener)
 {
+    memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
+    lastConnection.new_fd = 0;
     for (int fd_idx=0; fd_idx < fds_size; fd_idx++) {
         fds[fd_idx].events = other.fds[fd_idx].events;
         fds[fd_idx].revents = other.fds[fd_idx].revents;
@@ -284,17 +290,20 @@ int FdManager::acceptConnection(void) {
     fds[fd_new_idx].revents = 0;
 
     /* debug information */
+    char ip_address[20];
     if (client.ss_family == AF_INET)  {
-        char str[14];
         struct sockaddr_in *ptr = (struct sockaddr_in *)&client;
-        inet_ntop(AF_INET, &(ptr->sin_addr), str, sizeof(str));
-        LOG(INFO) << "connected to " << str;
+        inet_ntop(AF_INET, &(ptr->sin_addr), ip_address, sizeof(ip_address));
     } else {
-        char str[20];
         struct sockaddr_in6 *ptr = (struct sockaddr_in6 *)&client;
-        inet_ntop(AF_INET6, &(ptr->sin6_addr), str, sizeof(str));
-        LOG(INFO) << "connected to " << str;
+        inet_ntop(AF_INET6, &(ptr->sin6_addr), ip_address, sizeof(ip_address));
     }
+    LOG(INFO) << "connected to " << ip_address;
+
+    // para guardar la ip para futuros baneitos 
+    lastConnection.new_fd = fd_new;
+    memcpy(lastConnection.ip_address, ip_address, ft_strlen(ip_address));
+
     return fd_new;
 }
 
@@ -329,6 +338,13 @@ int FdManager::getSocketError(int fd) {
 bool FdManager::socketErrorIsNotFatal(int fd) {
     int error = getSocketError(fd);
     return (error == ECONNRESET || error == EPIPE);
+}
+
+const char* FdManager::getSocketAddress(int fd) {
+    if (lastConnection.new_fd == fd) {
+        return lastConnection.ip_address;
+    }
+    return NULL;
 }
 
 
