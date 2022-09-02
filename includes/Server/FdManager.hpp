@@ -58,7 +58,10 @@ class FdManager {
         char ip_address[20];
     } ConnInfo;
 
-    // gets the ip_address stored in lastConnection.
+    // whoever allocates, deallocates.
+    char* last_dynalloc_ip_address;
+
+    // gets a duplicate from the ip_address stored in lastConnection.
     const char* getSocketAddress(int fd);
 
     ConnInfo lastConnection;

@@ -21,7 +21,7 @@ void AIrcCommands::createNewChannel(const Command &cmd, int size, User &user, in
 void AIrcCommands::sendWhoisReply(const Command &cmd, int fd, User &user, std::string &nick) {
     User &whois = getUserFromNick(nick);
     std::string info_rpl = (RPL_WHOISUSER+user.real_nick+" "+whois.real_nick
-                       +" "+whois.name+" "+whois.ip+STR_WHOISUSER+whois.full_name);
+                       +" "+whois.name+" "+whois.ip_address+STR_WHOISUSER+whois.full_name);
     DataToUser(fd, info_rpl, NUMERIC_REPLY);
     if (!whois.ch_name_mask_map.empty()) {
         std::string channel_rpl = constructWhoisChannelRpl(whois, user.real_nick);

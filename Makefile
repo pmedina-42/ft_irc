@@ -26,7 +26,7 @@ SRCS		=	srcs/main.cpp\
 				srcs/Command.cpp \
 				srcs/Log.cpp 
 CXX			=	g++ 
-CXXFLAGS	=	-Wall -Wextra -Werror -std=c++98 -pedantic -g3 -Wno-c++0x-compat 
+CXXFLAGS	=	-Wall -Wextra -Werror -std=c++98 -pedantic -g3 -Wno-c++0x-compat
 RM			=	rm -f
 OBJS		=	$(SRCS:.cpp=.o)
 

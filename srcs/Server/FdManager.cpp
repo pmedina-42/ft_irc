@@ -23,6 +23,7 @@ namespace irc {
 
 FdManager::FdManager(void)
 :
+    last_dynalloc_ip_address(0),
     fds_size(0)
 {
     memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
@@ -36,6 +37,7 @@ FdManager::FdManager(void)
 
 FdManager::FdManager(string &hostname, string &port)
 :
+    last_dynalloc_ip_address(0),
     fds_size(0)
 {
     memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
@@ -49,6 +51,7 @@ FdManager::FdManager(string &hostname, string &port)
 
 FdManager::FdManager(const FdManager& other)
 :
+    last_dynalloc_ip_address(other.last_dynalloc_ip_address),
     fds_size(other.fds_size),
     servinfo(other.servinfo),
     listener(other.listener)
@@ -340,9 +343,22 @@ bool FdManager::socketErrorIsNotFatal(int fd) {
     return (error == ECONNRESET || error == EPIPE);
 }
 
+/* 
+ * returns an allocated copy of the last accepted connection
+ * ip address, in case the fd passed coincides with the
+ * socket provided byt this last accept() call.
+ */
 const char* FdManager::getSocketAddress(int fd) {
     if (lastConnection.new_fd == fd) {
-        return lastConnection.ip_address;
+        char* ret = ft_strdup(lastConnection.ip_address);
+        if (ret == NULL) {
+            throw irc::exc::MallocError();
+        }
+        if (last_dynalloc_ip_address != NULL) {
+            free(last_dynalloc_ip_address);
+        }
+        last_dynalloc_ip_address = ret; // to free later.
+        return ret;
     }
     return NULL;
 }

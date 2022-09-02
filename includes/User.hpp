@@ -98,7 +98,7 @@ class User {
     void setPrefixFromHost(std::string &host);
     /* ATTRIBUTES */
     int fd;
-    char ip_address[20];
+    std::string ip_address;
     std::string real_nick; // caRCe-b042 
     std::string nick;      // CARCE-B042 (for lookups)
     std::string name;
@@ -143,7 +143,6 @@ class User {
     time_t last_received;
     time_t ping_send_time;
     std::string ping_str;
-    std::string ip;
 
 };
 

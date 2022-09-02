@@ -273,7 +273,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     }
     // TODO no funciona correctamente hasta que la variable de usuario ip recoja el valor de la ip con la que se conecta
     if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
-            || channel.userInBlackList(user.ip) ||
+            || channel.userInBlackList(user.ip_address) ||
             channel.all_banned) && !channel.isUserOperator(user)) {
         string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
         return DataToUser(fd, reply, NUMERIC_REPLY);
@@ -788,7 +788,7 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
         // TODO esto va a dejar de funcionar hasta que se recoja el valor de la ip de cada usuario en user.ip
         // TODO revisar el parseo de lo que le llega al +b
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
-                || channel.userInBlackList(user.ip) ||
+                || channel.userInBlackList(user.ip_address) ||
                 channel.all_banned) && !channel.isUserOperator(user)) {
             string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
                     + STR_CANNOTSENDTOCHAN + "banned");
