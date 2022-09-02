@@ -78,7 +78,6 @@ Server::Server(string &hostname, string &port, string &password)
 Server::Server(const Server& other)
 :
     AIrcCommands(other),
-    password(other.password),
     cmd_map(other.cmd_map),
     srv_buff_size(other.srv_buff_size)
 {
@@ -355,6 +354,8 @@ void Server::parseCommandBuffer(string &cmd_content, int fd) {
 }
 
 bool Server::serverHasPassword(void) {
+    LOG(DEBUG) << "Server has password : " << !password.empty();
+    LOG(DEBUG) << "password is " << password;
     return !password.empty();
 }
 

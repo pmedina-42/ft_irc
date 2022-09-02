@@ -23,7 +23,6 @@ class Server : public AIrcCommands {
     
     private:
 
-    std::string password;
     bool serverHasPassword();
     void maybeRegisterUser(User &user);
     void registerUser(User &user);
