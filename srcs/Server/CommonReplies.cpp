@@ -14,8 +14,8 @@ void AIrcCommands::sendNeedMoreParams(string &nick, string& cmd_name, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendKeyNeeded(string &nick, string &ch_name, int fd) {
-    string reply(ERR_KEYNEEDED+nick+" "+ch_name+" k *"+STR_KEYNEEDED);
+void AIrcCommands::sendParamNeeded(string &nick, string &ch_name, string mode, int fd) {
+    string reply(ERR_KEYNEEDED+nick+" "+ch_name+mode+STR_KEYNEEDED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 

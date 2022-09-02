@@ -75,8 +75,10 @@ void IrcDataBase::addNewChannel(Channel& new_channel) {
     channel_map.insert(std::pair<string, Channel>(new_channel.name, new_channel));
 }
 
-void IrcDataBase::removeChannel(Channel& channel) {
-    channel_map.erase(channel_map.find(channel.name));
+void IrcDataBase::maybeRemoveChannel(Channel& channel) {
+    if (channel.users.empty()) {
+        channel_map.erase(channel_map.find(channel.name));
+    }
 }
 
 bool IrcDataBase::fdExists(int fd) {

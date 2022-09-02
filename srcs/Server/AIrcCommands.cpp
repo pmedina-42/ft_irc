@@ -245,7 +245,7 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     if (channel.userIsInChannel(user.nick)) {
         return ;
     }
-    // TODO no funciona correctamente hasta que la variable de usuario ip recoja el valor de la ip con la que se conecta
+    // TODO comprobar que funciona baneo por ip con join y privmsg
     if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
             || channel.userInBlackList(user.ip_address) ||
             channel.all_banned) && !channel.isUserOperator(user)) {
@@ -307,9 +307,7 @@ void AIrcCommands::PART(Command &cmd, int fd) {
     }
     channel.deleteUser(user);
     user.ch_name_mask_map.erase(channel.name);
-    if (channel.users.size() == 0) {
-        removeChannel(channel);
-    }
+    maybeRemoveChannel(channel);
     if (size == 3) {
         return sendPartMessage(cmd.args[2], fd, user, channel);
     }
@@ -418,9 +416,7 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     User& user_to_kick = getUserFromNick(nick);
     sendKickMessage(fd, user, channel, user_to_kick.real_nick);
     channel.deleteUser(user_to_kick);
-    if (channel.users.empty()) {
-        removeChannel(channel);
-    }
+    maybeRemoveChannel(channel);
 }
 
 /**
@@ -477,11 +473,11 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
 void AIrcCommands::MODE(Command &cmd, int fd) {
 
     User& user = getUserFromFd(fd);
+    int size = cmd.args.size();
     
     if (!user.isResgistered()) {
         return sendNotRegistered(cmd.Name(), fd);
     }
-    int size = cmd.args.size();
     if (size < 2) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
@@ -513,10 +509,27 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             }
             if (tools::charIsInString(cmd.args[2], 'k')) {
                 if (size < 4) {
-                    return sendKeyNeeded(user.real_nick, channel.name, fd);
+                    return sendParamNeeded(user.real_nick, channel.name, " k *", fd);
                 }
                 channel.addMode(CH_PAS);
                 channel.key = cmd.args[3];
+            }
+            if (tools::charIsInString(cmd.args[2], 'o')) {
+                if (size < 4) {
+                    return sendParamNeeded(user.real_nick, channel.name, " o *", fd);
+                }
+                string nick = cmd.args[3];
+                tools::ToUpperCase(nick);
+                if (!nick_fd_map.count(nick)) {
+                    return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
+                }
+                if (channel.userIsInChannel(nick)) {
+                    User &newOp = getUserFromNick(nick);
+                    newOp.addChannelMask(channel.name, OP);
+                    string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " +o :" + cmd.args[3];
+                    DataToUser(fd, mode_rpl, NO_NUMERIC_REPLY);
+                    DataToUser(newOp.fd, mode_rpl, NO_NUMERIC_REPLY);
+                }
             }
             if (tools::charIsInString(cmd.args[2], 'b')) {
                 if (size == 3) {
@@ -559,7 +572,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             }
             if (tools::charIsInString(cmd.args[2], 'k')) {
                 if (size < 4) {
-                    return sendKeyNeeded(user.real_nick, channel.name, fd);
+                    return sendParamNeeded(user.real_nick, channel.name, " k *", fd);
                 }
                 if (cmd.args[3].compare(channel.key)) {
                     string reply = (ERR_BADCHANNELKEY + cmd.Name() + STR_BADCHANNELKEY);
@@ -759,7 +772,6 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     +STR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        // TODO esto va a dejar de funcionar hasta que se recoja el valor de la ip de cada usuario en user.ip
         // TODO revisar el parseo de lo que le llega al +b
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
                 || channel.userInBlackList(user.ip_address) ||
