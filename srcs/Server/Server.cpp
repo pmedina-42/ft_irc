@@ -358,6 +358,28 @@ bool Server::serverHasPassword(void) {
     return !password.empty();
 }
 
+void Server::maybeRegisterUser(User &user) {
+    if (user.isReadyForRegistration(serverHasPassword())) {
+        registerUser(user);
+    }
+}
+
+/* This function is an entry point for a user which has all
+ * necessary fields for registration.
+ */
+void Server::registerUser(User &user) {
+
+    if (user.last_password == password) { // always true if password not set
+        user.setPrefixFromHost(hostname);
+        user.registered = true;
+        user.addServerMask(OP);
+        return sendWelcome(user.name, user.prefix, user.fd);
+    } else {
+        sendPasswordMismatch(user.real_nick, user.fd);
+        removeUser(user.fd);
+        return closeConnection(user.fd);
+    }
+}
 
 } /* namespace irc */
 

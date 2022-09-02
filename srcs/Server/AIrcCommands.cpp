@@ -97,20 +97,7 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     user.real_nick = real_nick;
     addNickFdPair(nick, fd);
     /* case NICK is recieved before valid USER comand */
-    if (user.name.empty() || user.full_name.empty()) {
-        return ;
-    }
-    // register user if possible
-    if (user.last_password == password) {
-        user.setPrefixFromHost(hostname);
-        user.registered = true;
-        user.addServerMask(OP);
-        return sendWelcome(user.name, user.prefix, fd);
-    } else {
-        sendPasswordMismatch(user.real_nick, fd);
-        removeUser(fd);
-        return closeConnection(fd);
-    }
+    return maybeRegisterUser(user);
 }
 
 /**
@@ -142,21 +129,7 @@ void AIrcCommands::USER(Command &cmd, int fd) {
         full_name = full_name.substr(1);
     }
     user.full_name = full_name;
-    /* rare case USER cmd is recieved before nick (irc hispano allows this) */
-    if (user.nick.empty()) {
-        return ;
-    }
-    // register user if possible
-    if (user.last_password == password) {
-        user.setPrefixFromHost(hostname);
-        user.registered = true;
-        user.addServerMask(OP);
-        return sendWelcome(user.name, user.prefix, fd);
-    } else {
-        sendPasswordMismatch(user.real_nick, fd);
-        removeUser(fd);
-        return closeConnection(fd);
-    }
+    return maybeRegisterUser(user);
 }
 
 /**
@@ -183,6 +156,7 @@ void AIrcCommands::PASS(Command &cmd, int fd) {
         return sendNeedMoreParams(unknown_user, cmd.Name(), fd);
     }
     user.last_password = cmd.args[1];
+    return maybeRegisterUser(user);
 }
 
 

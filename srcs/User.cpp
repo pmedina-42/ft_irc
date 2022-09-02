@@ -103,6 +103,13 @@ void User::setPrefixFromHost(string &host) {
     prefix = real_nick + "!" + name + "@" + host;
 }
 
+bool User::isReadyForRegistration(bool server_password_on) {
+    bool ready = !nick.empty() && !name.empty() && !full_name.empty();
+    return server_password_on ? ready && !last_password.empty()
+                              : ready;
+}
+
+
 bool User::hasLeftovers(void) const {
     return !(buffer_size == 0);
 }

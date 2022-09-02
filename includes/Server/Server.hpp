@@ -25,7 +25,8 @@ class Server : public AIrcCommands {
 
     std::string password;
     bool serverHasPassword();
-    //void registerUser(User &user);
+    void maybeRegisterUser(User &user);
+    void registerUser(User &user);
 
     void DataFromUser(int fd);
     void DataToUser(int fd, std::string &data, int type);

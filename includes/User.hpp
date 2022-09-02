@@ -114,6 +114,8 @@ class User {
 
     char buffer[BUFF_MAX_SIZE];
     int buffer_size;
+
+    bool isReadyForRegistration(bool server_password_on);
     bool registered;
 
     bool hasLeftovers(void) const;
