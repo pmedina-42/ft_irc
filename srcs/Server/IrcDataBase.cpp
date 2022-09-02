@@ -95,7 +95,12 @@ bool IrcDataBase::channelExists(std::string &channel_name) {
  * https://forums.mirc.com/ubbthreads.php/topics/186181/nickname-valid-characters */
 bool IrcDataBase::nickFormatOk(string &nickname) {
 
-    if (nickname.empty() || nickname.length() > NAME_MAX_SIZE) {
+    if (nickname.empty()
+        || nickname.length() > NAME_MAX_SIZE)
+    {
+        return false;
+    }
+    if (!ft_isalpha(nickname[0])) {
         return false;
     }
     for (string::iterator it = nickname.begin(); it != nickname.end(); it++) {
