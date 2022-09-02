@@ -523,7 +523,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                 if (!nick_fd_map.count(nick)) {
                     return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
                 }
-                if (channel.userIsInChannel(nick)) {
+                if (channel.userIsInChannel(nick) && nick.compare(user.nick)) {
                     User &newOp = getUserFromNick(nick);
                     newOp.addChannelMask(channel.name, OP);
                     string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " +o :" + cmd.args[3];
