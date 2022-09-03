@@ -173,6 +173,13 @@
 # define STR_NEEDMOREPARAMS " :Not enough parameters"
 
 /**
+ * Sent as a response when trying to delete a password using an incorrect one
+ */
+# define ERR_KEYSET " 467 "
+# define STR_KEYSET " :Channel key already set"
+
+
+/**
  * Client tries to change a detail that can only be set during registration
  */
 # define ERR_ALREADYREGISTERED " 462 "

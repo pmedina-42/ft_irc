@@ -468,7 +468,6 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
  * Command: MODE
  * Parameters: <channel>/<user> <channel/userMode> [<modeParams>]
  * TODO reorganizarlo todo que es un disaster
- * TODO añadir respuestas a mode +k y +i
  */
 void AIrcCommands::MODE(Command &cmd, int fd) {
 
@@ -490,58 +489,45 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         if (!channel.userIsInChannel(user.nick)) {
             return sendNotOnChannel(user.real_nick, channel.name, fd);
         }
-        if (!channel.isUserOperator(user) && size == 3) {
-            return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
-        }
         if (size == 2) {
             return sendChannelModes(fd, user.real_nick, channel);
+        }
+        if (!channel.isUserOperator(user)) {
+            return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
         }
         if (tools::anyRepeatedChar(cmd.args[2]) || tools::hasUnknownChannelFlag(cmd.args[2])) {
             string reply = (ERR_UNKNOWNMODE+user.real_nick+" "+cmd.args[2]+STR_UNKNOWNMODE);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        if (tools::charIsInString(cmd.args[2], '+')) {
-            if (tools::charIsInString(cmd.args[2], 'i')) {
-                channel.addMode(CH_INV);
+        checkModeToAddOrDelete(cmd, channel, user, 'i', CH_INV);
+        checkModeToAddOrDelete(cmd, channel, user, 'm', CH_MOD);
+        if (tools::charIsInString(cmd.args[2], 'k')) {
+            if (size < 4) {
+                return sendParamNeeded(user.real_nick, channel.name, " k *", fd);
             }
-            if (tools::charIsInString(cmd.args[2], 'm')) {
-                channel.addMode(CH_MOD);
+            if (tools::charIsInString(cmd.args[2], '-') && cmd.args[3].compare(channel.key) && !channel.key.empty()) {
+                string reply = (ERR_KEYSET + user.real_nick + " " + channel.name + STR_KEYSET);
+                return DataToUser(fd, reply, NUMERIC_REPLY);
             }
-            if (tools::charIsInString(cmd.args[2], 'k')) {
-                if (size < 4) {
-                    return sendParamNeeded(user.real_nick, channel.name, " k *", fd);
-                }
-                channel.addMode(CH_PAS);
-                channel.key = cmd.args[3];
+            checkKeyMode(cmd, channel, user);
+        }
+        if (tools::charIsInString(cmd.args[2], 'o')) {
+            if (size < 4) {
+                return sendParamNeeded(user.real_nick, channel.name, " o *", fd);
             }
-            if (tools::charIsInString(cmd.args[2], 'o')) {
-                if (size < 4) {
-                    return sendParamNeeded(user.real_nick, channel.name, " o *", fd);
-                }
-                string nick = cmd.args[3];
-                tools::ToUpperCase(nick);
-                if (!nick_fd_map.count(nick)) {
-                    return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
-                }
-                if (channel.userIsInChannel(nick) && nick.compare(user.nick)) {
-                    User &newOp = getUserFromNick(nick);
-                    newOp.addChannelMask(channel.name, OP);
-                    string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " +o :" + cmd.args[3];
-                    DataToUser(fd, mode_rpl, NO_NUMERIC_REPLY);
-                    DataToUser(newOp.fd, mode_rpl, NO_NUMERIC_REPLY);
-                }
+            string nick = cmd.args[3];
+            tools::ToUpperCase(nick);
+            if (!nick_fd_map.count(nick)) {
+                return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
             }
-            if (tools::charIsInString(cmd.args[2], 'b')) {
+            if (channel.userIsInChannel(nick)) {
+                checkOpMode(cmd, nick, user, channel, fd);
+            }
+        }
+        if (tools::charIsInString(cmd.args[2], 'b')) {
+            if (tools::charIsInString(cmd.args[2], '+')) {
                 if (size == 3) {
-                    if (!channel.black_list.empty()) {
-                        for (std::map<string, int>::iterator it = channel.black_list.begin(); it != channel.black_list.end(); it++) {
-                            string blacklist_rpl = (RPL_BANLIST + user.real_nick + " " + channel.name + " "
-                                            + it->first + " " + getUserFromFd(it->second).real_nick);
-                            DataToUser(fd, blacklist_rpl, NUMERIC_REPLY);
-                        }
-                    }
-                    string blacklist_end_rpl = (RPL_ENDOFBANLIST + user.real_nick + " " + channel.name + STR_ENDOFBANLIST);
-                    return DataToUser(fd, blacklist_end_rpl, NUMERIC_REPLY);
+                    return sendBlackListReply(fd, user, channel);
                 }
                 if (size == 4) {
                     string ban_nick = cmd.args[3];
@@ -562,48 +548,24 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                     }
                 }
             }
-        }
-        if (tools::charIsInString(cmd.args[2], '-')) {
-            if (tools::charIsInString(cmd.args[2], 'i')) {
-                channel.deleteMode(CH_INV);
-            }
-            if (tools::charIsInString(cmd.args[2], 'm')) {
-                channel.deleteMode(CH_MOD);
-            }
-            if (tools::charIsInString(cmd.args[2], 'k')) {
-                if (size < 4) {
-                    return sendParamNeeded(user.real_nick, channel.name, " k *", fd);
-                }
-                if (cmd.args[3].compare(channel.key)) {
-                    string reply = (ERR_BADCHANNELKEY + cmd.Name() + STR_BADCHANNELKEY);
-                    return DataToUser(fd, reply, NUMERIC_REPLY);
-                }
-                channel.deleteMode(CH_PAS);
-            }
-            if (tools::charIsInString(cmd.args[2], 'b')) {
-                if (size == 4) {
-                    string user_to_unban = cmd.args[3];
-                    if (!channel.unbanUser(user_to_unban)) {
-                        string ban_rpl = (ERR_NOSUCHBAN+user.real_nick+" "+channel.name+STR_NOSUCHBAN+user_to_unban);
-                        return DataToUser(fd, ban_rpl, NUMERIC_REPLY);
-                    }
-                    string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " -b " + cmd.args[3];
-                    return sendMessageToChannel(channel, mode_rpl, user.real_nick);
+            if (tools::charIsInString(cmd.args[2], '-') && size == 4) {
+                string user_to_unban = cmd.args[3];
+                if (!channel.unbanUser(user_to_unban)) {
+                    string ban_rpl = (ERR_NOSUCHBAN+user.real_nick+" "+channel.name+STR_NOSUCHBAN+user_to_unban);
+                    return DataToUser(fd, ban_rpl, NUMERIC_REPLY);
                 }
                 if (channel.black_list.empty()) {
                     channel.deleteMode(CH_BAN);
                 }
+                string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " -b " + cmd.args[3];
+                return sendMessageToChannel(channel, mode_rpl, user.real_nick);
             }
         }
     // CHANGE USER MODE
     } else {
         string nick = cmd.args[1];
         tools::ToUpperCase(nick);
-        bool isUserChannelMode = false;
-        if (size == 4) {
-            isUserChannelMode = tools::starts_with_mask(cmd.args[3]);
-        }
-        if (size == 3 && isUserChannelMode) {
+        if (size < 3) {
             return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
         }
         string mode = cmd.args[2];
@@ -662,6 +624,64 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                 other.deleteChannelMask(ch_name, CH_MOD);
             }
         }
+    }
+}
+
+void AIrcCommands::checkModeToAddOrDelete(const Command &cmd, Channel &channel, User &user, char m, int mode) {
+    if (tools::charIsInString(cmd.args[2], m)) {
+        string mode_rpl;
+        if (tools::charIsInString(cmd.args[2], '+')) {
+            channel.addMode(mode);
+            mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " :+" + m;
+        } else if (tools::charIsInString(cmd.args[2], '-')) {
+            channel.deleteMode(mode);
+            mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " :-" + m;
+        }
+        sendMessageToChannel(channel, mode_rpl, user.nick);
+        return DataToUser(user.fd, mode_rpl, NO_NUMERIC_REPLY);
+    }
+}
+
+void AIrcCommands::checkKeyMode(const irc::Command &cmd, irc::Channel &channel, User &user) {
+    string mode_rpl;
+    string key = cmd.args[3][0] == ':' ? cmd.args[3].substr(1) : cmd.args[3];
+    if (tools::charIsInString(cmd.args[2], '+')) {
+        if (!channel.key.empty()) {
+            LOG(DEBUG) << "key : " << channel.key;
+            return ;
+        }
+        channel.addMode(CH_PAS);
+        channel.key = key;
+        mode_rpl = ":" + user.prefix + " MODE " + channel.name + " +k :" + key;
+    } else if (tools::charIsInString(cmd.args[2],'-')) {
+        if (channel.key.empty()) {
+            return ;
+        }
+        channel.deleteMode(CH_PAS);
+        channel.key = "";
+        mode_rpl = ":" + user.prefix + " MODE " + channel.name + " -k :" + key;
+    }
+    sendMessageToChannel(channel, mode_rpl, user.nick);
+    return DataToUser(user.fd, mode_rpl, NO_NUMERIC_REPLY);
+}
+
+void AIrcCommands::checkOpMode(const irc::Command &cmd, string nick, User &user, irc::Channel &channel, int fd) {
+    User &other = getUserFromNick(nick);
+    string op_rpl;
+    if (tools::charIsInString(cmd.args[2], '+')) {
+        if (!nick.compare(user.nick)) {
+            return ;
+        }
+        other.addChannelMask(channel.name, OP);
+        op_rpl = " +o :";
+    } else if (tools::charIsInString(cmd.args[2],'-')) {
+        other.deleteChannelMask(channel.name, OP);
+        op_rpl = " -o :";
+    }
+    string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + op_rpl + cmd.args[3];
+    DataToUser(fd, mode_rpl, NO_NUMERIC_REPLY);
+    if (other.fd != fd) {
+        DataToUser(other.fd, mode_rpl, NO_NUMERIC_REPLY);
     }
 }
 
@@ -772,7 +792,7 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     +STR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        // TODO revisar el parseo de lo que le llega al +b
+        // TODO revisar el parseo de lo que le llega al +b y al user in blacklist ya que ahora si soy carce y baneo carcebo me dice que estoy baneado
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
                 || channel.userInBlackList(user.ip_address) ||
                 channel.all_banned) && !channel.isUserOperator(user)) {

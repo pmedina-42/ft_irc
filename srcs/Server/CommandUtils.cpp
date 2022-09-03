@@ -44,5 +44,17 @@ void AIrcCommands::joinExistingChannel(int fd, User &user, Channel &channel) {
     sendJoinReply(fd, user, channel, true);
 }
 
+void AIrcCommands::sendBlackListReply(int fd, const User &user, Channel &channel) {
+    if (!channel.black_list.empty()) {
+        for (std::map<std::string, int>::iterator it = channel.black_list.begin(); it != channel.black_list.end(); it++) {
+            std::string blacklist_rpl = (RPL_BANLIST + user.real_nick + " " + channel.name + " "
+                                    + it->first + " " + getUserFromFd(it->second).real_nick);
+            DataToUser(fd, blacklist_rpl, NUMERIC_REPLY);
+        }
+    }
+    std::string blacklist_end_rpl = (RPL_ENDOFBANLIST + user.real_nick + " " + channel.name + STR_ENDOFBANLIST);
+    return DataToUser(fd, blacklist_end_rpl, NUMERIC_REPLY);
+}
+
 }
 

@@ -81,6 +81,11 @@ class AIrcCommands : public FdManager,
     void createNewChannel(const Command &cmd, int size, User &user, int fd);
     void sendWhoisReply(const Command &cmd, int fd, User &user, std::string &nick);
     void joinExistingChannel(int fd, User &user, Channel &channel);
+    void sendBlackListReply(int fd, const User &user, Channel &channel);
+    void checkModeToAddOrDelete(const Command &cmd, Channel &channel, User &user, char m, int mode);
+    void checkKeyMode(const Command &cmd, Channel &channel, User &user);
+    void checkOpMode(const irc::Command &cmd, std::string nick, User &user, irc::Channel &channel, int fd);
+
 };
 
 } // namespace
