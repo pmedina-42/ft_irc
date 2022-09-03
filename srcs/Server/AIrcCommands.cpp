@@ -247,7 +247,6 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     if (channel.userIsInChannel(user.nick)) {
         return ;
     }
-    // TODO comprobar que funciona baneo por ip con join y privmsg
     if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
             || channel.userInBlackList(user.ip_address) ||
             channel.all_banned) && !channel.isUserOperator(user)) {
@@ -794,6 +793,7 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                     +STR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
+		// TODO revisar lo de los : como con la key, si vienen los substringeo
         // TODO revisar el parseo de lo que le llega al +b y al user in blacklist ya que ahora si soy carce y baneo carcebo me dice que estoy baneado
         if (channel.banModeOn() && (channel.userInBlackList(user.real_nick)
                 || channel.userInBlackList(user.ip_address) ||
