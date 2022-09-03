@@ -11,6 +11,8 @@
 
 #include <map>
 
+using std::string;
+
 namespace irc {
 
 AIrcCommands::AIrcCommands(void)

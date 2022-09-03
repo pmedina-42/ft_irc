@@ -4,17 +4,9 @@
 #include <vector>
 #include <string>
 
-using std::string;
-using std::vector;
-
 namespace irc {
 namespace tools {
 
-std::vector<std::string>& split(std::vector<std::string> &to_fill,
-                                std::string &str, char sep);
-std::vector<std::string>& split(std::vector<std::string> &to_fill,
-                                const char* buff, size_t bufflen,
-                                std::string &del);
 std::vector<std::string>& split(std::vector<std::string> &to_fill,
                                 std::string &str, std::string del);
 
@@ -23,7 +15,7 @@ void ToUpperCase(std::string &str);
 bool isEqual(const std::string &str1, const std::string &str2);
 bool endsWith(std::string const &str, std::string const &suffix);
 bool hasUnknownFlag(const std::string &str);
-bool hasUnknownChannelFlag(const string &mode);
+bool hasUnknownChannelFlag(const std::string &mode);
 bool charIsInString(const std::string &str, const char c);
 bool anyRepeatedChar(std::string &s);
 

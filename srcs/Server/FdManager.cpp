@@ -26,7 +26,7 @@ FdManager::FdManager(void)
     last_dynalloc_ip_address(0),
     fds_size(0)
 {
-    memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
+    ft_memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
     lastConnection.new_fd = 0;
     if (setUpAddress() == -1
         || setUpListener() == -1)
@@ -40,7 +40,7 @@ FdManager::FdManager(string &hostname, string &port)
     last_dynalloc_ip_address(0),
     fds_size(0)
 {
-    memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
+    ft_memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
     lastConnection.new_fd = 0;
     if (setUpAddress(hostname, port) == -1
         || setUpListener() == -1)
@@ -56,7 +56,7 @@ FdManager::FdManager(const FdManager& other)
     servinfo(other.servinfo),
     listener(other.listener)
 {
-    memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
+    ft_memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
     lastConnection.new_fd = 0;
     for (int fd_idx=0; fd_idx < fds_size; fd_idx++) {
         fds[fd_idx].events = other.fds[fd_idx].events;
@@ -76,6 +76,9 @@ FdManager::~FdManager(void) {
         if (close(fds[fd_idx].fd) == -1) {
             throw irc::exc::FatalError("close -1");
         }
+    }
+    if (last_dynalloc_ip_address != NULL) {
+        free(last_dynalloc_ip_address);
     }
 }
 
@@ -350,12 +353,13 @@ bool FdManager::socketErrorIsNotFatal(int fd) {
  */
 const char* FdManager::getSocketAddress(int fd) {
     if (lastConnection.new_fd == fd) {
+        if (last_dynalloc_ip_address != NULL) {
+            free(last_dynalloc_ip_address);
+            last_dynalloc_ip_address = NULL;
+        }
         char* ret = ft_strdup(lastConnection.ip_address);
         if (ret == NULL) {
             throw irc::exc::MallocError();
-        }
-        if (last_dynalloc_ip_address != NULL) {
-            free(last_dynalloc_ip_address);
         }
         last_dynalloc_ip_address = ret; // to free later.
         return ret;

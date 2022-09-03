@@ -15,6 +15,7 @@
 #include "libft.h"
 
 using std::string;
+using std::vector;
 
 /* ref https://www.youtube.com/watch?v=dEHZb9JsmOU
  * 
