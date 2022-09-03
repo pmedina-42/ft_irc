@@ -8,11 +8,6 @@ namespace irc {
 namespace tools {
 
 std::vector<std::string>& split(std::vector<std::string> &to_fill,
-                                std::string &str, char sep);
-std::vector<std::string>& split(std::vector<std::string> &to_fill,
-                                const char* buff, size_t bufflen,
-                                std::string &del);
-std::vector<std::string>& split(std::vector<std::string> &to_fill,
                                 std::string &str, std::string del);
 
 bool starts_with_mask(std::string const);
