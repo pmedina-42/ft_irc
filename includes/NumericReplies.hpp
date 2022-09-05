@@ -126,7 +126,7 @@
 # define ERR_UNKNOWNCOMMAND " 421 "
 # define STR_UNKNOWNCOMMAND " :Unknown command"
 
-// TODO meter esta respuesta donde haya que meterla
+// TODO meter esta respuesta donde haya que meterla, si es que hay que hacerlo. si no borrarla
 # define ERR_NONICKNAMEGIVEN " 431 "
 # define STR_NONICKNAMEGIVEN " :No nickname given"
 

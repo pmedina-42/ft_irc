@@ -15,12 +15,13 @@ void AIrcCommands::sendNeedMoreParams(string &nick, string& cmd_name, int fd) {
 }
 
 void AIrcCommands::sendParamNeeded(string &nick, string &ch_name, string mode, int fd) {
+    // TODO cambiar str voice mode key mode
     string reply(ERR_KEYNEEDED+nick+" "+ch_name+mode+STR_KEYNEEDED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendNotRegistered(string &cmd_name, int fd) {
-    string reply(ERR_NOTREGISTERED+cmd_name+STR_NOTREGISTERED);
+void AIrcCommands::sendNotRegistered(std::string &nick, std::string &cmd_name, int fd) {
+    string reply(ERR_NOTREGISTERED+nick+" "+cmd_name+STR_NOTREGISTERED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
@@ -151,9 +152,9 @@ string AIrcCommands::constructNamesReply(string nick, Channel &channel) {
             continue;
         }
         User &user = getUserFromNick(*it);
-        if (user.isChannelOperator(channel.name)) {
-            reply += "@";
-        }
+        string at = user.isChannelModerator(channel.name) ? "+" : "";
+        at = user.isChannelOperator(channel.name) ? "@" : at;
+        reply += at;
         reply += user.real_nick;
         reply += (++i < channel.users.size()) ? " " : "";
     }
@@ -177,7 +178,8 @@ string AIrcCommands::constructWhoisChannelRpl(User &user, string &nick) {
     unsigned long i = 0;
     unsigned long size = user.ch_name_mask_map.size();
     for (std::map<string, unsigned char> ::iterator it = user.ch_name_mask_map.begin(); i < size; i++) {
-        string at = user.isChannelOperator(it->first) ? "@" : "";
+        string at = user.isChannelModerator(it->first) ? "+" : "";
+        at = user.isChannelOperator(it->first) ? "@" : at;
         rpl += at + it->first;
         rpl += i < (size - 1) ? " " : "";
         it++;
