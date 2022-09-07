@@ -197,12 +197,12 @@ void AIrcCommands::PONG(Command &cmd, int fd) {
     User& user = getUserFromFd(fd);
     int size = cmd.args.size();
 
-    /* PONG has no replies */
-    if (size < 2
-        /* case pong is recieved wihtout previous PING */
-        || user.ping_str.empty())
-    {
+    if (size < 2) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
+    }
+    /* case pong is recieved wihtout previous PING (random pong) */
+    if (user.ping_str.empty()) {
+        return ;
     }
     if (user.ping_str.compare(cmd.args[1]) == 0) {
         user.resetPingStatus();
