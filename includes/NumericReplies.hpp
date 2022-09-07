@@ -249,7 +249,7 @@
  * Key parameter must be passed to MODE <channel> +/-k
  */
 # define ERR_KEYNEEDED " 696 "
-# define STR_KEYNEEDED " :You must specify a parameter for the key mode. Syntax <key>"
+# define STR_KEYNEEDED " :You must specify a parameter for the "
 
 /**
  * Sent as reply to a user trying to unban a user that's not on the blacklist

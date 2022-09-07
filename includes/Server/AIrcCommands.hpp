@@ -58,7 +58,7 @@ class AIrcCommands : public FdManager,
     /* Common replies  ? todas privadas ?*/
     void sendWelcome(std::string& name, std::string &prefix, int fd);
     void sendNeedMoreParams(std::string &nick, std::string& cmd_name, int fd);
-    void sendParamNeeded(std::string &nick, std::string &ch_name, std::string mode, int fd);
+    void sendParamNeeded(std::string &nick, std::string &ch_name, std::string mode, std::string mode_msg, int fd);
     void sendNotRegistered(std::string &nick, std::string &cmd_name, int fd);
     void sendNoSuchChannel(std::string &nick, std::string &ch_name, int fd);
     void sendNotOnChannel(std::string &nick, std::string &ch_name, int fd);
@@ -85,7 +85,9 @@ class AIrcCommands : public FdManager,
     void checkModeToAddOrDelete(const Command &cmd, Channel &channel, User &user, char m, int mode);
     void checkKeyMode(const Command &cmd, Channel &channel, User &user);
     void checkOpMode(const irc::Command &cmd, std::string nick, User &user, irc::Channel &channel, int fd);
-
+    std::string
+    checkAndGetVoiceRpl(const Command &cmd, const User &user, Channel &channel, const std::string &mode,
+                        User &other) const;
 };
 
 } // namespace

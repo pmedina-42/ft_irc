@@ -510,7 +510,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         checkModeToAddOrDelete(cmd, channel, user, 'm', CH_MOD);
         if (tools::charIsInString(mode, 'k')) {
             if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " k *", fd);
+                return sendParamNeeded(user.real_nick, channel.name, " k *", "key mode. Syntax <key>", fd);
             }
             if (tools::charIsInString(mode, '-') && cmd.args[3].compare(channel.key) && !channel.key.empty()) {
                 string reply = (ERR_KEYSET + user.real_nick + " " + channel.name + STR_KEYSET);
@@ -520,7 +520,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         }
         if (tools::charIsInString(mode, 'o')) {
             if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " o *", fd);
+                return sendParamNeeded(user.real_nick, channel.name, " o *", "op mode. Syntax: <nick>", fd);
             }
             string nick = cmd.args[3];
             tools::ToUpperCase(nick);
@@ -565,7 +565,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         }
         if (tools::charIsInString(mode, 'v')) {
             if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " v *", fd);
+                return sendParamNeeded(user.real_nick, channel.name, " v *", "voice mode. Syntax: <nick>", fd);
             }
             string nick = cmd.args[3];
             tools::ToUpperCase(nick);
@@ -573,77 +573,10 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
             if (!other.isResgistered()) {
                 return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
             }
-            // TODO extract method
-            string mode_rpl;
-            if (tools::charIsInString(mode, '+')) {
-                other.addChannelMask(channel.name, CH_MOD);
-                mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " +v :" + cmd.args[3];
-            }
-            if (tools::charIsInString(mode, '-')) {
-                other.deleteChannelMask(channel.name, CH_MOD);
-                mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " -v :" + cmd.args[3];
-            }
+            string mode_rpl = checkAndGetVoiceRpl(cmd, user, channel, mode, other);
             sendMessageToChannel(channel, mode_rpl, user.nick);
             return DataToUser(fd, mode_rpl, NO_NUMERIC_REPLY);
         }
-    }
-}
-
-void AIrcCommands::checkModeToAddOrDelete(const Command &cmd, Channel &channel, User &user, char m, int mode) {
-    if (tools::charIsInString(cmd.args[2], m)) {
-        string mode_rpl;
-        if (tools::charIsInString(cmd.args[2], '+')) {
-            channel.addMode(mode);
-            mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " :+" + m;
-        } else if (tools::charIsInString(cmd.args[2], '-')) {
-            channel.deleteMode(mode);
-            mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " :-" + m;
-        }
-        sendMessageToChannel(channel, mode_rpl, user.nick);
-        return DataToUser(user.fd, mode_rpl, NO_NUMERIC_REPLY);
-    }
-}
-
-void AIrcCommands::checkKeyMode(const irc::Command &cmd, irc::Channel &channel, User &user) {
-    string mode_rpl;
-    string key = cmd.args[3][0] == ':' ? cmd.args[3].substr(1) : cmd.args[3];
-    if (tools::charIsInString(cmd.args[2], '+')) {
-        if (!channel.key.empty()) {
-            LOG(DEBUG) << "key : " << channel.key;
-            return ;
-        }
-        channel.addMode(CH_PAS);
-        channel.key = key;
-        mode_rpl = ":" + user.prefix + " MODE " + channel.name + " +k :" + key;
-    } else if (tools::charIsInString(cmd.args[2],'-')) {
-        if (channel.key.empty()) {
-            return ;
-        }
-        channel.deleteMode(CH_PAS);
-        channel.key = "";
-        mode_rpl = ":" + user.prefix + " MODE " + channel.name + " -k :" + key;
-    }
-    sendMessageToChannel(channel, mode_rpl, user.nick);
-    return DataToUser(user.fd, mode_rpl, NO_NUMERIC_REPLY);
-}
-
-void AIrcCommands::checkOpMode(const irc::Command &cmd, string nick, User &user, irc::Channel &channel, int fd) {
-    User &other = getUserFromNick(nick);
-    string op_rpl;
-    if (tools::charIsInString(cmd.args[2], '+')) {
-        if (!nick.compare(user.nick)) {
-            return ;
-        }
-        other.addChannelMask(channel.name, OP);
-        op_rpl = " +o :";
-    } else if (tools::charIsInString(cmd.args[2],'-')) {
-        other.deleteChannelMask(channel.name, OP);
-        op_rpl = " -o :";
-    }
-    string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + op_rpl + cmd.args[3];
-    DataToUser(fd, mode_rpl, NO_NUMERIC_REPLY);
-    if (other.fd != fd) {
-        DataToUser(other.fd, mode_rpl, NO_NUMERIC_REPLY);
     }
 }
 
