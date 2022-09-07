@@ -421,6 +421,7 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     User& user_to_kick = getUserFromNick(nick);
     sendKickMessage(fd, user, channel, user_to_kick.real_nick);
     channel.deleteUser(user_to_kick);
+    user_to_kick.ch_name_mask_map.erase(channel.name);
     maybeRemoveChannel(channel);
 }
 
