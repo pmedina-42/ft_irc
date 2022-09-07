@@ -48,48 +48,17 @@ void Channel::addUser(User &user) {
  * 
  * Borrar un usuario del canal:
  * 1. Se busca dicho usuario
- * 2.1 Si el usuario a borrar resulta ser el primero de la lista aka el creador:
- * 2.1.1 Se saca de la lista y se pone el rol de operador al siguiente en la lista
- * 2.1.2 Ese siguiente no debe estar en la lista de baneados
- * 2.2 Si es un usuario normal o cualquier otro operador, se borra sin más
- * 3. Se borra el canal de la lista de canales del usuario
+ * 2. Se borra el canal de la lista de canales del usuario
  * 
  */
 void Channel::deleteUser(User &user) {
     NickList::iterator end = users.end();
     for (NickList::iterator u = users.begin(); u != end; u++) {
         if (!u->compare(user.nick)) {
-            /* Search for first non-blacklist user */
-            if (u == users.begin() && users.size() > 1) {
-                NickList::iterator it = ++users.begin();
-                while (userInBlackList(*it) && it != end)
-                    it++;
-                /* no users outside blacklist, delete channel */
-                if (it == end) {
-                    users.clear();
-                }
-            }
             users.erase(u);
             break ;
         }
     }
-}
-
-string Channel::getNextOpUser(string &nick) {
-    NickList::iterator end = users.end();
-    for (NickList::iterator u = users.begin(); u != end; u++) {
-        LOG(DEBUG) << "Entra con " << nick << ", compara con " << *u << ", el primero es " << *users.begin();
-        if (!u->compare(nick) && u == users.begin() && users.size() > 1) {
-            NickList::iterator it = ++users.begin();
-            while (userInBlackList(*it) && it != end)
-                    it++;
-            if (it != end) {
-                LOG(DEBUG) << "Devuelve siguiente usuario " << *it;
-                return (*it);
-            }
-        }
-    }
-    return "";
 }
 
 /**
@@ -123,9 +92,19 @@ bool Channel::unbanUser(string &user) {
 /**
  * Comprueba si el usuario está en la lista de baneados
  */
-bool Channel::userInBlackList(string nick) {
+bool Channel::userInBlackList(std::string nick, std::string ip_address) {
     for (std::map<string, int>::iterator it = black_list.begin(); it != black_list.end(); it++) {
-        if (it->first.find(nick) != string::npos) {
+        std::string banned_user = it->first.substr(0, it->first.find("!"));
+        std::string banned_ip = it->first.substr(it->first.find("@") + 1);
+            // If *!*@* is found in the blackList
+        if ((!banned_ip.compare("*") && !banned_user.compare("*"))
+            // If nick!*@* is found
+            || (!nick.compare(banned_user) && !banned_ip.compare("*"))
+            // If *!*@ip_address is found
+            || (!ip_address.compare(banned_ip) && !banned_user.compare("*"))
+            // If user!*@ip_address is found
+            || (!nick.compare(banned_user) && !ip_address.compare(banned_ip)))
+        {
             return true;
         }
     }

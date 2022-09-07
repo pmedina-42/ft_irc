@@ -26,7 +26,7 @@ class Channel {
     void deleteUser(User& user);
     void banUser(std::string &user, int fd);
     bool unbanUser(std::string &user);
-    bool userInBlackList(std::string nick);
+    bool userInBlackList(std::string nick, std::string ip_address);
     bool inviteModeOn();
     bool keyModeOn();
     bool topicModeOn();
@@ -36,7 +36,6 @@ class Channel {
     void addToWhitelist(std::string &nick);
     bool userIsInChannel(std::string& nick);
     bool isUserOperator(User& user);
-    std::string getNextOpUser(std::string& nick);
     void addMode(int bits);
     void deleteMode(int bits);
     std::string getModeStr();
