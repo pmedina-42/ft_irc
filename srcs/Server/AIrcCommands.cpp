@@ -69,7 +69,7 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     /* case no nickname */
     if (size < 2) {
         string unknown_user = "*";
-        return sendNeedMoreParams(user.isResgistered() ? user.real_nick : unknown_user, cmd.Name(), fd);
+        return sendNeedMoreParams(nickExists(user.nick) ? user.real_nick : unknown_user, cmd.Name(), fd);
     }
     string real_nick = cmd.args[1];
     if (real_nick[0] == ':') {
@@ -118,7 +118,7 @@ void AIrcCommands::USER(Command &cmd, int fd) {
     /* case arguments unsufficient */
     if (size < 5) {
         string unknown_user = "*";
-        return sendNeedMoreParams(user.isResgistered() ? user.real_nick : unknown_user, cmd.Name(), fd);
+        return sendNeedMoreParams(nickExists(user.nick) ? user.real_nick : unknown_user, cmd.Name(), fd);
     }
     /* case user already sent a valid USER comand */
     if (user.isResgistered()) {
