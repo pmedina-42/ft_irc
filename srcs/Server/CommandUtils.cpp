@@ -3,6 +3,7 @@
 #include "Channel.hpp"
 #include "User.hpp"
 #include "Command.hpp"
+#include "Tools.hpp"
 
 namespace irc {
 
@@ -55,6 +56,78 @@ void AIrcCommands::sendBlackListReply(int fd, const User &user, Channel &channel
     std::string blacklist_end_rpl = (RPL_ENDOFBANLIST + user.real_nick + " " + channel.name + STR_ENDOFBANLIST);
     return DataToUser(fd, blacklist_end_rpl, NUMERIC_REPLY);
 }
+
+std::string AIrcCommands::checkAndGetVoiceRpl(const Command &cmd, const User &user, Channel &channel, const std::string &mode,
+                                              User &other) const {
+    std::string mode_rpl;
+    if (tools::charIsInString(mode, '+')) {
+        other.addChannelMask(channel.name, CH_MOD);
+        mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " +v :" + cmd.args[3];
+    }
+    if (tools::charIsInString(mode, '-')) {
+        other.deleteChannelMask(channel.name, CH_MOD);
+        mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " -v :" + cmd.args[3];
+    }
+    return mode_rpl;
+}
+
+void AIrcCommands::checkModeToAddOrDelete(const Command &cmd, Channel &channel, User &user, char m, int mode) {
+    if (tools::charIsInString(cmd.args[2], m)) {
+        std::string mode_rpl;
+        if (tools::charIsInString(cmd.args[2], '+')) {
+            channel.addMode(mode);
+            mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " :+" + m;
+        } else if (tools::charIsInString(cmd.args[2], '-')) {
+            channel.deleteMode(mode);
+            mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " :-" + m;
+        }
+        sendMessageToChannel(channel, mode_rpl, user.nick);
+        return DataToUser(user.fd, mode_rpl, NO_NUMERIC_REPLY);
+    }
+}
+
+void AIrcCommands::checkKeyMode(const irc::Command &cmd, irc::Channel &channel, User &user) {
+    std::string mode_rpl;
+    std::string key = cmd.args[3][0] == ':' ? cmd.args[3].substr(1) : cmd.args[3];
+    if (tools::charIsInString(cmd.args[2], '+')) {
+        if (!channel.key.empty()) {
+            return ;
+        }
+        channel.addMode(CH_PAS);
+        channel.key = key;
+        mode_rpl = ":" + user.prefix + " MODE " + channel.name + " +k :" + key;
+    } else if (tools::charIsInString(cmd.args[2],'-')) {
+        if (channel.key.empty()) {
+            return ;
+        }
+        channel.deleteMode(CH_PAS);
+        channel.key = "";
+        mode_rpl = ":" + user.prefix + " MODE " + channel.name + " -k :" + key;
+    }
+    sendMessageToChannel(channel, mode_rpl, user.nick);
+    return DataToUser(user.fd, mode_rpl, NO_NUMERIC_REPLY);
+}
+
+void AIrcCommands::checkOpMode(const irc::Command &cmd, std::string nick, User &user, irc::Channel &channel, int fd) {
+    User &other = getUserFromNick(nick);
+    std::string op_rpl;
+    if (tools::charIsInString(cmd.args[2], '+')) {
+        if (!nick.compare(user.nick)) {
+            return ;
+        }
+        other.addChannelMask(channel.name, OP);
+        op_rpl = " +o :";
+    } else if (tools::charIsInString(cmd.args[2],'-')) {
+        other.deleteChannelMask(channel.name, OP);
+        op_rpl = " -o :";
+    }
+    std::string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + op_rpl + cmd.args[3];
+    DataToUser(fd, mode_rpl, NO_NUMERIC_REPLY);
+    if (other.fd != fd) {
+        DataToUser(other.fd, mode_rpl, NO_NUMERIC_REPLY);
+    }
+}
+
 
 }
 

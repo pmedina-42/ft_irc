@@ -85,7 +85,9 @@ class AIrcCommands : public FdManager,
     void checkModeToAddOrDelete(const Command &cmd, Channel &channel, User &user, char m, int mode);
     void checkKeyMode(const Command &cmd, Channel &channel, User &user);
     void checkOpMode(const irc::Command &cmd, std::string nick, User &user, irc::Channel &channel, int fd);
-
+    std::string
+    checkAndGetVoiceRpl(const Command &cmd, const User &user, Channel &channel, const std::string &mode,
+                        User &other) const;
 };
 
 } // namespace
