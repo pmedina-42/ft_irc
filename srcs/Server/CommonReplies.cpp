@@ -14,9 +14,8 @@ void AIrcCommands::sendNeedMoreParams(string &nick, string& cmd_name, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendParamNeeded(string &nick, string &ch_name, string mode, int fd) {
-    // TODO cambiar str voice mode key mode
-    string reply(ERR_KEYNEEDED+nick+" "+ch_name+mode+STR_KEYNEEDED);
+void AIrcCommands::sendParamNeeded(string &nick, string &ch_name, string mode, string mode_msg, int fd) {
+    string reply(ERR_KEYNEEDED+nick+" "+ch_name+mode+STR_KEYNEEDED+mode_msg);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 

@@ -510,7 +510,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         checkModeToAddOrDelete(cmd, channel, user, 'm', CH_MOD);
         if (tools::charIsInString(mode, 'k')) {
             if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " k *", fd);
+                return sendParamNeeded(user.real_nick, channel.name, " k *", "key mode. Syntax <key>", fd);
             }
             if (tools::charIsInString(mode, '-') && cmd.args[3].compare(channel.key) && !channel.key.empty()) {
                 string reply = (ERR_KEYSET + user.real_nick + " " + channel.name + STR_KEYSET);
@@ -520,7 +520,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         }
         if (tools::charIsInString(mode, 'o')) {
             if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " o *", fd);
+                return sendParamNeeded(user.real_nick, channel.name, " o *", "op mode. Syntax: <nick>", fd);
             }
             string nick = cmd.args[3];
             tools::ToUpperCase(nick);
@@ -565,7 +565,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
         }
         if (tools::charIsInString(mode, 'v')) {
             if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " v *", fd);
+                return sendParamNeeded(user.real_nick, channel.name, " v *", "voice mode. Syntax: <nick>", fd);
             }
             string nick = cmd.args[3];
             tools::ToUpperCase(nick);
