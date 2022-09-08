@@ -14,11 +14,6 @@
 # define RPL_WELCOME_STR_1 " :Welcome to the Internet Relay Network, "
 
 /**
- *  Sent as a reply to the AWAY command, this lets the client know that they are no longer set as being away
- */
-# define RPL_UMODEIS " 221 "
-
-/**
  *  Sent as the first reply of WHOIS command
  */
 # define RPL_WHOISUSER " 311 "
@@ -126,10 +121,6 @@
 # define ERR_UNKNOWNCOMMAND " 421 "
 # define STR_UNKNOWNCOMMAND " :Unknown command"
 
-// TODO meter esta respuesta donde haya que meterla, si es que hay que hacerlo. si no borrarla
-# define ERR_NONICKNAMEGIVEN " 431 "
-# define STR_NONICKNAMEGIVEN " :No nickname given"
-
 /**
  * The desired nickname contains characters that are disallowed by the server
  */
@@ -232,18 +223,6 @@
  */
 # define ERR_CHANOPRIVSNEEDED " 482 "
 # define STR_CHANOPRIVSNEEDED " :You're not channel operator"
-
-/**
- * A MODE command affecting a user failed because it's trying to set or view modes for other users.
- */
-# define ERR_UMODEUNKNOWNFLAG " 501 "
-# define STR_UMODEUNKNOWNFLAG ":Unknown MODE flag"
-
-/**
- * A MODE command affecting a user failed because it's trying to set or view modes for other users.
- */
-# define ERR_USERSDONTMATCH " 502 "
-# define STR_USERSDONTMATCH ":Cant change mode for other users"
 
 /**
  * Key parameter must be passed to MODE <channel> +/-k
