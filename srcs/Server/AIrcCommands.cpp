@@ -607,16 +607,18 @@ void AIrcCommands::QUIT(Command &cmd, int fd) {
     int size = cmd.args.size();
     string message = "Client exited";
     if (size == 2) {
-        message = cmd.args[1][0] == ':' ? cmd.args[1].substr(1) : cmd.args[1];
+        message = "Quit: ";
+        message += cmd.args[1][0] == ':' ? cmd.args[1].substr(1) : cmd.args[1];
     }
     for (std::map<std::string, unsigned char>::iterator it = user.ch_name_mask_map.begin(); it != user.ch_name_mask_map.end(); it++) {
-        string reply(":"+user.prefix +" "+cmd.Name()+ ( size == 2 ? " :Quit: ": " :") +message);
+        string reply(":"+user.prefix +" "+cmd.Name()+" :"+message);
         std::string ch_name = it->first;
         Channel &channel = getChannelFromName(ch_name);
         sendMessageToChannel(channel, reply, user.nick);
         channel.deleteUser(user);
     }
-    // TODO mensaje de error
+    string err_rpl("ERROR :Closing link: ("+user.name+"@"+user.ip_address+") ["+message+"]");
+    DataToUser(fd, err_rpl, NO_NUMERIC_REPLY);
     removeUser(fd);
     closeConnection(fd);
 }
