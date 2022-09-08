@@ -606,9 +606,19 @@ void AIrcCommands::QUIT(Command &cmd, int fd) {
             ? user.real_nick : unknown_user, cmd.Name(), fd);
     }
     int size = cmd.args.size();
-    string reply = "User " + user.nick + " has left the server.";
-    reply = size == 2 ? user.nick.append(": ").append(cmd.args[1]) : reply;
-    DataToUser(fd, reply, NO_NUMERIC_REPLY);
+    string message = "quit"; // TODO ponerlo bien
+    if (size == 2) {
+        message = cmd.args[1][0] == ':' ? cmd.args[1].substr(1) : cmd.args[1];
+    }
+    for (std::map<std::string, unsigned char>::iterator it = user.ch_name_mask_map.begin(); it != user.ch_name_mask_map.end(); it++) {
+        string reply(user.prefix + " " + cmd.Name() + " " + message);
+        std::string ch_name = it->first;
+        Channel &channel = getChannelFromName(ch_name);
+        LOG(DEBUG) << "encontrado canal :" << channel.name;
+        sendMessageToChannel(channel, reply, user.real_nick);
+        channel.deleteUser(user);
+    }
+    removeUser(fd);
 }
 
 /**

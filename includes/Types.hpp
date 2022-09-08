@@ -38,8 +38,7 @@ typedef enum {
     CH_PAS = 4,
     CH_INV = 3,
     CH_MOD = 2,
-    CH_TOP = 1,
-    SV_AWAY = 6
+    CH_TOP = 1
 } IRC_MODES;
 
 class Channel;
