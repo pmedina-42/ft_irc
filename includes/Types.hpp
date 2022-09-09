@@ -21,7 +21,7 @@ namespace irc {
 
 typedef enum {
     LISTENER_BACKLOG = 20,
-    NAME_MAX_SIZE = 10,
+    NAME_MAX_SIZE = 12, // no me deja sino poner christian97 >:(
     MAX_FDS = 255,
     POLL_TIMEOUT_MS = 1000,
     BUFF_MAX_SIZE = 512,
