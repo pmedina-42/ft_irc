@@ -216,6 +216,7 @@ void AIrcCommands::PONG(Command &cmd, int fd) {
     }
     if (user.ping_str.compare(cmd.args[1]) == 0) {
         user.resetPingStatus();
+        LOG(INFO) << "PING from user " << user << " correct";
     } else {
         LOG(INFO) << "PING from user " << user << " incorrect, sent "
                    << user.ping_str << " recieved " << cmd.args[1];
