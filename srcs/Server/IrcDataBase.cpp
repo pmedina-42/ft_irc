@@ -110,6 +110,9 @@ bool IrcDataBase::nickFormatOk(string &nickname) {
             && *it != '-' && *it != '{' && *it != '}' && *it != '['
             && *it != ']' && *it != '\\' && *it != '@' && *it != '!')
         {
+            continue ;
+        }
+        else {
             return false;
         }
     }
