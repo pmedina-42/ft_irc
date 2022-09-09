@@ -612,6 +612,7 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
                 if (!channel.banModeOn()) {
                     channel.addMode(CH_BAN);
                 }
+                // check if already banned
                 if (!channel.userInBlackList(ban_nick, ip)) {
                     string ban_mask = (ban_nick.find("@") == string::npos)
                                        ? ban_nick + "!*@" + ip
