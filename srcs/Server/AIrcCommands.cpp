@@ -12,6 +12,7 @@
 #include <map>
 
 using std::string;
+using std::map;
 
 namespace irc {
 
@@ -69,7 +70,8 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     /* case no nickname */
     if (size < 2) {
         string unknown_user = "*";
-        return sendNeedMoreParams(nickExists(user.nick) ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : unknown_user;
+        return sendNeedMoreParams(nick, cmd.Name(), fd);
     }
     string real_nick = cmd.args[1];
     if (real_nick[0] == ':') {
@@ -79,20 +81,34 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
     tools::ToUpperCase(nick);
     /* case forbidden characters are found / incorrect length */
     if (nickFormatOk(real_nick) == false) {
-        string reply(ERR_ERRONEUSNICKNAME + real_nick + STR_ERRONEUSNICKNAME);
+        string reply(ERR_ERRONEUSNICKNAME
+                     + real_nick
+                     + STR_ERRONEUSNICKNAME);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     /* case nickname is equal to some other in the server
      * (ignoring upper/lower case) */
     if (nickExists(nick)) {
-        string reply(ERR_NICKNAMEINUSE+real_nick+STR_NICKNAMEINUSE);
+        string reply(ERR_NICKNAMEINUSE
+                     + real_nick
+                     + STR_NICKNAMEINUSE);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     /* case nickname change */
     if (user.isResgistered()) {
-        updateUserNick(fd, nick, real_nick);
-        // THIS SHOULD NOTIFY CHANNELS OF THE NICKNAME CHANGE CYA
-        return ;
+        // Notify channels of nickname change
+        for (map<string, unsigned char>::iterator
+             it = user.ch_name_mask_map.begin();
+             it != user.ch_name_mask_map.end(); it++)
+        {
+            string reply = ":" + user.prefix + " "
+                            + cmd.Name() + " :"
+                            + real_nick;
+            string ch_name = it->first;
+            Channel &channel = getChannelFromName(ch_name);
+            sendMessageToChannel(channel, reply, user.nick);
+        }
+        return updateUserNick(fd, nick, real_nick);
     }
     /* case the nickname is the first recieved from this user */
     user.nick = nick;
@@ -108,8 +124,8 @@ void AIrcCommands::NICK(Command &cmd, int fd) {
  */
 void AIrcCommands::USER(Command &cmd, int fd) {
 
-    int size = cmd.args.size();
     User& user = getUserFromFd(fd);
+    int size = cmd.args.size();
 
     /* case many params (from irc-hispano) */
     if (size > 5) {
@@ -118,7 +134,8 @@ void AIrcCommands::USER(Command &cmd, int fd) {
     /* case arguments unsufficient */
     if (size < 5) {
         string unknown_user = "*";
-        return sendNeedMoreParams(nickExists(user.nick) ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : unknown_user;
+        return sendNeedMoreParams(nick, cmd.Name(), fd);
     }
     /* case user already sent a valid USER comand */
     if (user.isResgistered()) {
@@ -144,6 +161,7 @@ void AIrcCommands::USER(Command &cmd, int fd) {
 void AIrcCommands::PASS(Command &cmd, int fd) {
 
     User &user = getUserFromFd(fd);
+    int size = cmd.args.size();
 
     /* case sending PASS command to server without password set, ignore */
     if (!serverHasPassword()) {
@@ -152,7 +170,6 @@ void AIrcCommands::PASS(Command &cmd, int fd) {
     if (user.registered) {
         return sendAlreadyRegistered(user.real_nick, fd);
     }
-    int size = cmd.args.size();
     if (size < 2) {
         string unknown_user = "*";
         return sendNeedMoreParams(unknown_user, cmd.Name(), fd);
@@ -182,9 +199,8 @@ void AIrcCommands::PING(Command &cmd, int fd) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     string pong_reply("PONG " + cmd.args[1]);
     DataToUser(fd, pong_reply, NO_NUMERIC_REPLY);
@@ -233,9 +249,8 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     int size = cmd.args.size();
 
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     if (size < 2) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
@@ -251,23 +266,34 @@ void AIrcCommands::JOIN(Command &cmd, int fd) {
     if (channel.userIsInChannel(user.nick)) {
         return ;
     }
-    if (channel.banModeOn() && (channel.userInBlackList(user.real_nick, user.ip_address) ||
-            channel.all_banned) && !channel.isUserOperator(user)) {
-        string reply = (ERR_BANNEDFROMCHAN + user.real_nick + " " + channel.name + STR_BANNEDFROMCHAN);
+    if (channel.banModeOn()
+        && (channel.userInBlackList(user.real_nick, user.ip_address)
+            || channel.all_banned)
+        && !channel.isUserOperator(user))
+    {
+        string reply = (ERR_BANNEDFROMCHAN
+                        + user.real_nick + " "
+                        + channel.name
+                        + STR_BANNEDFROMCHAN);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     if (channel.inviteModeOn()
         && !channel.isInvited(user.nick))
     {
-        string reply(ERR_INVITEONLYCHAN + user.real_nick + " "
-                    + channel.name + STR_INVITEONLYCHAN);
+        string reply(ERR_INVITEONLYCHAN
+                     + user.real_nick + " "
+                     + channel.name
+                     + STR_INVITEONLYCHAN);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
-    if ((size == 2 || channel.key.compare(cmd.args[2]) != 0)
-        && channel.keyModeOn())
+    if (channel.keyModeOn()
+        && (size == 2
+            || channel.key.compare(cmd.args[2]) != 0))
     {
-        string reply(ERR_BADCHANNELKEY + user.real_nick + " "
-                    + channel.name + STR_BADCHANNELKEY);
+        string reply(ERR_BADCHANNELKEY
+                     + user.real_nick + " "
+                     + channel.name
+                     + STR_BADCHANNELKEY);
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     joinExistingChannel(fd, user, channel);
@@ -289,9 +315,8 @@ void AIrcCommands::PART(Command &cmd, int fd) {
     int size = cmd.args.size();
     
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     if (size < 2) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
@@ -333,9 +358,8 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
     int size = cmd.args.size();
 
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     if (size < 2) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
@@ -355,10 +379,14 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
     }
     if (size == 2) {
         if (channel.topic.empty()) {
-            string reply(RPL_NOTOPIC+user.real_nick+" "+channel.name+STR_NOTOPIC);
+            string reply(RPL_NOTOPIC
+                         + user.real_nick + " "
+                         + channel.name
+                         + STR_NOTOPIC);
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        string reply(RPL_TOPIC+ user.real_nick + " "
+        string reply(RPL_TOPIC
+                     + user.real_nick + " "
                      + channel.name + " :"
                      + channel.topic);
         return DataToUser(fd, reply, NUMERIC_REPLY);
@@ -367,17 +395,21 @@ void AIrcCommands::TOPIC(Command &cmd, int fd) {
         return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
     }
     if (size == 3) {
-        channel.topic = cmd.args[2][0] == ':' ? cmd.args[2].substr(1) : cmd.args[2];
-        string reply(user.prefix + " " + cmd.Name()+ " "
-                               + channel.name + " :"
-                               + channel.topic);
+        channel.topic = (cmd.args[2][0] == ':')
+                        ? cmd.args[2].substr(1)
+                        : cmd.args[2];
+        string reply(user.prefix + " "
+                     + cmd.Name()+ " "
+                     + channel.name + " :"
+                     + channel.topic);
         return DataToUser(fd, reply, NO_NUMERIC_REPLY);
     }
     for (int i = 2; i < size; i++) {
         channel.topic += cmd.args[i];
         channel.topic += i < size - 1 ? " " : "";
     }
-    string reply(user.prefix + " " + cmd.Name()+ " "
+    string reply(user.prefix + " "
+                 + cmd.Name()+ " "
                  + channel.name + " :"
                  + channel.topic);
     DataToUser(fd, reply, NO_NUMERIC_REPLY);
@@ -396,9 +428,8 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     User& user = getUserFromFd(fd);
 
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     int size = cmd.args.size();
     if (size < 3) {
@@ -420,8 +451,11 @@ void AIrcCommands::KICK(Command &cmd, int fd) {
     string nick = cmd.args[2];
     tools::ToUpperCase(nick);
     if (!channel.userIsInChannel(nick)) {
-        string reply = (ERR_USERNOTINCHANNEL+user.real_nick+" "
-                +cmd.args[2]+" "+channel.name+STR_USERNOTINCHANNEL);
+        string reply = ERR_USERNOTINCHANNEL
+                       + user.real_nick + " "
+                       + cmd.args[2] + " "
+                       + channel.name
+                       + STR_USERNOTINCHANNEL;
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     User& user_to_kick = getUserFromNick(nick);
@@ -445,9 +479,8 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
         int size = cmd.args.size();
 
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     if (size < 3) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
@@ -468,14 +501,22 @@ void AIrcCommands::INVITE(Command &cmd, int fd) {
         return sendNoSuchNick(fd, user.real_nick, cmd.args[1]);
     }
     if (channel.userIsInChannel(nick)) {
-        string reply(ERR_USERONCHANNEL+user.real_nick+" "+cmd.args[1]
-                                +" "+channel.name+STR_USERONCHANNEL);
+        string reply = ERR_USERONCHANNEL
+                       + user.real_nick + " "
+                       + cmd.args[1] + " "
+                       + channel.name
+                       + STR_USERONCHANNEL;
         return DataToUser(fd, reply, NUMERIC_REPLY);
     }
     channel.addToWhitelist(nick);
-    string invite_msg = ":" + user.prefix + " INVITE " + cmd.args[1]  + " :" + channel.name;
+    string invite_msg = ":" + user.prefix + " INVITE "
+                         + cmd.args[1] + " :"
+                         + channel.name;
     DataToUser(getUserFromNick(nick).fd, invite_msg, NO_NUMERIC_REPLY);
-    string invite_rpl = RPL_INVITING + user.real_nick + " " + cmd.args[1] + " :" + channel.name;
+    string invite_rpl = RPL_INVITING
+                        + user.real_nick + " "
+                        + cmd.args[1] + " :"
+                        + channel.name;
     DataToUser(fd, invite_rpl, NUMERIC_REPLY);
 }
 
@@ -489,104 +530,139 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
     int size = cmd.args.size();
     
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     if (size < 2) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     // CHANGE CHANNEL MODE
-    if (tools::starts_with_mask(cmd.args[1])) {
-        if (!channelExists(cmd.args[1])) {
-            return sendNoSuchChannel(user.real_nick, cmd.args[1], fd);
+    // filter out user modes, we do not implement them outside channels.
+    if (!tools::starts_with_mask(cmd.args[1])) {
+        return ;
+    }
+    if (!channelExists(cmd.args[1])) {
+        return sendNoSuchChannel(user.real_nick, cmd.args[1], fd);
+    }
+    Channel &channel = channel_map.find(cmd.args[1])->second;
+    if (!channel.userIsInChannel(user.nick)) {
+        return sendNotOnChannel(user.real_nick, channel.name, fd);
+    }
+    if (size == 2) {
+        return sendChannelModes(fd, user.real_nick, channel);
+    }
+    if (!channel.isUserOperator(user)) {
+        return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
+    }
+    string mode = cmd.args[2];
+    if (tools::anyRepeatedChar(mode)
+        || tools::hasUnknownChannelFlag(mode))
+    {
+        string reply = ERR_UNKNOWNMODE
+                        + user.real_nick + " "
+                        + mode
+                        + STR_UNKNOWNMODE;
+        return DataToUser(fd, reply, NUMERIC_REPLY);
+    }
+    checkModeToAddOrDelete(cmd, channel, user, 'i', CH_INV);
+    checkModeToAddOrDelete(cmd, channel, user, 'm', CH_MOD);
+    if (tools::charIsInString(mode, 'k')) {
+        if (size < 4) {
+            return sendParamNeeded(user.real_nick, channel.name, " k *",
+                                    "key mode. Syntax <key>", fd);
         }
-        Channel &channel = channel_map.find(cmd.args[1])->second;
-        if (!channel.userIsInChannel(user.nick)) {
-            return sendNotOnChannel(user.real_nick, channel.name, fd);
-        }
-        if (size == 2) {
-            return sendChannelModes(fd, user.real_nick, channel);
-        }
-        if (!channel.isUserOperator(user)) {
-            return sendChannelOperatorNeeded(user.real_nick, channel.name, fd);
-        }
-        string mode = cmd.args[2];
-        if (tools::anyRepeatedChar(mode) || tools::hasUnknownChannelFlag(mode)) {
-            string reply = (ERR_UNKNOWNMODE+user.real_nick+" "+mode+STR_UNKNOWNMODE);
+        if (tools::charIsInString(mode, '-')
+            && cmd.args[3].compare(channel.key)
+            && !channel.key.empty())
+        {
+            string reply = ERR_KEYSET
+                            + user.real_nick + " "
+                            + channel.name
+                            + STR_KEYSET;
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        checkModeToAddOrDelete(cmd, channel, user, 'i', CH_INV);
-        checkModeToAddOrDelete(cmd, channel, user, 'm', CH_MOD);
-        if (tools::charIsInString(mode, 'k')) {
-            if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " k *", "key mode. Syntax <key>", fd);
-            }
-            if (tools::charIsInString(mode, '-') && cmd.args[3].compare(channel.key) && !channel.key.empty()) {
-                string reply = (ERR_KEYSET + user.real_nick + " " + channel.name + STR_KEYSET);
-                return DataToUser(fd, reply, NUMERIC_REPLY);
-            }
-            checkKeyMode(cmd, channel, user);
+        checkKeyMode(cmd, channel, user);
+    }
+    if (tools::charIsInString(mode, 'o')) {
+        if (size < 4) {
+            return sendParamNeeded(user.real_nick, channel.name, " o *",
+                                    "op mode. Syntax: <nick>", fd);
         }
-        if (tools::charIsInString(mode, 'o')) {
-            if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " o *", "op mode. Syntax: <nick>", fd);
-            }
-            string nick = cmd.args[3];
-            tools::ToUpperCase(nick);
-            if (!nick_fd_map.count(nick)) {
-                return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
-            }
-            if (channel.userIsInChannel(nick)) {
-                checkOpMode(cmd, nick, user, channel, fd);
-            }
+        string nick = cmd.args[3];
+        tools::ToUpperCase(nick);
+        if (!nick_fd_map.count(nick)) {
+            return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
         }
-        if (tools::charIsInString(mode, 'b')) {
-            if (tools::charIsInString(mode, '+')) {
-                if (size == 3) {
-                    return sendBlackListReply(fd, user, channel);
-                }
-                if (size == 4) {
-                    string ban_nick = (ft_isdigit(cmd.args[3][0])) ? "*" : cmd.args[3];
-                    string ip = (ft_isdigit(cmd.args[3][0]) || cmd.args[3].find('@') != string::npos)? cmd.args[3] : "*";
-                    if (!channel.banModeOn()) {
-                        channel.addMode(CH_BAN);
-                    }
-                    if (!channel.userInBlackList(ban_nick, ip)) {
-                        string ban_mask = (ban_nick.find("@") == string::npos) ? ban_nick+"!*@"+ip : ban_nick;
-                        channel.banUser(ban_mask, user.fd);
-                        string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " +b " + cmd.args[3];
-                        return sendMessageToChannel(channel, mode_rpl, user.real_nick);
-                    }
-                }
+        if (channel.userIsInChannel(nick)) {
+            checkOpMode(cmd, nick, user, channel, fd);
+        }
+    }
+    if (tools::charIsInString(mode, 'b')) {
+        if (tools::charIsInString(mode, '+')) {
+            if (size == 3) {
+                return sendBlackListReply(fd, user, channel);
             }
-            if (tools::charIsInString(mode, '-') && size == 4) {
-                string user_to_unban = cmd.args[3];
-                if (!channel.unbanUser(user_to_unban)) {
-                    string ban_rpl = (ERR_NOSUCHBAN+user.real_nick+" "+channel.name+STR_NOSUCHBAN+user_to_unban);
-                    return DataToUser(fd, ban_rpl, NUMERIC_REPLY);
+            if (size == 4) {
+                string ban_nick = ft_isdigit(cmd.args[3][0])
+                                  ? "*"
+                                  : cmd.args[3];
+                string ip = (ft_isdigit(cmd.args[3][0])
+                             || cmd.args[3].find('@') != string::npos)
+                             ? cmd.args[3]
+                             : "*";
+                if (!channel.banModeOn()) {
+                    channel.addMode(CH_BAN);
                 }
-                if (channel.black_list.empty()) {
-                    channel.deleteMode(CH_BAN);
+                if (!channel.userInBlackList(ban_nick, ip)) {
+                    string ban_mask = (ban_nick.find("@") == string::npos)
+                                       ? ban_nick + "!*@" + ip
+                                       : ban_nick;
+                    channel.banUser(ban_mask, user.fd);
+                    string mode_rpl = ":" + user.prefix
+                                      + " MODE "
+                                      + cmd.args[1] + " +b "
+                                      + cmd.args[3];
+                    return sendMessageToChannel(channel, mode_rpl,
+                                                user.real_nick);
                 }
-                string mode_rpl = ":" + user.prefix + " MODE " + cmd.args[1] + " -b " + cmd.args[3];
-                return sendMessageToChannel(channel, mode_rpl, user.real_nick);
             }
         }
-        if (tools::charIsInString(mode, 'v')) {
-            if (size < 4) {
-                return sendParamNeeded(user.real_nick, channel.name, " v *", "voice mode. Syntax: <nick>", fd);
+        if (tools::charIsInString(mode, '-')
+            && size == 4)
+        {
+            string user_to_unban = cmd.args[3];
+            if (!channel.unbanUser(user_to_unban)) {
+                string ban_rpl = ERR_NOSUCHBAN
+                                 + user.real_nick + " "
+                                 + channel.name
+                                 + STR_NOSUCHBAN
+                                 + user_to_unban;
+                return DataToUser(fd, ban_rpl, NUMERIC_REPLY);
             }
-            string nick = cmd.args[3];
-            tools::ToUpperCase(nick);
-            User &other = getUserFromNick(nick);
-            if (!other.isResgistered()) {
-                return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
+            if (channel.black_list.empty()) {
+                channel.deleteMode(CH_BAN);
             }
-            string mode_rpl = checkAndGetVoiceRpl(cmd, user, channel, mode, other);
-            sendMessageToChannel(channel, mode_rpl, user.nick);
-            return DataToUser(fd, mode_rpl, NO_NUMERIC_REPLY);
+            string mode_rpl = ":" + user.prefix
+                              + " MODE "
+                              + cmd.args[1] + " -b "
+                              + user_to_unban;
+            return sendMessageToChannel(channel, mode_rpl, user.real_nick);
         }
+    }
+    if (tools::charIsInString(mode, 'v')) {
+        if (size < 4) {
+            return sendParamNeeded(user.real_nick, channel.name, " v *",
+                                   "voice mode. Syntax: <nick>", fd);
+        }
+        string nick = cmd.args[3];
+        tools::ToUpperCase(nick);
+        User &other = getUserFromNick(nick);
+        if (!other.isResgistered()) {
+            return sendNoSuchNick(fd, user.real_nick, cmd.args[3]);
+        }
+        string mode_rpl = checkAndGetVoiceRpl(cmd, user, channel, mode, other);
+        sendMessageToChannel(channel, mode_rpl, user.nick);
+        return DataToUser(fd, mode_rpl, NO_NUMERIC_REPLY);
     }
 }
 
@@ -598,26 +674,33 @@ void AIrcCommands::MODE(Command &cmd, int fd) {
 void AIrcCommands::QUIT(Command &cmd, int fd) {
 
     User &user = getUserFromFd(fd);
+    int size = cmd.args.size();
     
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
-    int size = cmd.args.size();
     string message = "Client exited";
     if (size == 2) {
         message = "Quit: ";
-        message += cmd.args[1][0] == ':' ? cmd.args[1].substr(1) : cmd.args[1];
+        message += cmd.args[1][0] == ':'
+                   ? cmd.args[1].substr(1)
+                   : cmd.args[1];
     }
-    for (std::map<std::string, unsigned char>::iterator it = user.ch_name_mask_map.begin(); it != user.ch_name_mask_map.end(); it++) {
-        string reply(":"+user.prefix +" "+cmd.Name()+" :"+message);
-        std::string ch_name = it->first;
+    for (map<string, unsigned char>::iterator
+         it = user.ch_name_mask_map.begin();
+         it != user.ch_name_mask_map.end(); it++)
+    {
+        string reply = ":" + user.prefix + " " + cmd.Name() + " :" + message;
+        string ch_name = it->first;
         Channel &channel = getChannelFromName(ch_name);
         sendMessageToChannel(channel, reply, user.nick);
         channel.deleteUser(user);
     }
-    string err_rpl("ERROR :Closing link: ("+user.name+"@"+user.ip_address+") ["+message+"]");
+    string err_rpl = "ERROR :Closing link: ("
+                     + user.name + "@"
+                     + user.ip_address + ") ["
+                     + message + "]";
     DataToUser(fd, err_rpl, NO_NUMERIC_REPLY);
     removeUser(fd);
     closeConnection(fd);
@@ -631,13 +714,12 @@ void AIrcCommands::QUIT(Command &cmd, int fd) {
 void AIrcCommands::NAMES(Command &cmd, int fd) {
 
     User &user = getUserFromFd(fd);
+    int size = cmd.args.size();
 
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
-    int size = cmd.args.size();
     if (size == 2) {
         if (!channelExists(cmd.args[1])) {
             return sendNoSuchChannel(user.real_nick, cmd.args[1], fd);
@@ -645,9 +727,10 @@ void AIrcCommands::NAMES(Command &cmd, int fd) {
         Channel &channel = channel_map.find(cmd.args[1])->second;
         return sendNamesReply(fd, user, channel);
     }
-    string namesReply = (RPL_ENDOFNAMES+ user.real_nick +
-                        " *"+ STR_ENDOFNAMES);
-    DataToUser(fd, namesReply, NUMERIC_REPLY);
+    string names_reply = RPL_ENDOFNAMES
+                         + user.real_nick + " *"
+                         + STR_ENDOFNAMES;
+    DataToUser(fd, names_reply, NUMERIC_REPLY);
 }
 
 /**
@@ -658,13 +741,12 @@ void AIrcCommands::NAMES(Command &cmd, int fd) {
 void AIrcCommands::LIST(Command &cmd, int fd) {
 
     User &user = getUserFromFd(fd);
+    int size = cmd.args.size();
 
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user,cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
-    int size = cmd.args.size();
     if (size == 1) {
         sendListReply(fd, user, "");
     }
@@ -674,7 +756,6 @@ void AIrcCommands::LIST(Command &cmd, int fd) {
         }
         sendListReply(fd, user, cmd.args[1]);
     }
-
 }
 
 /**
@@ -688,15 +769,16 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
     int size = cmd.args.size();
 
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     if (size < 3) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);
     }
     string name = cmd.args[1];
-    string message = cmd.args[2][0] == ':' ? cmd.args[2].substr(1) : cmd.args[2];
+    string message = cmd.args[2][0] == ':'
+                     ? cmd.args[2].substr(1)
+                     : cmd.args[2];
     if (!tools::starts_with_mask(name) && size == 3) {
         tools::ToUpperCase(name);
         if (!nick_fd_map.count(name)) {
@@ -706,34 +788,57 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
         if (!receiver.isResgistered()) {
             return sendNoSuchNick(fd, user.real_nick, cmd.args[1]);
         }
-        string reply = ":" + user.prefix + " PRIVMSG " + cmd.args[1] + " :" + message;
+        string reply = ":" + user.prefix
+                        + " PRIVMSG "
+                        + cmd.args[1] + " :"
+                        + message;
         return DataToUser(receiver.fd, reply, NO_NUMERIC_REPLY);
     }
-    if (tools::starts_with_mask(name) && size == 3) {
+    if (tools::starts_with_mask(name)
+        && size == 3)
+    {
         if (!channelExists(cmd.args[1])) {
             return sendNoSuchChannel(user.real_nick, cmd.args[1], fd);
         }
         Channel &channel = channel_map.find(name)->second;
         if (!channel.userIsInChannel(user.nick)) {
-            string reply = (ERR_CANNOTSENDTOCHAN+user.real_nick+" "+channel.name
-                    +STR_CANNOTSENDTOCHAN+"the +n (noextmsg) mode is set");
+            string reply = ERR_CANNOTSENDTOCHAN
+                           + user.real_nick + " "
+                           + channel.name
+                           + STR_CANNOTSENDTOCHAN
+                           + "the +n (noextmsg) mode is set";
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        if (channel.banModeOn() && (channel.userInBlackList(user.real_nick, user.ip_address) ||
-                channel.all_banned) && !channel.isUserOperator(user)) {
-            string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
-                    + STR_CANNOTSENDTOCHAN + "banned");
+        if (channel.banModeOn()
+            && (channel.userInBlackList(user.real_nick, user.ip_address)
+                || channel.all_banned)
+            && !channel.isUserOperator(user))
+        {
+            string reply = ERR_CANNOTSENDTOCHAN
+                           + user.real_nick + " "
+                           + channel.name
+                           + STR_CANNOTSENDTOCHAN
+                           + "banned";
             return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        if (channel.moderatedModeOn() && !user.isChannelOperator(name) && !user.isChannelModerator(name)) {
-            string reply = (ERR_CANNOTSENDTOCHAN + user.real_nick + " " + channel.name
-                    + STR_CANNOTSENDTOCHAN + "the +m (moderated) mode is set");
-            return (DataToUser(fd, reply, NUMERIC_REPLY));
+        if (channel.moderatedModeOn()
+            && !user.isChannelOperator(name)
+            && !user.isChannelModerator(name))
+        {
+            string reply = ERR_CANNOTSENDTOCHAN
+                           + user.real_nick + " "
+                           + channel.name
+                           + STR_CANNOTSENDTOCHAN
+                           + "the +m (moderated) mode is set";
+            return DataToUser(fd, reply, NUMERIC_REPLY);
         }
-        string reply = ":" + user.prefix + " PRIVMSG " + channel.name + " :" + message;
+        string reply = ":" + user.prefix
+                        + " PRIVMSG "
+                        + channel.name + " :"
+                        + message;
+        LOG(DEBUG) << "Sending message to channel " << channel.name;
         sendMessageToChannel(channel, reply, user.nick);
     }
-
 }
 
 /**
@@ -742,13 +847,13 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
  *
  */
 void AIrcCommands::WHOIS(Command &cmd, int fd) {
+
     User &user = getUserFromFd(fd);
     int size = cmd.args.size();
 
     if (!user.isResgistered()) {
-        string unknown_user = "*";
-        return sendNotRegistered((nickExists(user.nick))
-            ? user.real_nick : unknown_user, cmd.Name(), fd);
+        string nick = nickExists(user.nick) ? user.real_nick : "*";
+        return sendNotRegistered(nick, cmd.Name(), fd);
     }
     if (size < 2) {
         return sendNeedMoreParams(user.real_nick, cmd.Name(), fd);

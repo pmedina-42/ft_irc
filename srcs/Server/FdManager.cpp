@@ -82,7 +82,8 @@ FdManager::~FdManager(void) {
     }
 }
 
-static int get_addrinfo_from_params(const char* hostname, const char *port,
+static int get_addrinfo_from_params(const char* hostname,
+                                    const char *port,
                                     struct addrinfo *hints,
                                     struct addrinfo **servinfo)
 {
