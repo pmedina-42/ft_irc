@@ -685,26 +685,7 @@ void AIrcCommands::QUIT(Command &cmd, int fd) {
                    ? cmd.args[1].substr(1)
                    : cmd.args[1];
     }
-    for (map<string, unsigned char>::iterator
-         it = user.ch_name_mask_map.begin();
-         it != user.ch_name_mask_map.end(); it++)
-    {
-        string reply = ":"
-                        + user.prefix + " "
-                        + cmd.Name() + " :"
-                        + message;
-        string ch_name = it->first;
-        Channel &channel = getChannelFromName(ch_name);
-        sendMessageToChannel(channel, reply, user.nick);
-    }
-    removeUserFromChannels(fd);
-    string err_rpl = "ERROR :Closing link: ("
-                     + user.name + "@"
-                     + user.ip_address + ") ["
-                     + message + "]";
-    DataToUser(fd, err_rpl, NO_NUMERIC_REPLY);
-    removeUser(fd);
-    closeConnection(fd);
+    removeUserFromServer(fd, message);
 }
 
 /**

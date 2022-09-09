@@ -96,6 +96,9 @@ class AIrcCommands : public FdManager,
     std::string checkAndGetVoiceRpl(const Command &cmd, const User &user,
                                     Channel &channel, const std::string &mode,
                                     User &other) const;
+    void sendQuitToAllChannels(int fd, std::string &msg);
+    void sendClosingLink(int fd, std::string &reason);
+    void removeUserFromServer(int fd, std::string &reason);
 };
 
 } // namespace

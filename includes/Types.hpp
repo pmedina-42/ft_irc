@@ -10,6 +10,7 @@
 #define CRLF "\r\n"
 #define CR "\r"
 #define LF "\n"
+#define PING_TIMEOUT_S_STR "120"
 
 /*
  * On why enums are chosen over macros for integers :
@@ -26,6 +27,7 @@ typedef enum {
     BUFF_MAX_SIZE = 512,
     PING_TIMEOUT_S = 120 
 } SERVER_CONFIG;
+
 
 typedef enum {
     NO_NUMERIC_REPLY = 0,

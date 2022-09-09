@@ -204,5 +204,39 @@ void AIrcCommands::checkOpMode(const irc::Command &cmd, string nick,
     }
 }
 
+void AIrcCommands::sendQuitToAllChannels(int fd, string &msg) {
+
+    User &user = getUserFromFd(fd);
+
+    for (std::map<string, unsigned char>::iterator
+                 it = user.ch_name_mask_map.begin();
+         it != user.ch_name_mask_map.end(); it++)
+    {
+        string ch_name = it->first;
+        Channel &channel = getChannelFromName(ch_name);
+        string quit_msg = ":" + user.prefix
+                          + " QUIT :"
+                          + msg; //Client Closed connection";
+        sendMessageToChannel(channel, quit_msg, user.nick);
+    }
+}
+
+void AIrcCommands::sendClosingLink(int fd, string &reason) {
+
+    User &user = getUserFromFd(fd);
+    string msg = "ERROR :Closing link : ("
+                 + user.prefix + ") ["
+                 + reason + "]";
+    DataToUser(fd, msg, NO_NUMERIC_REPLY);
+}
+
+void AIrcCommands::removeUserFromServer(int fd, string &reason) {
+    sendQuitToAllChannels(fd, reason);
+    removeUserFromChannels(fd);
+    sendClosingLink(fd, reason);
+    removeUser(fd);
+    return closeConnection(fd);
+}
+
 }
 

@@ -163,6 +163,7 @@ void IrcDataBase::debugNickFdMap(void) {
 }
 
 void IrcDataBase::removeUserFromChannels(int fd) {
+    
     User &user = getUserFromFd(fd);
 
     for (std::map<string, unsigned char>::iterator

@@ -157,8 +157,8 @@ void Server::pingLoop(void) {
         if (user.isOnPongHold()) {
             time_t since_ping = time(NULL) - user.getPingTime();
             if (since_ping >= PING_TIMEOUT_S) {
-                removeUser(fd);
-                closeConnection(fd);
+                string reason = "Ping timeout: " PING_TIMEOUT_S_STR " seconds" ;
+                removeUserFromServer(fd, reason);
             }
             continue ;
         }
@@ -187,14 +187,14 @@ void Server::DataFromUser(int fd) {
             LOG(WARNING) << "DataFromUser closing fd " << fd
                          << " from user " << getUserFromFd(fd)
                          << " non fatal error";
-            removeUser(fd);
-            return closeConnection(fd);
+                string reason = "Internal server error";
+                return removeUserFromServer(fd, reason);
         }
         throw irc::exc::FatalError("recv -1");
     }
     if (srv_buff_size == 0) {
-        removeUser(fd);
-        return closeConnection(fd);
+        string reason = "Client closed connection";
+        return removeUserFromServer(fd, reason);
     }
     /* Update when a user sends a command ! */
     User& user = getUserFromFd(fd);
@@ -246,8 +246,8 @@ void Server::DataToUser(int fd, string &msg, int type) {
                 LOG(WARNING) << "DataToUser closing fd " << fd
                              << " from user " << user
                              << " non fatal error";
-                removeUser(fd);
-                return closeConnection(fd);
+                string reason = "Internal server error";
+                return removeUserFromServer(fd, reason);
             }
             throw irc::exc::FatalError("send = -1");
         }
@@ -375,8 +375,8 @@ void Server::registerUser(User &user) {
         return sendWelcome(user.name, user.prefix, user.fd);
     } else {
         sendPasswordMismatch(user.real_nick, user.fd);
-        removeUser(user.fd);
-        return closeConnection(user.fd);
+        string reason = "Password missmatch";
+        removeUserFromServer(user.fd, reason);
     }
 }
 

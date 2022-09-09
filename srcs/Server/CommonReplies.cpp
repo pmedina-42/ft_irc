@@ -22,7 +22,7 @@ void AIrcCommands::sendParamNeeded(string &nick, string &ch_name,
 {
     string reply = ERR_KEYNEEDED
                    + nick + " "
-                   + ch_name
+                   + ch_name    
                    + mode
                    + STR_KEYNEEDED
                    + mode_msg;
