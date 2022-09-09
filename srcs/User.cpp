@@ -106,11 +106,6 @@ void User::setPrefixFromHost(string &host) {
 
 bool User::isReadyForRegistration(bool server_password_on) {
     bool ready = !nick.empty() && !name.empty() && !full_name.empty();
-    LOG(DEBUG) << "User ready " << ready << ". password is set ("
-               << server_password_on;
-    if (server_password_on) {
-        LOG(DEBUG) << "recieved password " << last_password;
-    }
     return server_password_on ? ready && !last_password.empty()
                               : ready;
 }

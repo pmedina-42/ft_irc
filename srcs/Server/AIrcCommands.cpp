@@ -217,7 +217,7 @@ void AIrcCommands::PONG(Command &cmd, int fd) {
     if (user.ping_str.compare(cmd.args[1]) == 0) {
         user.resetPingStatus();
     } else {
-        LOG(DEBUG) << "PING from user " << user << " incorrect, sent "
+        LOG(INFO) << "PING from user " << user << " incorrect, sent "
                    << user.ping_str << " recieved " << cmd.args[1];
     }
     return ;
@@ -834,7 +834,6 @@ void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
                         + " PRIVMSG "
                         + channel.name + " :"
                         + message;
-        LOG(DEBUG) << "Sending message to channel " << channel.name;
         sendMessageToChannel(channel, reply, user.nick);
     }
 }

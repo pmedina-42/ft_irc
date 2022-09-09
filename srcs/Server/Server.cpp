@@ -203,7 +203,7 @@ void Server::DataFromUser(int fd) {
         user.last_received = time(NULL);
     }
 
-    LOG(DEBUG) << "DataFromUser user " << user
+    LOG(INFO) << "DataFromUser user " << user
               << ", bytes " << srv_buff_size
               << " content [" << srv_buff << "]";
 
@@ -233,7 +233,7 @@ void Server::DataToUser(int fd, string &msg, int type) {
     
     User& user = getUserFromFd(fd);
 
-    LOG(DEBUG) << "DataToUser user " << user
+    LOG(INFO) << "DataToUser user " << user
               << ", bytes " << msg.size()
               << ", content [" << msg << "]"; 
 
@@ -355,8 +355,6 @@ void Server::parseCommandBuffer(string &cmd_content, int fd) {
 }
 
 bool Server::serverHasPassword(void) {
-    LOG(DEBUG) << "Server has password : " << !password.empty();
-    LOG(DEBUG) << "password is " << password;
     return !password.empty();
 }
 
