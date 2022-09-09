@@ -696,9 +696,8 @@ void AIrcCommands::QUIT(Command &cmd, int fd) {
         string ch_name = it->first;
         Channel &channel = getChannelFromName(ch_name);
         sendMessageToChannel(channel, reply, user.nick);
-        channel.deleteUser(user);
-        maybeRemoveChannel(channel);
     }
+    removeUserFromChannels(fd);
     string err_rpl = "ERROR :Closing link: ("
                      + user.name + "@"
                      + user.ip_address + ") ["
