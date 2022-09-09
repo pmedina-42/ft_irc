@@ -10,57 +10,60 @@ using std::string;
 namespace irc {
 
 void AIrcCommands::sendNeedMoreParams(string &nick, string& cmd_name, int fd) {
-    string reply(ERR_NEEDMOREPARAMS+nick+" "+cmd_name+STR_NEEDMOREPARAMS);
+    string reply = ERR_NEEDMOREPARAMS
+                   + nick + " "
+                   + cmd_name
+                   + STR_NEEDMOREPARAMS;
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendParamNeeded(string &nick, string &ch_name, string mode, string mode_msg, int fd) {
-    string reply(ERR_KEYNEEDED+nick+" "+ch_name+mode+STR_KEYNEEDED+mode_msg);
+    string reply(ERR_KEYNEEDED + nick + " " + ch_name + mode + STR_KEYNEEDED + mode_msg);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendNotRegistered(string &nick, string &cmd_name, int fd) {
-    string reply(ERR_NOTREGISTERED+nick+" "+cmd_name+STR_NOTREGISTERED);
+    string reply(ERR_NOTREGISTERED + nick + " " + cmd_name + STR_NOTREGISTERED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendNoSuchChannel(string &nick, string &ch_name, int fd) {
-    string reply = (ERR_NOSUCHCHANNEL+nick+" "+ch_name+STR_NOSUCHCHANNEL);
+    string reply = (ERR_NOSUCHCHANNEL + nick + " " + ch_name + STR_NOSUCHCHANNEL);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendNotOnChannel(string &nick, string &ch_name, int fd) {
-    string reply = (ERR_NOTONCHANNEL+nick+" "+ch_name+STR_NOTONCHANNEL);
+    string reply = (ERR_NOTONCHANNEL + nick + " " + ch_name + STR_NOTONCHANNEL);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendBadChannelMask(string &nick, string &ch_name, int fd) {
-    string reply = (ERR_BADCHANMASK+nick+" "+ch_name+STR_BADCHANMASK);
+    string reply = (ERR_BADCHANMASK + nick + " " + ch_name + STR_BADCHANMASK);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendNoChannelModes(string &cmd_name, int fd) {
-    string reply = (ERR_NOCHANMODES+cmd_name+STR_NOCHANMODES);
+    string reply = (ERR_NOCHANMODES + cmd_name + STR_NOCHANMODES);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendChannelOperatorNeeded(string &nick, string &ch_name, int fd) {
-    string reply = (ERR_CHANOPRIVSNEEDED+nick+" "+ch_name+STR_CHANOPRIVSNEEDED);
+    string reply = (ERR_CHANOPRIVSNEEDED + nick + " " + ch_name + STR_CHANOPRIVSNEEDED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendWelcome(string& nick, string &prefix, int fd) {
-    string welcome_msg(RPL_WELCOME+nick+RPL_WELCOME_STR_1+prefix);
+    string welcome_msg(RPL_WELCOME + nick + RPL_WELCOME_STR_1 + prefix);
     DataToUser(fd, welcome_msg, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendAlreadyRegistered(string &nick, int fd) {
-    string reply = (ERR_ALREADYREGISTERED+nick+STR_ALREADYREGISTERED);
+    string reply = (ERR_ALREADYREGISTERED + nick + STR_ALREADYREGISTERED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
 void AIrcCommands::sendPasswordMismatch(string &nick, int fd) {
-    string reply = (ERR_PASSWDMISMATCH+nick+STR_PASSWDMISMATCH);
+    string reply = (ERR_PASSWDMISMATCH + nick + STR_PASSWDMISMATCH);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 

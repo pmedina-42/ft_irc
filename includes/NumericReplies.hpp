@@ -110,7 +110,8 @@
 # define STR_NOSUCHCHANNEL " :No such channel"
 
 /**
- * Sent as a response to user trying to send a message to a moderated channel without being moderator
+ * Sent as a response to user trying to send a message to a moderated channel
+ * without being moderator
  */
 # define ERR_CANNOTSENDTOCHAN " 404 "
 # define STR_CANNOTSENDTOCHAN " :You cannot send messages to this channel whilst "
