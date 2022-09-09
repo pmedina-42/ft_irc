@@ -27,7 +27,7 @@ vector<string>& split(vector<string> &to_fill, string &str, string del) {
         start = end + del.size();
         end = str.find(del, start);
     }
-    std::string last = str.substr(start, end - start);
+    string last = str.substr(start, end - start);
     if (!last.empty()) {
         to_fill.push_back(str.substr(start, end - start));
     }
@@ -56,9 +56,9 @@ string& trimRepeatedChar(string& str, char c) {
  * Replaces all <from> occurrences in string str for <to>.
  * From https://stackoverflow.com/questions/2896600/
  */
-void ReplaceAll(std::string& str, const std::string& from, const std::string& to) {
+void ReplaceAll(string& str, const string& from, const string& to) {
     size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+    while((start_pos = str.find(from, start_pos)) != string::npos) {
         str.replace(start_pos, from.length(), to);
         start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
     }
@@ -93,7 +93,7 @@ bool isEqual(const string &str1, const string &str2) {
 }
 
 /* Check if str ends with suffix */
-bool endsWith(std::string const &str, std::string const &suffix) {
+bool endsWith(string const &str, string const &suffix) {
     if (str.length() < suffix.length()) {
         return false;
     }
@@ -135,7 +135,7 @@ string rngString(int len) {
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
         "!$/%()=?^_;\\|@#~[]{},-'+";
-    std::string tmp_s;
+    string tmp_s;
     tmp_s.reserve(len);
     for (int i = 0; i < len; ++i) {
         unsigned char c = printables[rand() % (sizeof(printables) - 1)];

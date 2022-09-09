@@ -295,7 +295,7 @@ string Server::processLeftovers(int fd) {
     } else {
         size_t pos = tools::findLastCRLF(cmd_string);
         // no CRLF found
-        if (pos == std::string::npos) {
+        if (pos == string::npos) {
             // ill-formated long comand
             if (cmd_string.length() + user.buffer_size > BUFF_MAX_SIZE) {
                 user.resetBuffer();

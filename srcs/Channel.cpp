@@ -32,7 +32,8 @@ Channel::~Channel() {
 
 /**
  * Añadir un usuario a un canal:
- * 1. Se comprueba la disponibilidad del canal a nivel de comando, antes de llamar esta funcion
+ * 1. Se comprueba la disponibilidad del canal a nivel de
+ *    comando, antes de llamar esta funcion
  * 2. Se añade el usuario a la lista de usuarios
  */
 void Channel::addUser(User &user) {
@@ -92,10 +93,12 @@ bool Channel::unbanUser(string &user) {
 /**
  * Comprueba si el usuario está en la lista de baneados
  */
-bool Channel::userInBlackList(std::string nick, std::string ip_address) {
-    for (std::map<string, int>::iterator it = black_list.begin(); it != black_list.end(); it++) {
-        std::string banned_user = it->first.substr(0, it->first.find("!"));
-        std::string banned_ip = it->first.substr(it->first.find("@") + 1);
+bool Channel::userInBlackList(string nick, string ip_address) {
+    for (std::map<string, int>::iterator it = black_list.begin();
+         it != black_list.end(); it++)
+    {
+        string banned_user = it->first.substr(0, it->first.find("!"));
+        string banned_ip = it->first.substr(it->first.find("@") + 1);
             // If *!*@* is found in the blackList
         if ((!banned_ip.compare("*") && !banned_user.compare("*"))
             // If nick!*@* is found
@@ -158,15 +161,16 @@ bool Channel::isUserOperator(User &user) {
 /**
  * Añade un nuevo usuario a la whitelist 
  */
-void Channel::addToWhitelist(std::string &nick) {
+void Channel::addToWhitelist(string &nick) {
     white_list.push_back(nick);
 }
 
 /**
  * Devuelve true si el usuario está en la white_list del canal 
  */
-bool Channel::isInvited(std::string &nick) {
-    return (std::find(white_list.begin(), white_list.end(), nick) != white_list.end());
+bool Channel::isInvited(string &nick) {
+    return (std::find(white_list.begin(), white_list.end(), nick)
+                      != white_list.end());
 }
 
 bool Channel::userIsInChannel(string& nick) {
@@ -195,6 +199,5 @@ void Channel::updateUserNick(string &old_nick, string &new_nick) {
         *it = new_nick;
     }
 }
-
 
 } // namespace

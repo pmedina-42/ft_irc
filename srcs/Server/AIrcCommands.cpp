@@ -56,7 +56,6 @@ AIrcCommands::~AIrcCommands()
 /**
  * Command: NICK
  * Parameters: <nickname>
- *
  */
 void AIrcCommands::NICK(Command &cmd, int fd) {
 
@@ -182,14 +181,7 @@ void AIrcCommands::PASS(Command &cmd, int fd) {
 /*
  * Command: PING
  * Parameters: <token> 
- * 
- * testeo con irc hispano :
- * PING :lol lasd as qwe q r  31412413r f13!"32º
- * :stirling.chathispano.com PONG stirling.chathispano.com :lol lasd as qwe q r  31412413r f13!"32º
- * PING :: : : : : :
- * :stirling.chathispano.com PONG stirling.chathispano.com :: : : : : :
  */
-
 void AIrcCommands::PING(Command &cmd, int fd) {
     
     int size = cmd.args.size();
@@ -236,10 +228,13 @@ void AIrcCommands::PONG(Command &cmd, int fd) {
  * Parameters: <channel> [<key>]
  * 1. If command JOIN has no arguments, error message is returned
  * 2. If channel mask is missing, bad mask error is returned
- * 3. If channel doesn't exist, create new channel and new User with operator channel_mode and add it to the channel_map
+ * 3. If channel doesn't exist, create new channel and new User with
+ *    operator channel_mode and add it to the channel_map
  * 4. If channel exists, check channel_mode
- * 4.1. If channel is in channel_mode 'i', check if user is invited to join it. If not, error message is returned
- * 4.2. If channel is in channel_mode 'K', check if user is providing the correct pw. If not, error message is returned
+ * 4.1. If channel is in channel_mode 'i', check if user is invited
+ *      to join it. If not, error message is returned
+ * 4.2. If channel is in channel_mode 'K', check if user is providing
+ *      the correct pw. If not, error message is returned
  * 5. Add user to channel
  * 6. Send replies
  */
@@ -346,9 +341,12 @@ void AIrcCommands::PART(Command &cmd, int fd) {
  * Parameters: <channel> [<topic>]
  * 1. If command TOPIC has no arguments, error message is returned
  * 2. If channel doesn't start with mask, bad mask error is returned
- * 3. If command TOPIC has one argument, channel topic is returned if exists (channel, user in channel & topic)
- * 4. If command TOPIC has two arguments, channel topic is set (if user has the requested permissions)
- * 5. If command TOPIC has two arguments, and topic is and empty string, the channel topic is removed
+ * 3. If command TOPIC has one argument, channel topic is returned
+ *    if exists (channel, user in channel & topic)
+ * 4. If command TOPIC has two arguments, channel topic is set
+ *    (if user has the requested permissions)
+ * 5. If command TOPIC has two arguments, and topic is and empty
+ *    string, the channel topic is removed
  * 6. Return RLP_TOPIC to client
  *  If not, error message is returned
  */

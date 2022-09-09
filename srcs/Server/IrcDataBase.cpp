@@ -89,7 +89,7 @@ bool IrcDataBase::nickExists(string &nick) {
     return nick_fd_map.count(nick);
 }
 
-bool IrcDataBase::channelExists(std::string &channel_name) {
+bool IrcDataBase::channelExists(string &channel_name) {
     return channel_map.count(channel_name);
 }
 

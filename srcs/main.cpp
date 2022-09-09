@@ -27,8 +27,9 @@
 bool running = true;
 
 using namespace irc;
+using std::string;
 
-void error(std::string msg) {
+void error(string msg) {
     std::cout << msg << std::endl;
     exit(1);
 }
@@ -43,12 +44,12 @@ int main(int argc, char **argv) {
             Server server;
             return 42;
         } else if (argc == 2) { // only password set ! 
-        std::string password = argv[1];
+        string password = argv[1];
             Server server(password);
             return 1;
         } else if (argc == 3) {
-            std::string hostname(argv[1]);
-            std::string port(argv[2]);
+            string hostname(argv[1]);
+            string port(argv[2]);
             Server(hostname, port);
             // connect to server using params
             return 1;

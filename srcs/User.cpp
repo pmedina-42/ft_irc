@@ -178,7 +178,7 @@ bool User::isChannelOperator(string name) {
     return ((ch_name_mask_map.find(name)->second & 0x80) >> 7);
 }
 
-bool User::isInChannel(std::string &channel_name) {
+bool User::isInChannel(string &channel_name) {
     return ch_name_mask_map.count(channel_name);
 }
 

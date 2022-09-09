@@ -19,7 +19,7 @@ void AIrcCommands::sendParamNeeded(string &nick, string &ch_name, string mode, s
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendNotRegistered(std::string &nick, std::string &cmd_name, int fd) {
+void AIrcCommands::sendNotRegistered(string &nick, string &cmd_name, int fd) {
     string reply(ERR_NOTREGISTERED+nick+" "+cmd_name+STR_NOTREGISTERED);
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
@@ -64,7 +64,7 @@ void AIrcCommands::sendPasswordMismatch(string &nick, int fd) {
     DataToUser(fd, reply, NUMERIC_REPLY);
 }
 
-void AIrcCommands::sendNoSuchNick(int fd, std::string nick, std::string notFoundNick) {
+void AIrcCommands::sendNoSuchNick(int fd, string nick, string notFoundNick) {
     string reply = (ERR_NOSUCHNICK + nick + " " + notFoundNick + " " + STR_NOSUCHNICK);
     return DataToUser(fd, reply, NUMERIC_REPLY);
 }
@@ -99,7 +99,7 @@ void AIrcCommands::sendListReply(int fd, User &user, string ch_name) {
         string reply = constructListReply(user.real_nick, channel);
         DataToUser(fd, reply, NUMERIC_REPLY);
     } else if (channel_map.size() > 0) {
-        for (std::map<std::string, Channel>::iterator it = channel_map.begin(); it != channel_map.end(); it++) {
+        for (std::map<string, Channel>::iterator it = channel_map.begin(); it != channel_map.end(); it++) {
             string reply = constructListReply(user.real_nick, it->second);
             DataToUser(fd, reply, NUMERIC_REPLY);
         }
@@ -122,7 +122,7 @@ void AIrcCommands::sendPartMessage(string &extra_msg, int fd, User &user, Channe
         return (DataToUser(fd, kick_rpl, NO_NUMERIC_REPLY));
     }
 
-void AIrcCommands::sendChannelModes(int fd, std::string nick, Channel &channel) {
+void AIrcCommands::sendChannelModes(int fd, string nick, Channel &channel) {
     string mode = channel.getModeStr();
     string mode_rpl = (RPL_CHANNELMODEIS + nick + " " + channel.name + " :+" + mode + "nt");
     DataToUser(fd, mode_rpl, NUMERIC_REPLY);
@@ -166,7 +166,7 @@ string AIrcCommands::constructListReply(string nick, Channel &channel) {
     if (!channel_size) {
         throw irc::exc::MallocError();
     }
-    string reply = (RPL_LIST + nick + " " + channel.name + " " + std::string(channel_size) + " :[+" + mode + "nt]");
+    string reply = (RPL_LIST + nick + " " + channel.name + " " + string(channel_size) + " :[+" + mode + "nt]");
     reply += channel.topicModeOn() ? (" " + channel.topic) : "";
     free(channel_size);
     return reply;
