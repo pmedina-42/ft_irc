@@ -26,8 +26,8 @@ FdManager::FdManager(void)
     last_dynalloc_ip_address(0),
     fds_size(0)
 {
-    ft_memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
-    lastConnection.new_fd = 0;
+    ft_memset(last_connection.ip_address, 0, sizeof(last_connection.ip_address));
+    last_connection.new_fd = 0;
     if (setUpAddress() == -1
         || setUpListener() == -1)
     {
@@ -40,8 +40,8 @@ FdManager::FdManager(string &hostname, string &port)
     last_dynalloc_ip_address(0),
     fds_size(0)
 {
-    ft_memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
-    lastConnection.new_fd = 0;
+    ft_memset(last_connection.ip_address, 0, sizeof(last_connection.ip_address));
+    last_connection.new_fd = 0;
     if (setUpAddress(hostname, port) == -1
         || setUpListener() == -1)
     {
@@ -56,8 +56,8 @@ FdManager::FdManager(const FdManager& other)
     servinfo(other.servinfo),
     listener(other.listener)
 {
-    ft_memset(lastConnection.ip_address, 0, sizeof(lastConnection.ip_address));
-    lastConnection.new_fd = 0;
+    ft_memset(last_connection.ip_address, 0, sizeof(last_connection.ip_address));
+    last_connection.new_fd = 0;
     for (int fd_idx=0; fd_idx < fds_size; fd_idx++) {
         fds[fd_idx].events = other.fds[fd_idx].events;
         fds[fd_idx].revents = other.fds[fd_idx].revents;
@@ -308,8 +308,8 @@ int FdManager::acceptConnection(void) {
     LOG(INFO) << "connected to " << ip_address;
 
     // para guardar la ip para futuros baneitos 
-    lastConnection.new_fd = fd_new;
-    memcpy(lastConnection.ip_address, ip_address, ft_strlen(ip_address));
+    last_connection.new_fd = fd_new;
+    memcpy(last_connection.ip_address, ip_address, ft_strlen(ip_address));
 
     return fd_new;
 }
@@ -353,12 +353,12 @@ bool FdManager::socketErrorIsNotFatal(int fd) {
  * socket provided byt this last accept() call.
  */
 const char* FdManager::getSocketAddress(int fd) {
-    if (lastConnection.new_fd == fd) {
+    if (last_connection.new_fd == fd) {
         if (last_dynalloc_ip_address != NULL) {
             free(last_dynalloc_ip_address);
             last_dynalloc_ip_address = NULL;
         }
-        char* ret = ft_strdup(lastConnection.ip_address);
+        char* ret = ft_strdup(last_connection.ip_address);
         if (ret == NULL) {
             throw irc::exc::MallocError();
         }

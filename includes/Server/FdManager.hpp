@@ -61,10 +61,10 @@ class FdManager {
     // whoever allocates, deallocates.
     char* last_dynalloc_ip_address;
 
-    // gets a duplicate from the ip_address stored in lastConnection.
+    // gets a duplicate from the ip_address stored in last_connection.
     const char* getSocketAddress(int fd);
 
-    ConnInfo lastConnection;
+    ConnInfo last_connection;
 
     struct pollfd fds[MAX_FDS];
     int fds_size;

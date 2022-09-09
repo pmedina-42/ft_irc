@@ -106,10 +106,9 @@ bool IrcDataBase::nickFormatOk(string &nickname) {
         return false;
     }
     for (string::iterator it = nickname.begin(); it != nickname.end(); it++) {
-        if (ft_isalnum(*it) == 0
-            && *it != '`' && *it != '|' && *it != '^' && *it != '_'
+        if (*it != '`' && *it != '|' && *it != '^' && *it != '_'
             && *it != '-' && *it != '{' && *it != '}' && *it != '['
-            && *it != ']' && *it != '\\')
+            && *it != ']' && *it != '\\' && *it != '@' && *it != '!')
         {
             return false;
         }
