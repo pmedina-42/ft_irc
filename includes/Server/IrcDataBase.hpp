@@ -61,6 +61,7 @@ class IrcDataBase {
 
     void addNewChannel(Channel& new_channel);
     void maybeRemoveChannel(Channel& channel);
+    void removeUserFromChannels(int fd);
 
     void updateUserInChannels(User &user, std::string new_nick);
 

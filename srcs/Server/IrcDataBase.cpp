@@ -162,4 +162,18 @@ void IrcDataBase::debugNickFdMap(void) {
     }
 }
 
+void IrcDataBase::removeUserFromChannels(int fd) {
+    User &user = getUserFromFd(fd);
+
+    for (std::map<string, unsigned char>::iterator
+                 it = user.ch_name_mask_map.begin();
+         it != user.ch_name_mask_map.end(); it++)
+    {
+        string ch_name = it->first;
+        Channel &channel = getChannelFromName(ch_name);
+        channel.deleteUser(user);
+        maybeRemoveChannel(channel);
+    }
+}
+
 } // namespace
