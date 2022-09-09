@@ -157,7 +157,6 @@ void Server::pingLoop(void) {
         if (user.isOnPongHold()) {
             time_t since_ping = time(NULL) - user.getPingTime();
             if (since_ping >= PING_TIMEOUT_S) {
-                // Maybe send a message ? 
                 removeUser(fd);
                 closeConnection(fd);
             }

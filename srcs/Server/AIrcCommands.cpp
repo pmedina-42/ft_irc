@@ -689,7 +689,10 @@ void AIrcCommands::QUIT(Command &cmd, int fd) {
          it = user.ch_name_mask_map.begin();
          it != user.ch_name_mask_map.end(); it++)
     {
-        string reply = ":" + user.prefix + " " + cmd.Name() + " :" + message;
+        string reply = ":"
+                        + user.prefix + " "
+                        + cmd.Name() + " :"
+                        + message;
         string ch_name = it->first;
         Channel &channel = getChannelFromName(ch_name);
         sendMessageToChannel(channel, reply, user.nick);
@@ -760,7 +763,7 @@ void AIrcCommands::LIST(Command &cmd, int fd) {
  * Command: PRIVMSG
  * Parameters: [<channel/user>] <message>
  * Lists channel size & modes
- * */
+ */
 void AIrcCommands::PRIVMSG(Command &cmd, int fd) {
 
     User &user = getUserFromFd(fd);
