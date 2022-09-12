@@ -25,7 +25,7 @@ typedef enum {
     MAX_FDS = 255,
     POLL_TIMEOUT_MS = 1000,
     BUFF_MAX_SIZE = 512,
-    PING_TIMEOUT_S = 120 
+    PING_TIMEOUT_S = 120
 } SERVER_CONFIG;
 
 

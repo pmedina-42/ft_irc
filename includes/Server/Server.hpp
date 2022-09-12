@@ -28,7 +28,7 @@ class Server : public AIrcCommands {
     void registerUser(User &user);
 
     void DataFromUser(int fd);
-    void DataToUser(int fd, std::string &data, int type);
+    void DataToUser(int fd, std::string data, int type);
     
     int mainLoop(void);
 

@@ -34,7 +34,7 @@ class AIrcCommands : public FdManager,
     virtual void registerUser(User &user) = 0;
 
     virtual void DataFromUser(int fd) = 0;
-    virtual void DataToUser(int fd, std::string &data, int type) = 0;
+    virtual void DataToUser(int fd, std::string data, int type) = 0;
     virtual void loadCommandMap(void) = 0;
 
     /* Command implementations */

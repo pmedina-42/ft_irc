@@ -224,8 +224,17 @@ void AIrcCommands::sendQuitToAllChannels(int fd, string &msg) {
 void AIrcCommands::sendClosingLink(int fd, string &reason) {
 
     User &user = getUserFromFd(fd);
+
+    /* irc hispano, en función del servidor, escribe una palabra que
+     * parece ser random appendeada a @<ip>, en concreto, 113AADPV1@<ip>,
+     * cuando el usuario no está registrado y se le ha de cerrar el link.
+     * En este servidor, se envía unregistered@<ip>.
+     */
+    string prefix = user.prefix.empty() ?
+                    "unregistered@" + user.ip_address
+                    : user.prefix;
     string msg = "ERROR :Closing link : ("
-                 + user.prefix + ") ["
+                 + prefix + ") ["
                  + reason + "]";
     DataToUser(fd, msg, NO_NUMERIC_REPLY);
 }
