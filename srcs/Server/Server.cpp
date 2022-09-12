@@ -225,22 +225,23 @@ void Server::DataFromUser(int fd) {
  */
 void Server::DataToUser(int fd, string &msg, int type) {
 
+    string send_buf = msg;
     if (type == NUMERIC_REPLY) {
-        msg.insert(0, ":" + hostname);
+        send_buf.insert(0, ":" + hostname);
     }
-    msg.insert(msg.size(), CRLF);
+    send_buf.insert(send_buf.size(), CRLF);
     
     User& user = getUserFromFd(fd);
 
     LOG(INFO) << "DataToUser user " << user
-              << ", bytes " << msg.size()
-              << ", content [" << msg << "]"; 
+              << ", bytes " << send_buf.size()
+              << ", content [" << send_buf << "]"; 
 
     int b_sent = 0;
     int total_b_sent = 0;
 
     do {
-        b_sent = send(fd, &msg[b_sent], msg.size() - total_b_sent, 0);
+        b_sent = send(fd, &send_buf[b_sent], send_buf.size() - total_b_sent, 0);
         if (b_sent == -1) {
             if (socketErrorIsNotFatal(fd)) {
                 LOG(WARNING) << "DataToUser closing fd " << fd
@@ -254,7 +255,7 @@ void Server::DataToUser(int fd, string &msg, int type) {
         /* add bytes sent to total */
         total_b_sent += b_sent;
     /* keep looping until full message is sent */
-    } while (total_b_sent != (int)msg.size());
+    } while (total_b_sent != (int)send_buf.size());
 }
 
 /* 
