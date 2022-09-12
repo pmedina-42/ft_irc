@@ -157,7 +157,7 @@ void Server::pingLoop(void) {
         if (user.isOnPongHold()) {
             time_t since_ping = time(NULL) - user.getPingTime();
             if (since_ping >= PING_TIMEOUT_S) {
-                string reason = "Ping timeout: " PING_TIMEOUT_S_STR " seconds" ;
+                string reason = "Ping timeout: " PING_TIMEOUT_S_STR " seconds";
                 removeUserFromServer(fd, reason);
             }
             continue ;

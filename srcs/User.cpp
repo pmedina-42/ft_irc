@@ -110,7 +110,6 @@ bool User::isReadyForRegistration(bool server_password_on) {
                               : ready;
 }
 
-
 bool User::hasLeftovers(void) const {
     return !(buffer_size == 0);
 }

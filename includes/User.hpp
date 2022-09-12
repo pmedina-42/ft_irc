@@ -16,7 +16,6 @@ namespace irc {
  * El prefijo, de todas formas, seguirá reflejando el real_nick,
  * ya me jodería que si me quiero llamar ChRiStIAn el servidor me
  * llame CHRISTIAN. El control interno tiene que quedar como es, interno.
- *
  */
 
 
@@ -56,13 +55,14 @@ namespace irc {
  * 
  *  +t : el topic solo puede cambiarlo el operator
  *  +s : el channel es secreto y no se ve en list
- *  +n : controla si los usuarios pueden escribir al canal sin estar dentro 
+ *  +n : controla si los usuarios pueden escribir al canal sin estar dentro  
  *  +m : controla si puede hablar gente que no sea moderadora. 
  *  +l : controla si el canal tiene limite de clientes o no.
  *  +e : controla que pueda haber excepciones a los baneados.
  *  +I : invite-exception channel mode. No quiero ni saber lo que es.
  * 
  * Razones por las que no son necesarias estas anteriores mascaras, una por una:
+ * 
  * +t : Se fijan unas normas. El topic lo cambia solo el operator desde siempre.
  *      Y nunca podrá hacerlo alguien que no sea operator. Fasil rapido sencillo.
  * +s : Se puede hacer que si un channel tiene key o invitación o las dos, no sea
