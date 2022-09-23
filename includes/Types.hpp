@@ -20,14 +20,11 @@
 namespace irc {
 
 typedef enum {
-    LISTENER_BACKLOG = 20,
     NAME_MAX_SIZE = 12, // no me deja sino poner christian97 >:(
-    MAX_FDS = 255,
     POLL_TIMEOUT_MS = 1000,
     BUFF_MAX_SIZE = 512,
     PING_TIMEOUT_S = 120
 } SERVER_CONFIG;
-
 
 typedef enum {
     NO_NUMERIC_REPLY = 0,
@@ -42,11 +39,6 @@ typedef enum {
     CH_MOD = 2,
     CH_TOP = 1
 } IRC_MODES;
-
-class Channel;
-class User;
-class Command;
-class AIrcCommands;
 
 }
 

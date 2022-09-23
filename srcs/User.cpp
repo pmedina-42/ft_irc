@@ -1,5 +1,4 @@
 #include "Tools.hpp"
-#include <unistd.h>
 #include <algorithm>
 #include <string.h>
 #include "User.hpp"

@@ -16,6 +16,8 @@
 
 namespace irc {
 
+class Command;
+
 class AIrcCommands : public FdManager,
                      public IrcDataBase
 {

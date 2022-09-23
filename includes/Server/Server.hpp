@@ -1,9 +1,7 @@
 #ifndef IRC42_SERVER_H
 # define IRC42_SERVER_H
 
-#include "Channel.hpp" // without this, it doesnt compile
 #include "Types.hpp"
-
 #include "Server/AIrcCommands.hpp"
 
 namespace irc {
@@ -22,6 +20,8 @@ class Server : public AIrcCommands {
     ~Server();
     
     private:
+
+    void init();
 
     bool serverHasPassword();
     void maybeRegisterUser(User &user);
